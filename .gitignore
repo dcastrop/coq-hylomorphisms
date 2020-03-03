@@ -1,0 +1,9 @@
+*.glob
+*.vo
+*.aux
+.coqdeps.d
+Makefile
+Makefile.conf
+
+extraction
+extraction

@@ -1,0 +1,4 @@
+-R theories/ hylo
+-arg -w
+-arg all
+theories/hylo.v
