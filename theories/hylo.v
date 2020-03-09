@@ -1,5 +1,4 @@
 From mathcomp Require Import all_ssreflect.
-From Paco Require Import paco paco2.
 Require Import Setoid.
 
 Set Implicit Arguments.
@@ -29,13 +28,12 @@ Hint Resolve e_refl : ffix.
 Hint Resolve e_sym : ffix.
 Hint Resolve e_trans : ffix.
 
-(* Instance def_eq A : equivalence A := *)
-(*   {| eqRel := @eq A; *)
-(*      e_refl := @erefl A; *)
-(*      e_sym := @esym A; *)
-(*      e_trans := @etrans A; *)
-(*   |}. *)
-
+Instance def_eq A : equivalence A | 100 :=
+  {| eqRel := @eq A;
+     e_refl := @erefl A;
+     e_sym := @esym A;
+     e_trans := @etrans A;
+  |}.
 
 Add Parametric Relation (A: Type) (eq : equivalence A) : A (@eqRel A eq)
     reflexivity proved by (@e_refl A eq)
@@ -424,8 +422,6 @@ Proof. by split;[apply/ana_univ_l|apply/ana_univ_r]. Qed.
 
 (** Hylomorphisms **)
 
-Print FinF_inv.
-
 Definition hylo_f_ S P {F : functor S P}
            A B {eA : equivalence A} {eB : equivalence B}
            (g : Alg S P B) (h : CoAlg S P A)
@@ -637,25 +633,14 @@ Section ExQsort.
        end.
   (* end tree *)
 
-  Instance eq_seq_nat : equivalence (seq nat) :=
-    { eqRel := eq;
-      e_refl := @erefl (seq nat);
-      e_sym := @esym (seq nat);
-      e_trans := @etrans (seq nat);
-    }.
-
   Definition m_merge (x : App (Ts nat) Tp (seq nat)) : seq nat :=
     match a_out x with
     | None => [::]
     | Some (h, l, r) => l ++ h :: r
     end.
-    (* match projT1 x as sh return (sig (dom sh) -> seq nat) -> seq nat with *)
-    (* | Leaf => fun=>[::] *)
-    (* | Node h => fun k=> k (exist _ Lbranch is_true_true) ++ h :: k (exist _ Rbranch is_true_true) *)
-    (* end (projT2 x). *)
   Lemma m_merge_arr : forall x y, x =e y -> m_merge x =e m_merge y.
   Proof.
-    move=>[[|hx]/= kx]/= [[|hy]//= ky] [//= [<-]] H.
+    move=>[[|hx]//= kx] [[|hy]//= ky] [//= [<-]] H.
     by rewrite /m_merge/= !H.
   Qed.
   Definition merge : Alg (Ts nat) Tp (seq nat)
@@ -664,7 +649,7 @@ Section ExQsort.
   Definition m_split (x : seq nat) : App (Ts nat) Tp (seq nat) :=
     match x with
     | [::] => a_leaf _ _
-    | h :: t => a_node h [seq x <- t | x <= h] [seq x <- t | x > h]
+    | h :: t => a_node h (List.filter (fun x => x <= h) t) (List.filter (fun x => x > h) t)
     end.
   Lemma m_split_arr : forall x y, x =e y -> m_split x =e m_split y.
   Proof. by move=> x y ->; eauto with ffix. Qed.
@@ -680,7 +665,7 @@ Section ExQsort.
     - by [].
     - move=> [e /=_]; apply/Ih.
       by case: e; rewrite size_filter (leq_trans (count_size _ _)).
-  Defined.
+  Qed.
 
   Definition tsplit : FCoAlg (Ts nat) Tp (seq nat)
     := exist _ c_split split_fin.
@@ -688,14 +673,27 @@ Section ExQsort.
 End ExQsort.
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
-(* Set Extraction TypeExpand. *)
+Extract Inlined Constant leq => "(<=)".
+Extract Inductive reflect => "bool" ["true" "false"].
+Set Extraction TypeExpand.
+(* Set Extraction Conservative Types. *)
+Extraction Inline Coq.ssr.ssrbool.pred.
+Extraction Inline Coq.ssr.ssrbool.rel.
+Extraction Inline projT1.
+Extraction Inline projT2.
+Extraction Inline eq_op.
+Extraction Inline Equality.class.
+Extraction Inline Equality.op.
+Extraction Inline Equality.axiom.
+Extraction Inline Equality.sort.
+Extraction Inline nat_eqMixin.
+Extraction Inline nat_eqType.
+
 Extraction Inline app.
 Extraction Inline coalg.
 Extraction Inline hylo.
 Extraction Inline hylo_f.
 Extraction Inline hylo_f_.
-Extraction Inline projT1.
-Extraction Inline projT2.
 
 Extraction Inline merge.
 Extraction Inline a_leaf.
@@ -706,4 +704,4 @@ Extraction Inline a_out.
 Extraction Inline c_split.
 Extraction Inline tsplit.
 Set Extraction Flag 2047.
-Extraction "test.ml" Ts Tp dom_leaf leq filter msort.
+Extraction "test.ml" msort.
