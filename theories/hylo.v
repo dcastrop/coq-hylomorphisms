@@ -13,6 +13,8 @@ Reserved Notation "x '=1/a' y" (at level 70, no associativity).
 Reserved Notation "x '=1/a/g' y" (at level 70, no associativity).
 Reserved Notation "x '=1/sval' y" (at level 70, no associativity).
 
+Unset Auto Template Polymorphism.
+
 (****************************************************************************)
 (** Assumptions and Strict positivisation of functors                      **)
 (****************************************************************************)
@@ -312,25 +314,17 @@ Lemma cata_univ_r S P {F : functor S P} A {eA : equivalence A} (g : Alg S P A)
       (f : LFix S P ~> A)
   : f =e g \o fmap f \o l_out -> f =e cata g.
 Proof.
-  move=> H.
-  elim=> sx kx /= Ih.
-  rewrite (H _)/=; apply/f_eq; rewrite /fmap/=.
-  split=>//= e d1 d2.
-  rewrite Ih (cont_irr (X:=LFix S P) kx).
-  by auto with ffix.
+  move=> H; elim=> sx kx /= Ih; rewrite (H _)/=; apply/f_eq => /=.
+  split=>//= e d1 d2; rewrite Ih (bool_irrelevance d1 d2); by auto with ffix.
 Qed.
 
 Lemma cata_univ_l S P {F : functor S P} A {eA : equivalence A} (g : Alg S P A)
       (f : LFix S P ~> A)
   : f =e cata g -> f =e g \o fmap f \o l_out.
 Proof.
-  move=> H.
-  elim=> sx kx /= Ih.
-  rewrite (H _)/=; apply/(f_eq g); rewrite /fmap/=.
-  split=>//= e d1 d2.
-  rewrite Ih (cont_irr (X:=LFix S P) kx).
-  rewrite -[cata_f g _]/(cata g _) -(H _) Ih.
-  by auto with ffix.
+  move=> H; case=> sx kx; rewrite (H _)/=; apply/f_eq => /=.
+  split=>//= e d1 d2; rewrite -[cata_f g _]/(cata g _) -(H _). 
+  by rewrite (bool_irrelevance d2 d1); auto with ffix.
 Qed.
 
 Lemma cata_univ S P {F : functor S P} A {eA : equivalence A} (g : Alg S P A)
@@ -396,8 +390,8 @@ Lemma ana_univ_r S P (F : functor S P) A (eA : equivalence A)
 Proof.
   move=> H; rewrite /ana/ana_f/==>x; move: x (finite h x).
   fix Ih 2; move=> x [{}x Fx].
-  rewrite -[LFixR (f x) _]/(@eqRel _ LFix_Eq (f x) _) (H _)/=; split=>// e d1 d2.
-  rewrite (bool_irrelevance d2 d1); by apply: Ih.
+  rewrite -[LFixR (f x) _]/(@eqRel _ LFix_Eq (f x) _) (H _)/=. 
+  split=>// e d1 d2; rewrite (bool_irrelevance d2 d1); by apply: Ih.
 Qed.
 
 Lemma ana_univ_l S P {F : functor S P} A {eA : equivalence A}
@@ -407,9 +401,7 @@ Proof.
   move=> H x; move: x (finite h x).
   fix Ih 2; move=> x [{}x Fx].
   rewrite (H _) /=/ana_f; move: (finite h x)=>Fx'; move: Fx' Fx.
-  move=>[{}x Fx'] Fx/=; split=>// e d1 d2.
-  rewrite (bool_irrelevance d2 d1).
-  rewrite -[LFixR _ _]/(@eqRel _ LFix_Eq _ _).
+  move=>[{}x Fx'] Fx/=; split=>// e d1 d2; rewrite (bool_irrelevance d2 d1).
   move: (H (projT2 (coalg h x) (exist _ e d1))); rewrite /ana/ana_f/=.
   rewrite -![LFixR _ _]/(@eqRel _ LFix_Eq _ _).
   rewrite ana_f_irr =><-/=; by apply: LFixR_refl.
@@ -517,7 +509,7 @@ Arguments f_out {S P F}.
 
 Lemma hylo_cata S P {F : functor S P} B {eB : equivalence B} (g : Alg S P B)
   : cata g =e hylo g f_out.
-Proof. rewrite hylo_univ; apply/cata_univ; reflexivity. Qed.
+Proof. by rewrite hylo_univ; apply/cata_univ; reflexivity. Qed.
 
 Lemma hylo_ana  S P {F : functor S P} A {eA : equivalence A} (h : FCoAlg S P A)
   : ana h =e hylo l_in h.
@@ -549,11 +541,15 @@ Lemma hylo_fusion_l S P {F : functor S P} A B C
       (E2 : f2 \o g1 =e g2 \o fmap f2)
   : f2 \o hylo g1 h1 =e hylo g2 h1.
 Proof.
-  rewrite hylo_univ fmap_comp.
-  rewrite compA -E2 -compA -compA.
-  apply/splitC; first by reflexivity.
-  rewrite compA -hylo_univ.
-  reflexivity.
+  rewrite hylo_univ.
+  rewrite fmap_comp.
+  rewrite compA.
+  rewrite -E2. 
+  rewrite -compA.
+  rewrite -compA.
+  rewrite [in g1 \o (_ \o _)]compA.
+  rewrite -hylo_unr.
+  by reflexivity.
 Qed.
 
 Lemma hylo_fusion_r S P {F : functor S P} A B C
@@ -562,11 +558,15 @@ Lemma hylo_fusion_r S P {F : functor S P} A B C
       (f1 : A ~> B) (E1 : h1 \o f1 =e fmap f1 \o h2)
   : hylo g1 h1 \o f1 =e hylo g1 h2.
 Proof.
-  rewrite hylo_univ fmap_comp.
-  rewrite -!compA -E1 !compA.
-  apply/splitC; last by reflexivity.
-  rewrite -hylo_univ.
-  reflexivity.
+  rewrite hylo_univ.
+  rewrite fmap_comp.
+  rewrite -compA.
+  rewrite -compA.
+  rewrite -E1. 
+  rewrite compA.
+  rewrite compA.
+  rewrite -hylo_unr.
+  by reflexivity.
 Qed.
 
 Lemma deforest S P {F : functor S P} A B C
@@ -595,7 +595,9 @@ Proof. by rewrite hylo_cata hylo_ana; apply/deforest/l_out_in. Qed.
 Section ExQsort.
 
   (* Defining a tree *)
-  Inductive Ts A := | Leaf | Node (ELEM : A). (* shapes *)
+ 
+  (* shapes *)
+  Inductive Ts A := | Leaf | Node (ELEM : A).
   Inductive Tp := | Lbranch | Rbranch. (* positions *)
   Definition t_dom A (s : Ts A) : Tp -> bool := (* position valid in shape? *)
     match s with
@@ -611,7 +613,9 @@ Section ExQsort.
   Definition dom_leaf A B (x : {y | t_dom (Leaf A) y}) : B :=
     False_rect _ (dom_leaf_false x).
 
-  Definition a_leaf A X : App (Ts A) Tp X := existT _ (Leaf A) (@dom_leaf A _).
+    Print App.
+  Definition a_leaf (A X : Type)
+    : App (Ts A) Tp X := existT _ (Leaf A) (@dom_leaf A X).
   Definition a_node A X (x : A) (l r : X) : App (Ts A) Tp X :=
     existT _ (Node x) (fun p => match proj1_sig p with
                                 | Lbranch => l
@@ -649,7 +653,10 @@ Section ExQsort.
   Definition m_split (x : seq nat) : App (Ts nat) Tp (seq nat) :=
     match x with
     | [::] => a_leaf _ _
-    | h :: t => a_node h (List.filter (fun x => x <= h) t) (List.filter (fun x => x > h) t)
+    | h :: t
+      => a_node h
+                (List.filter (fun x => x <= h) t) 
+                (List.filter (fun x => x > h) t)
     end.
   Lemma m_split_arr : forall x y, x =e y -> m_split x =e m_split y.
   Proof. by move=> x y ->; eauto with ffix. Qed.
