@@ -336,6 +336,7 @@ Proof. by split;[apply/cata_univ_l|apply/cata_univ_r]. Qed.
 Inductive FinF S P {F : functor S P} A {eA : equivalence A}
           (h : CoAlg S P A) : A -> Prop :=
 | FinF_fold x : (forall e, FinF h (projT2 (h x) e)) -> FinF h x.
+Hint Constructors FinF : ffix.
 
 Lemma FinF_inv S P {F : functor S P} A {eA : equivalence A} (h : CoAlg S P A) x
   : FinF h x -> forall e, FinF h (projT2 (h x) e).
@@ -667,11 +668,10 @@ Section ExQsort.
   Lemma split_fin : forall x, FinF c_split x.
   Proof.
     move=>x; move: {-1}(size x) (leqnn (size x))=> n.
-    elim: n => [|n Ih] in x *; case: x=> [|h t]/=; eauto=>E; constructor=>/=.
-    - by case.
-    - by [].
-    - move=> [e /=_]; apply/Ih.
-      by case: e; rewrite size_filter (leq_trans (count_size _ _)).
+    elim: n => [|n Ih] in x *; case: x=> [|h t]/=;
+      eauto=>E; constructor=>/=; case; [by []| by [] | move=>[] /= _; apply/Ih].
+    - by rewrite size_filter (leq_trans (count_size _ _)).
+    - by rewrite size_filter (leq_trans (count_size _ _)).
   Qed.
 
   Definition tsplit : FCoAlg (Ts nat) Tp (seq nat)
@@ -711,4 +711,4 @@ Extraction Inline a_out.
 Extraction Inline c_split.
 Extraction Inline tsplit.
 Set Extraction Flag 2047.
-Extraction "test.ml" msort.
+Extraction "extraction/test.ml" msort.
