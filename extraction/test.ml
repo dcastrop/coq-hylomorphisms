@@ -22,13 +22,13 @@ type tp =
 | Lbranch
 | Rbranch
 
-(** val msort : int list -> int list **)
+(** val qsort : int list -> int list **)
 
-let rec msort = function
+let rec qsort = function
 | [] -> []
 | h :: t ->
   let k = fun e ->
-    msort
+    qsort
       (match e with
        | Lbranch -> filter (fun x0 -> (<=) x0 h) t
        | Rbranch -> filter (fun x0 -> negb ((<=) x0 h)) t)

@@ -720,7 +720,7 @@ Section ExQsort.
     induction m as [|m Ih]; intros n; auto.
     destruct n as [|n]; simpl in *; try discriminate. apply Ih.
   Qed.
-  (* Needs to be defined, otherwise msort does not reduce!
+  (* Needs to be defined, otherwise qsort does not reduce!
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
   Lemma split_fin : forall x, FinF c_split x.
@@ -741,7 +741,7 @@ Section ExQsort.
   (* UPDATE 12/09/2023 by DC: this used to be mergesort, and at some
    * point I simply changed the implementation ...
    *)
-  Definition msort : list nat -> list nat := hylo merge tsplit.
+  Definition qsort : list nat -> list nat := hylo merge tsplit.
 End ExQsort.
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
@@ -752,6 +752,7 @@ Extraction Inline projT1.
 Extraction Inline projT2.
 
 Extraction Inline app.
+Extraction Inline comp.
 Extraction Inline coalg.
 Extraction Inline hylo.
 Extraction Inline hylo_f.
@@ -767,5 +768,5 @@ Extraction Inline c_split.
 Extraction Inline tsplit.
 Set Extraction Flag 2047.
 (* Set Extraction Optimize. *)
-Recursive Extraction msort.
-Extraction "../extraction/test.ml" msort.
+Recursive Extraction qsort.
+Extraction "../extraction/test.ml" qsort.

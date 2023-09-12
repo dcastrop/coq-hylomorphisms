@@ -9,4 +9,4 @@ type tp =
 | Lbranch
 | Rbranch
 
-val msort : int list -> int list
+val qsort : int list -> int list
