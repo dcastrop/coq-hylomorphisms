@@ -1,4 +1,5 @@
--R theories/ hylo
+-R theories/ "HYLO"
 -arg -w
 -arg all
 theories/hylo.v
+theories/hexpr.v
