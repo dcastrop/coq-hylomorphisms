@@ -766,6 +766,6 @@ Extraction Inline a_out.
 Extraction Inline c_split.
 Extraction Inline tsplit.
 Set Extraction Flag 2047.
-Set Extraction Optimize.
+(* Set Extraction Optimize. *)
 Recursive Extraction msort.
 Extraction "../extraction/test.ml" msort.
