@@ -688,7 +688,7 @@ Section ExQsort.
   Proof.
     intros [[|hx] kx] [[|hy] ky] [Hs Hk]; simpl in *; try discriminate; auto.
     specialize Hk with (d1:=eq_refl) (d2:=eq_refl).
-    inversion_clear Hs.
+    injection Hs. intros <-.
     unfold m_merge. simpl. rewrite !Hk. reflexivity.
   Qed.
   Definition merge : Alg (Ts nat) Tp (list nat)
@@ -767,6 +767,5 @@ Extraction Inline a_out.
 Extraction Inline c_split.
 Extraction Inline tsplit.
 Set Extraction Flag 2047.
-(* Set Extraction Optimize. *)
 Recursive Extraction qsort.
 Extraction "../extraction/test.ml" qsort.
