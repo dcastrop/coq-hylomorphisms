@@ -1,0 +1,37 @@
+\newsavebox{\lbansbox}
+\newcommand{\lbansmacro}{%
+\begin{tikzpicture}[baseline=0.45ex,xscale=0.006em,yscale=0.012ex]%
+% curvey bananas
+%\draw[solid,join=round,fill=yellow] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9) to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;%
+% fitted lenses
+\draw[solid,join=round] (1.8,6) -- (1.5,5.9) to[out=-120, in=90] (0.7,3) to[out=-90, in=120] (1.5,0.1) -- (1.8,0) -- cycle;%
+\end{tikzpicture}}
+\savebox{\lbansbox}{\lbansmacro}
+\newcommand{\lbans}{\mathopen{\usebox{\lbansbox}\mspace{1mu}}}
+
+\newsavebox{\rbansbox}
+\newcommand{\rbansmacro}{%
+\begin{tikzpicture}[baseline=0.45ex,xscale=-0.006em,yscale=0.012ex]%
+% curvey bananas
+%\draw[solid,join=round,fill=yellow] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9) to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;%
+% fitted lenses
+\draw[solid,join=round] (1.8,6) -- (1.5,5.9) to[out=-120, in=90] (0.7,3) to[out=-90, in=120] (1.5,0.1) -- (1.8,0) -- cycle;%
+\end{tikzpicture}}
+\savebox{\rbansbox}{\rbansmacro}
+\newcommand{\rbans}{\mathclose{\mspace{1mu}\usebox{\rbansbox}}}
+
+\newsavebox{\llensbox}
+\newcommand{\llensmacro}{%
+\begin{tikzpicture}[baseline=0.45ex,xscale=0.006em,yscale=0.012ex]%
+\draw[solid,join=round] (1.4,0) -- (0,0) -- (0,6) -- (1.4,6) -- (1.5,5.9) to[out=-120, in=90] (0.7,3) to[out=-90, in=120] (1.5,0.1) -- cycle;%
+\end{tikzpicture}}
+\savebox{\llensbox}{\llensmacro}
+\newcommand{\llens}{\mathopen{\usebox{\llensbox}\mspace{1mu}}}
+
+\newsavebox{\rlensbox}
+\newcommand{\rlensmacro}{%
+\begin{tikzpicture}[baseline=0.45ex,xscale=-0.006em,yscale=0.012ex]%
+\draw[solid,join=round] (1.4,0) -- (0,0) -- (0,6) -- (1.4,6) -- (1.5,5.9) to[out=-120, in=90] (0.7,3) to[out=-90, in=120] (1.5,0.1) -- cycle;%
+\end{tikzpicture}}
+\savebox{\rlensbox}{\rlensmacro}
+\newcommand{\rlens}{\mathclose{\mspace{1mu}\usebox{\rlensbox}}}
