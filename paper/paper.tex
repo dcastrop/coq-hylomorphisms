@@ -98,10 +98,125 @@
 \begin{document}
 
 \maketitle
+\newcommand{\comp}{\cdot}
+\section{Introduction}
+Say that we want to prove that the two functions below are well-defined
 
+\begin{tabular}{LL}
+  \operator{even} : \Nat \to \Bool                  &  \operator{odd} : \Nat \to \Bool\\
+  \operator{even} (0) = \top                        &  \operator{odd}(0) = \bot\\
+  \operator{even} (n+1) = \neg \operator{odd}(n)    &  \operator{odd}(n+1) = \neg (\operator{even}(n))
+\end{tabular}
+
+One option is to prove that the following function (given by a catamorphism) is
+equivalent to the above
+\begin{align*}
+  & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
+  & \operator{even-odd} (0) = (\top, \bot)\\
+  & \operator{even-odd} (n+1) = \operator{let } (x,y) \leftarrow \operator{even-odd}(n) \operator{ in } (\neg x, \neg y)
+\end{align*}
+This function is clearly a catarmorphism:
+\begin{align*}
+  & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
+  & \operator{even-odd} = \cata{a} \operator{ where }\\
+  & \qquad \qquad a : 1 + (\Bool \times \Bool)\\
+  & \qquad \qquad a (\operator{nil}) = (\top, \bot)\\
+  & \qquad \qquad a (\operator{x,y}) = (\neg x, \neg y)
+\end{align*}
+where $\cata{\cdot}$ takes a $(1+-)$ algebra on $\Bool \times \Bool$ and returns
+the associated recursive function.
+
+Now we recover the original two functions by setting
+$\operator{even}' \eqdef \pi_{1} \comp \operator{even-odd}$
+$\operator{odd}' \eqdef \pi_{2} \comp \operator{even-odd}$. The proof that these two pairs of functions are the same is an easy induction over the natural numbers.
+
+This is an instance of a more general phenonema whose argumet uses category theory.
 \section{Adjoint Folds}
+In order to transform $\operator{even-odd}$ into two functions $\operator{even}$ and
+$\operator{odd}$ we are going to use something called an ``adjunction''.
+In particular, we have two functors. The diagonal functor $\Delta : \CatC \to \CatC \times \CatC$ defined as
+$\Delta X = (X,X)$ and the product functor $\times : \CatC \times \CatC$. These two functors form an adjunction:
+\[\begin{tikzcd}
+	{\CatC \times \CatC} & \CatC
+	\arrow[""{name=0, anchor=center, inner sep=0}, "\Delta"', shift right=2, from=1-2, to=1-1]
+	\arrow[""{name=1, anchor=center, inner sep=0}, "\times"', shift right=2, from=1-1, to=1-2]
+	\arrow["\dashv"{anchor=center, rotate=-90}, draw=none, from=0, to=1]
+    \arrow["D"', loop, distance=2em, in=35, out=325, from=1-2, to=1-2]
+    \arrow["\Delta\circ D\circ \times "', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
+\end{tikzcd}
+\]
+More formally, this means there is a one-to-one correspondence of maps, i.e. every map $(A,A) \to (B_{1}, B_{2})$ corresponds univocally to a map of type $A \to B_{1} \times B_{2}$. In the isomorphism below we use $\ceiling{\cdot}$ and $\floor{\cdot}$ to denote the maps witnessing the isomorphism called respectively the right and left transpose of the adjunction:
+\[
+  \floor{\cdot} : \CatC \times \CatC ((A, A) , (B_{1}, B_{2}) \iso \CatC (A , B_{1} \times B_{2}): \ceiling{\cdot}
+\]
+the right transponse $\ceiling{\cdot}$ of the adjunction can be
+defined using the projections:
+\[
+  \ceiling{g} = (\pi_{1} \cdot g,\pi_{2}\cdot g)
+\]
+and the floor can be defined as using the pair into the product:
+\[
+  \floor{f}(a) = \pair{f(a)}{f(a)}
+\]
 
-\subsection{Canonical Adjoint Folds}
+We can instantiate further the iso by setting $A = \Nat$, $B_{1} = \Bool$ and
+$B_{2} = \Bool$.
+\[
+  \floor{\cdot}: \CatC \times \CatC ((\Nat, \Nat) , (\Bool, \Bool) \iso \CatC (\Nat , \Bool \times \Bool) : \ceiling{\cdot}
+\]
+% At this point we are pretty much done as we can instantiate the diagrams
+% (\ref{eq:canonical-adjoint-fold}) where $D X = 1 + X$
+% \[
+%   \begin{tikzcd}
+% 	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool \times \Bool, 1 + \Bool \times \Bool) & { 1 + \Nat} & 1 + (\Bool \times \Bool) \\
+% 	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool \times \Bool
+% 	\arrow["{\cata{a}}"', from=2-4, to=2-5]
+% 	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
+% 	\arrow["{1 + \cata{a}}", from=1-4, to=1-5]
+% 	\arrow["a", from=1-5, to=2-5]
+% 	\arrow["{\ceiling{\cata{a}}}"', from=2-1, to=2-3]
+% 	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
+% 	\arrow["{(1 + \cata{a}, 1 + \cata{a})}", from=1-1, to=1-3]
+% 	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
+% 	\arrow[shorten <=35pt, shorten >=35pt, Rightarrow, 2tail reversed, from=1, to=0]
+%   \end{tikzcd}
+% \]
+% Now we define $a$ to be the following $D$ algebra:
+% \begin{align*}
+%   & a : 1 + \Bool \times \Bool \to \Bool\\
+%   & a (\operator{nil}) = (\top, \bot)\\
+%   & a (b_{1}, b_{2}) = (\neg b_{1}, \neg b_{2})
+% \end{align*}
+
+We already seen that the catamorphism over the algebra $a$ equals
+$\operator{even-odd}$. By using the right transpose we can derive the pair of original functions $(\operator{even}, \operator{odd})$:
+\[
+  \ceiling{\operator{even-odd}} = (\pi_{1}\cdot \operator{even-odd}, \pi_{2}\cdot \operator{even-odd})
+\]
+To show this pair of functions are the same as the original ones we appeal to
+uniqueness of catamorphisms. Recall that catamorphisms for a generic $F$ algebra $a$ are the unique maps such that
+\[
+  \cata{a} = a \comp F(\cata{a})\comp \InIso^{\circ}
+\]
+This is represented on the right hand side of the following diagrams:
+\[
+  \begin{tikzcd}
+	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool^{2}, 1 + \Bool^{2}) & {1 + \Nat} & 1 + \Bool^{2} \\
+	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool^{2}
+	\arrow["{\operator{eo}}"', dotted,  from=2-4, to=2-5]
+	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
+	\arrow["{1 + \operator{eo}}", dotted, from=1-4, to=1-5]
+	\arrow["a", from=1-5, to=2-5]
+	\arrow["{\ceiling{\operator{eo}}}"', from=2-1, to=2-3]
+	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
+	\arrow["{(1 + \operator{eo}, 1 + \operator{eo})}", from=1-1, to=1-3]
+	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
+	\arrow[shorten <=20pt, shorten >=20pt, Rightarrow, 2tail reversed, from=1, to=0]
+  \end{tikzcd}
+\]
+The double implication in the middle of these two diagrams states that the catamorphism on the right is in one-to-one correspondences with the right transpose of $\operator{eo}$ satisfying the right-hand side diagram. Notice the right-hand side is exactly the definition of the pair of functions $\operator{even}$ and $\operator{odd}$ and the diagram states these correspond to $\operator{even-odd}$ given by a catamorphism on the left. Since this latter is the unique catamorphism the one on the right is also unique such that it makes the right-hand side diagram commute.
+\subsection{The General Case}
+
 \[\begin{tikzcd}
 	{\CatC} & \CatD
 	\arrow[""{name=0, anchor=center, inner sep=0}, "L"', shift right=2, from=1-2, to=1-1]
@@ -157,110 +272,4 @@ wrapped up in $L$. The transformation is done by just applying the isomorphism
 
 In the following section we instantiate the adjoint fold with some instances
 taken from the literature.
-
-\subsection{Example}
-Say that we want to prove that the two functions below are well-defined
-
-\begin{tabular}{LL}
-  \operator{even} : \Nat \to \Bool                  &  \operator{odd} : \Nat \to \Bool\\
-  \operator{even} (0) = \top                        &  \operator{odd}(0) = \top\\
-  \operator{even} (n+1) = \neg \operator{odd}(n)    &  \operator{odd}(n+1) = \neg (\operator{even}(n))
-\end{tabular}
-
-One option is to prove that the following function (given by a catamorphism) is
-equivalent to the above
-\begin{align*}
-  & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
-  & \operator{even-odd} (0) = (\top, \bot)\\
-  & \operator{even-odd} (n+1) = \operator{let } (x,y) \leftarrow \operator{even-odd}(n) \operator{ in } (\neg x, \neg y)
-\end{align*}
-This function is clearly a catarmorphism:
-\begin{align*}
-  & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
-  & \operator{even-odd} = \cata{a} \operator{ where }\\
-  & \qquad \qquad a : 1 + (\Bool \times \Bool)\\
-  & \qquad \qquad a (\operator{nil}) = (\top, \bot)\\
-  & \qquad \qquad a (\operator{x,y}) = (\neg x, \neg y)
-\end{align*}
-where $\cata{\cdot}$ takes a $(1+-)$ algebra on $\Bool \times \Bool$ and returns
-the associated recursive function.
-
-In order to transform $\operator{even-odd}$ into two functions $\operator{even}$
-and $\operator{odd}$ we are going to use the adjunction $\Delta \vdash \times$
-where $\Delta : \CatC \to \CatC \times \CatC$ is the diagonal functor
-$\Delta X = (X,X)$ and $\times : \CatC \times \CatC$ is the product seen as a
-bifunctor
-
-\[\begin{tikzcd}
-	{\CatC \times \CatC} & \CatC
-	\arrow[""{name=0, anchor=center, inner sep=0}, "\Delta"', shift right=2, from=1-2, to=1-1]
-	\arrow[""{name=1, anchor=center, inner sep=0}, "\times"', shift right=2, from=1-1, to=1-2]
-	\arrow["\dashv"{anchor=center, rotate=-90}, draw=none, from=0, to=1]
-    \arrow["D"', loop, distance=2em, in=35, out=325, from=1-2, to=1-2]
-    \arrow["\Delta\circ D\circ \times "', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
-\end{tikzcd}
-\]
-To get the natural isomorphism from this adjunction we can instantiate
-(\ref{eq:adjoint-iso}) as follows
-\[
-  \floor{\cdot} : \CatC \times \CatC ((A, A) , (B_{1}, B_{2}) \iso \CatC (A , B_{1} \times B_{2}): \ceiling{\cdot}
-\]
-We can instantiate further the iso by setting $A = \Nat$, $B_{1} = \Bool$ and
-$B_{2} = \Bool$.
-\[
-  \floor{\cdot}: \CatC \times \CatC ((\Nat, \Nat) , (\Bool, \Bool) \iso \CatC (\Nat , \Bool \times \Bool) : \ceiling{\cdot}
-\]
-
-To define this isomorphism we can just define the units of the adjunctions:
-\begin{align*}
-  & \eta_{A} : A \to A \times A\\
-  & \eta_{A}= \pair{id_{A}}{id_{a}}\\
-  & \epsilon_{(X,Y)} : ((X \times Y), (X \times Y) \to (X,Y)\\
-  & \epsilon_{(X,Y)} = (\pi_{1}, \pi_{2})
-\end{align*}
-Notice that, in particular, the counit is given by the projections out of the
-product.  Now, the right transponse $\ceiling{\cdot}$ of the adjunction can be
-defined using the projections provided by the counit.  And in fact, the ceiling
-can be defined as
-\[
-  \ceiling{g} = (\pi_{1},\pi_{2}) \cdot \Delta(g) =  (\pi_{1},\pi_{2}) \cdot (g,g) = (\pi_{1} \cdot g,\pi_{2}\cdot g)
-\]
-and the floor can be defined as
-\[
-  \floor{f}(a) = \pair{f(a)}{f(a)}
-\]
-At this point we are pretty much done as we can instantiate the diagrams
-(\ref{eq:canonical-adjoint-fold}) where $D X = 1 + X$
-\[
-  \begin{tikzcd}
-	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool \times \Bool, 1 + \Bool \times \Bool) & { 1 + \Nat} & 1 + (\Bool \times \Bool) \\
-	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool \times \Bool
-	\arrow["{\cata{a}}"', from=2-4, to=2-5]
-	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
-	\arrow["{1 + \cata{a}}", from=1-4, to=1-5]
-	\arrow["a", from=1-5, to=2-5]
-	\arrow["{\ceiling{\cata{a}}}"', from=2-1, to=2-3]
-	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
-	\arrow["{(1 + \cata{a}, 1 + \cata{a})}", from=1-1, to=1-3]
-	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
-	\arrow[shorten <=35pt, shorten >=35pt, Rightarrow, 2tail reversed, from=1, to=0]
-  \end{tikzcd}
-\]
-Now we define $a$ to be the following $D$ algebra:
-\begin{align*}
-  & a : 1 + \Bool \times \Bool \to \Bool\\
-  & a (\operator{nil}) = (\top, \bot)\\
-  & a (b_{1}, b_{2}) = (\neg b_{1}, \neg b_{2})
-\end{align*}
-
-It is easy to see that the catamorphism over the algebra $a$ equals
-$\operator{even-odd}$ and by the adjoint fold property we know that its right
-transpose satisfies the right hand side diagram. We now have to show that the
-pair of functions $(\operator{even}, \operator{odd})$ equals the right transpose
-of $\operator{even-odd}$, but this is easy to see by definition of the ceiling:
-\[
-  \ceiling{\operator{even-odd}} = (\pi_{1}\cdot \operator{even-odd}, \pi_{2}\cdot \operator{even-odd})
-\]
-and then it is an easy calculation to see that $\pi_{1}\cdot \operator{even-odd}$ equals $\operator{even}$ and
-that $\pi_{2}\cdot \operator{even-odd}$ equals $\operator{odd}$.
 \end{document}
