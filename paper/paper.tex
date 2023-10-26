@@ -91,6 +91,8 @@
 \newcommand{\pair}[2]{\langle #1, #2 \rangle}
 \newcommand{\InIso}{\text{In}}
 
+\newcommand{\comp}{\cdot}
+
 \title{Hylomorphisms in Coq}
 
 \author{}
@@ -98,7 +100,6 @@
 \begin{document}
 
 \maketitle
-\newcommand{\comp}{\cdot}
 \section{Introduction}
 Say that we want to prove that the two functions below are well-defined
 
@@ -128,14 +129,19 @@ the associated recursive function.
 
 Now we recover the original two functions by setting
 $\operator{even}' \eqdef \pi_{1} \comp \operator{even-odd}$
-$\operator{odd}' \eqdef \pi_{2} \comp \operator{even-odd}$. The proof that these two pairs of functions are the same is an easy induction over the natural numbers.
+$\operator{odd}' \eqdef \pi_{2} \comp \operator{even-odd}$. The proof that these
+two pairs of functions are the same is an easy induction over the natural
+numbers.
 
-This is an instance of a more general phenonema whose argumet uses category theory.
+This is an instance of a more general phenonema whose argumet uses category
+theory.
 \section{Adjoint Folds}
-In order to transform $\operator{even-odd}$ into two functions $\operator{even}$ and
-$\operator{odd}$ we are going to use something called an ``adjunction''.
-In particular, we have two functors. The diagonal functor $\Delta : \CatC \to \CatC \times \CatC$ defined as
-$\Delta X = (X,X)$ and the product functor $\times : \CatC \times \CatC$. These two functors form an adjunction:
+In order to transform $\operator{even-odd}$ into two functions $\operator{even}$
+and $\operator{odd}$ we are going to use something called an ``adjunction''.  In
+particular, we have two functors. The diagonal functor
+$\Delta : \CatC \to \CatC \times \CatC$ defined as $\Delta X = (X,X)$ and the
+product functor $\times : \CatC \times \CatC$. These two functors form an
+adjunction:
 \[\begin{tikzcd}
 	{\CatC \times \CatC} & \CatC
 	\arrow[""{name=0, anchor=center, inner sep=0}, "\Delta"', shift right=2, from=1-2, to=1-1]
@@ -145,7 +151,11 @@ $\Delta X = (X,X)$ and the product functor $\times : \CatC \times \CatC$. These 
     \arrow["\Delta\circ D\circ \times "', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
 \end{tikzcd}
 \]
-More formally, this means there is a one-to-one correspondence of maps, i.e. every map $(A,A) \to (B_{1}, B_{2})$ corresponds univocally to a map of type $A \to B_{1} \times B_{2}$. In the isomorphism below we use $\ceiling{\cdot}$ and $\floor{\cdot}$ to denote the maps witnessing the isomorphism called respectively the right and left transpose of the adjunction:
+More formally, this means there is a one-to-one correspondence of maps, i.e.
+every map $(A,A) \to (B_{1}, B_{2})$ corresponds univocally to a map of type
+$A \to B_{1} \times B_{2}$. In the isomorphism below we use $\ceiling{\cdot}$
+and $\floor{\cdot}$ to denote the maps witnessing the isomorphism called
+respectively the right and left transpose of the adjunction:
 \[
   \floor{\cdot} : \CatC \times \CatC ((A, A) , (B_{1}, B_{2}) \iso \CatC (A , B_{1} \times B_{2}): \ceiling{\cdot}
 \]
@@ -189,12 +199,14 @@ $B_{2} = \Bool$.
 % \end{align*}
 
 We already seen that the catamorphism over the algebra $a$ equals
-$\operator{even-odd}$. By using the right transpose we can derive the pair of original functions $(\operator{even}, \operator{odd})$:
+$\operator{even-odd}$. By using the right transpose we can derive the pair of
+original functions $(\operator{even}, \operator{odd})$:
 \[
   \ceiling{\operator{even-odd}} = (\pi_{1}\cdot \operator{even-odd}, \pi_{2}\cdot \operator{even-odd})
 \]
 To show this pair of functions are the same as the original ones we appeal to
-uniqueness of catamorphisms. Recall that catamorphisms for a generic $F$ algebra $a$ are the unique maps such that
+uniqueness of catamorphisms. Recall that catamorphisms for a generic $F$ algebra
+$a$ are the unique maps such that
 \[
   \cata{a} = a \comp F(\cata{a})\comp \InIso^{\circ}
 \]
@@ -214,7 +226,15 @@ This is represented on the right hand side of the following diagrams:
 	\arrow[shorten <=20pt, shorten >=20pt, Rightarrow, 2tail reversed, from=1, to=0]
   \end{tikzcd}
 \]
-The double implication in the middle of these two diagrams states that the catamorphism on the right is in one-to-one correspondences with the right transpose of $\operator{eo}$ satisfying the right-hand side diagram. Notice the right-hand side is exactly the definition of the pair of functions $\operator{even}$ and $\operator{odd}$ and the diagram states these correspond to $\operator{even-odd}$ given by a catamorphism on the left. Since this latter is the unique catamorphism the one on the right is also unique such that it makes the right-hand side diagram commute.
+The double implication in the middle of these two diagrams states that the
+catamorphism on the right is in one-to-one correspondences with the right
+transpose of $\operator{eo}$ satisfying the right-hand side diagram. Notice the
+right-hand side is exactly the definition of the pair of functions
+$\operator{even}$ and $\operator{odd}$ and the diagram states these correspond
+to $\operator{even-odd}$ given by a catamorphism on the left. Since this latter
+is the unique catamorphism the one on the right is also unique such that it
+makes the right-hand side diagram commute.
+
 \subsection{The General Case}
 
 \[\begin{tikzcd}
