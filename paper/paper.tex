@@ -100,7 +100,20 @@
 \begin{document}
 
 \maketitle
-\section{Introduction}
+\section{Goals and Motivations}
+\begin{itemize}
+  \item We provide a framework for \emph{generic programming} with recursion schemes in Coq
+  \item The hylomorphism and its connected theory with adjunctions provides the most general framework we can work with and provides some built-in optimisations as well
+        \item We formalise algorithms for
+        \begin{itemize}
+          \item  divide and conquer
+          \item dynamic programming
+          \item mutual recursion
+        \end{itemize}
+  \item We show these can be optimised in Coq and extracted to OCaml.
+\end{itemize}
+
+\section{Background on Adjoint Folds}
 Say that we want to prove that the two functions below are well-defined
 
 \begin{tabular}{LL}
