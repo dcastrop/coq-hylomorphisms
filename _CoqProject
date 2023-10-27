@@ -1,6 +1,9 @@
 -R theories/ "HYLO"
--R extraction/ "Extraction"
 -arg -w
 -arg all
-theories/hylo.v
-extraction/Extraction.v
+theories/Equivalence.v
+theories/Morphism.v
+theories/Container.v
+theories/Algebra.v
+theories/Hylo.v
+theories/QSort.v
