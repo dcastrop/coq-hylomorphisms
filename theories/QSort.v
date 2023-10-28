@@ -135,9 +135,15 @@ From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
 (* Set Extraction Conservative Types. *)
+Extraction Inline dom_leaf.
 Extraction Inline projT1.
 Extraction Inline projT2.
 Extraction Inline comp.
+
+Extraction Inline Pos.
+Extraction Inline val.
+Extraction Inline InDom.
+Extraction Inline MkElem.
 
 Extraction Inline app.
 Extraction Inline coalg.
@@ -145,8 +151,11 @@ Extraction Inline val.
 Extraction Inline shape.
 Extraction Inline cont.
 Extraction Inline hylo.
+Extraction Inline cata.
+Extraction Inline ana.
 Extraction Inline hylo_f.
 Extraction Inline hylo_f_.
+Extraction Inline LFix_out.
 
 Extraction Inline merge.
 Extraction Inline a_leaf.

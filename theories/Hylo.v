@@ -27,7 +27,7 @@ Lemma hylo_f_irr `{F : Container Sh P}
 Proof.
   fix Ih 2. intros x0 [x Fx] F2. clear x0. destruct F2 as [x Fy]. simpl.
   generalize dependent (h x).  clear x. intros [s_x c_x] Fx Fy. simpl in *.
-  apply f_eq. split; [reflexivity|intros d1 d2 e].
+  apply app_eq. split; [reflexivity|intros d1 d2 e].
   rewrite (elem_val_eq e). simpl in *. apply Ih. Guarded.
 Qed.
 
@@ -44,10 +44,10 @@ Proof.
   unfold hylo_f.
   intros x y. generalize x,y,(finite h x),(finite h y). clear x y.
   fix Ih 3. intros x y [x' Fx] [y' Fy] H. simpl.
-  generalize (@f_eq _ _ _ _ h _ _ H). revert Fx Fy.
+  generalize (@app_eq _ _ _ _ h _ _ H). revert Fx Fy.
   generalize (h x') (h y'). intros [s_x c_x] [s_y c_y]. simpl.
   intros Fx Fy [Exy Ec]. simpl in *.
-  apply f_eq. split; [trivial|simpl; intros d1 d2 e].
+  apply app_eq. split; [trivial|simpl; intros d1 d2 e].
   apply Ih. Guarded. apply Ec, e.
 Qed.
 
@@ -66,7 +66,7 @@ Definition hylo `{F : Container Sh P}
               | MkCont s_x c_x =>
                   fun H => g (MkCont s_x (fun e => f (c_x e) (H e)))
               end (FinF_inv H)) x (finite h x);
-       f_eq := hylo_arr g h |}.
+       app_eq := hylo_arr g h |}.
 
 (* "universal" (quotes) because these are *finite* hylos, otherwise this
    direction would not work
@@ -80,7 +80,7 @@ Proof.
   intros x. generalize x, (finite h x). clear x.
   fix Ih 2. intros x Fx. rewrite (H _). simpl. unfold comp. unfold fmap.
   destruct Fx as [x Fx]. simpl. destruct (h x) as [s_x c_x]. simpl in *.
-  apply f_eq. simpl. split; [reflexivity|simpl; intros d1 d2 e].
+  apply app_eq. simpl. split; [reflexivity|simpl; intros d1 d2 e].
   rewrite (elem_val_eq e). apply Ih. Guarded.
 Qed.
 
@@ -92,7 +92,7 @@ Proof.
   intros H. rewrite H. clear H f. simpl. intros x.
   destruct (finite h x) as [x Fx]. simpl.
   destruct (h x) as [s_x c_x]. simpl in *.
-  apply f_eq. split; [reflexivity|simpl; intros d1 d2 e].
+  apply app_eq. split; [reflexivity|simpl; intros d1 d2 e].
   rewrite (elem_val_eq e). apply hylo_f_irr.
 Qed.
 

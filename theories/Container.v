@@ -26,7 +26,7 @@ Require Import HYLO.Morphism.
         position : shape -> Type;
       }
     ]
-  * or even a straightforward "strict-positivisation" of an actual Container [F]:
+  * or even a straightforward "strict-positivisation" of an actual functor [F]:
   * [ Record Apply (F : Type -> Type) (X : Type) :=
       { witness : Type;
         shape : F witness;
@@ -47,7 +47,6 @@ Arguments Container Sh {Esh} P.
       val : P;
       InDom : dom (s, val) = true
     }.
-(* About Pos. *)
 Arguments Pos & {Sh _ P F} s : rename.
 Arguments MkElem & {Sh _ P F s} val InDom : rename.
 Arguments val & {Sh _ P F s} : rename.
@@ -65,7 +64,7 @@ Lemma elem_dom_irr `{Container Sh P} (s1 s2 : Sh) (Eq : s1 =e s2)
 Proof.
   intros [v d1]. simpl.
   assert (d2 : dom (s2, v) =e true).
-  { rewrite <- d1. apply f_eq. split; simpl; auto with ffix. }
+  { rewrite <- d1. apply app_eq. split; simpl; auto with ffix. }
   simpl in *.
   exists (MkElem v d2); auto.
 Qed.
@@ -139,14 +138,14 @@ Definition ComposeDom `(F : Container S1 P1) `(G : Container S2 P2) :
   inversion E12. rename H0 into E1. rename H1 into E2.
   destruct aRb as [Es Ek].
   assert (Dab : dom (shape a, pa1) =e dom (shape b, pb1)).
-  { apply f_eq. split; trivial. }
+  { apply app_eq. split; trivial. }
   simpl in Dab. subst.
   generalize (@eq_refl _ (dom (shape a, pb1))).
   generalize (@eq_refl _ (dom (shape b, pb1))).
   revert Dab.
   generalize (dom (shape a, pb1)) at 1 3 4. intros []; simpl in *.
   + generalize (dom (shape b, pb1)) at 1 3 4. intros []; try discriminate.
-    intros _ d1 d2. apply fold_eq, f_eq. split; simpl in *; trivial.
+    intros _ d1 d2. apply fold_eq, app_eq. split; simpl in *; trivial.
     apply Ek; trivial.
   + generalize (dom (shape b, pb1)) at 1 3 4. intros []; try discriminate.
     trivial.
@@ -175,12 +174,12 @@ Definition fmapA `{F : Container Sh P} `{equiv A} `{equiv B}
 Lemma fmapA_eqF `{F : Container Sh P} `{equiv A} `{equiv B} (f : A ~> B)
   : forall (x y : App F A), x =e y -> fmapA (F:= F) f x =e fmapA f y.
 Proof with eauto with ffix.
-  intros [sx kx] [sy ky] [Es Ek]. split; auto. intros.  apply f_eq. auto.
+  intros [sx kx] [sy ky] [Es Ek]. split; auto. intros.  apply app_eq. auto.
 Qed.
 
 Notation fmapU f :=
   ({| app := fun x => MkCont (shape x) (fun e => f (cont x e));
-     f_eq := fmapA_eqF f
+     app_eq := fmapA_eqF f
    |}).
 
 Lemma fmapU_eq `{F : Container Sh P} `{eA : equiv A} `{eB : equiv B} :

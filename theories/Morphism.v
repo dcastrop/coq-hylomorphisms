@@ -12,9 +12,9 @@ Section Defn.
   Structure morph :=
     MkMorph
       { app :> A -> B;
-        f_eq : forall x y, x =e y -> app x =e app y
+        app_eq : forall x y, x =e y -> app x =e app y
       }.
-  Hint Resolve f_eq : ffix.
+  Hint Resolve app_eq : ffix.
 
   #[export] Instance eq_morph : equiv morph.
   Proof with eauto with ffix.
@@ -38,7 +38,7 @@ Add Parametric Morphism `{eA : equiv A} `{eB : equiv B}
 Proof.
   intros ?? Efg x y Exy.
   rewrite (Efg x).
-  apply f_eq, Exy.
+  apply app_eq, Exy.
 Qed.
 
 Section Id.
@@ -49,7 +49,7 @@ Section Id.
   Lemma id_eq : forall x y : A, x =e y -> id_ x =e id_ y.
   Proof. auto. Qed.
 
-  Definition id : A ~> A := {| app := _; f_eq := id_eq |}.
+  Definition id : A ~> A := {| app := _; app_eq := id_eq |}.
 End Id.
 
 Section Const.
@@ -60,13 +60,13 @@ Section Const.
     : forall x y : A, x =e y -> (const_ k) x =e (const_ k) y.
   Proof. auto with ffix. Qed.
   Definition const1 (k : B) : A ~> B
-    := {| app := _; f_eq := const_eq1 k |}.
+    := {| app := _; app_eq := const_eq1 k |}.
 
 
   Lemma const_eq : forall x y : B, x =e y -> const1 x =e const1 y.
   Proof. intros ????. trivial. Qed.
 
-  Definition const : B ~> A ~> B := {| app := _; f_eq := const_eq |}.
+  Definition const : B ~> A ~> B := {| app := _; app_eq := const_eq |}.
 End Const.
 
 
@@ -78,7 +78,7 @@ Section Exp.
   Lemma eapp_eq : forall x y : (A ~> B) * A, x =e y -> eapp_ x =e eapp_ y.
   Proof.
     intros [][][E1 E2]; simpl in *.
-    rewrite (f_eq m E2). apply E1.
+    rewrite (app_eq m E2). apply E1.
   Qed.
 
   Definition eapp := MkMorph eapp_eq.
@@ -86,7 +86,7 @@ Section Exp.
   Notation papp_ f := (fun x y => f y x).
   Lemma papp_eq (f : A ~> B ~> C) (v : B)
     : forall x y : A, x =e y -> papp_ f v x =e papp_ f v y.
-  Proof. intros ?? E. simpl. apply (f_equal v), f_eq,E. Qed.
+  Proof. intros ?? E. simpl. apply (f_equal v), app_eq,E. Qed.
   Definition papp f v := MkMorph (papp_eq f v).
 End Exp.
 
@@ -97,12 +97,12 @@ Section Comp.
 
   Lemma comp_eq2 (g : B ~> C) (f : A ~> B)
     : forall x y, x =e y -> (comp_ g f) x =e (comp_ g f) y.
-  Proof. intros. apply f_eq,f_eq. trivial. Qed.
+  Proof. intros. apply app_eq,app_eq. trivial. Qed.
   Notation comp2 := (fun g f => MkMorph (comp_eq2 g f)).
 
   Lemma comp_eq1 (g : B ~> C)
     : forall x y : A ~> B, x =e y -> (comp2 g) x =e (comp2 g) y.
-  Proof. intros ?? E ?. simpl. apply f_eq, E. Qed.
+  Proof. intros ?? E ?. simpl. apply app_eq, E. Qed.
   Notation comp1 := (fun g => MkMorph (comp_eq1 g)).
 
   Lemma comp_eq : forall x y : B ~> C, x =e y -> comp1 x =e comp1 y.
@@ -137,7 +137,7 @@ Section Pairs.
 
   Lemma pair_feq2 (f : A ~> B) (g : A ~> C) :
     forall x y : A, x =e y -> (pair_ f g) x =e (pair_ f g) y.
-  Proof. intros; split; apply f_eq; trivial. Qed.
+  Proof. intros; split; apply app_eq; trivial. Qed.
 
   Notation pair2 := (fun f g => MkMorph (pair_feq2 f g)).
 
@@ -178,7 +178,7 @@ Section Sums.
 
   Lemma fcase_eq2 (f : A ~> C) (g : B ~> C) :
     forall x y : A + B, x =e y -> (fcase_ f g) x =e (fcase_ f g) y.
-  Proof. intros [][]; simpl; try intros[]; apply f_eq; trivial. Qed.
+  Proof. intros [][]; simpl; try intros[]; apply app_eq; trivial. Qed.
   Notation fcase2 := (fun f g => MkMorph (fcase_eq2 f g)).
 
   Lemma fcase_eq1 (f : A ~> C) :

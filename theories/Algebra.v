@@ -99,9 +99,9 @@ Lemma l_out_eq `(F : Container Sh P) (x y : LFix F)
 Proof. destruct x, y. intros []. simpl. auto with ffix. Qed.
 
 Definition l_in `{F : Container Sh P} : Alg F (LFix F) :=
-  {| app := _; f_eq := l_in_eq (F:=F) |}.
+  {| app := _; app_eq := l_in_eq (F:=F) |}.
 Definition l_out `{F : Container Sh P} : CoAlg F (LFix F) :=
-  {| app := _; f_eq := l_out_eq (F:=F) |}.
+  {| app := _; app_eq := l_out_eq (F:=F) |}.
 
 Lemma l_in_out `(F : Container Sh P) : l_in \o l_out =e id (A:=LFix F).
 Proof.
@@ -124,7 +124,7 @@ Lemma cata_arr `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
   : forall x y, x =e y -> cata_f g x =e cata_f g y.
 Proof.
   induction x as [sx Ih]. intros [sy]. simpl in *. intros [Es Ek].
-  apply (f_eq g). split; [trivial|intros e1 e2 Hv]. apply Ih. auto.
+  apply (app_eq g). split; [trivial|intros e1 e2 Hv]. apply Ih. auto.
 Qed.
 
 Definition cata `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
@@ -132,14 +132,14 @@ Definition cata `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
   := {| app := fix f x :=
            g ((fun x => MkCont (F:=F) (shape x)
                           (fun e => f (cont x e))) (LFix_out (F:=F) x));
-       f_eq := cata_arr g |}.
+       app_eq := cata_arr g |}.
 Arguments cata {Sh}%type_scope {Esh} {P}%type_scope {F} [A]%type_scope {eA} g.
 
 Lemma cata_univ_r `{F : Container Sh P} `{eA : equiv A} (g : Alg F A)
       (f : LFix F ~> A)
   : f =e g \o fmap f \o l_out -> f =e cata g.
 Proof.
-  intros H e. induction e as [e Ih]. simpl in *. rewrite H. apply f_eq.
+  intros H e. induction e as [e Ih]. simpl in *. rewrite H. apply app_eq.
   split; try auto with ffix. simpl in *. intros e1 e2 Hv. rewrite Ih.
   rewrite (elem_val_eq Hv). reflexivity.
 Qed.
@@ -148,7 +148,7 @@ Lemma cata_univ_l `{F : Container Sh P} `{eA : equiv A} (g : Alg F A)
       (f : LFix F ~> A)
   : f =e cata g -> f =e g \o fmap f \o l_out.
 Proof.
-  intros H [e]. simpl in *. rewrite H. apply f_eq. simpl.
+  intros H [e]. simpl in *. rewrite H. apply app_eq. simpl.
   split; auto with ffix. simpl. intros e1 e2 Hv. rewrite H.
   rewrite (elem_val_eq Hv). reflexivity.
 Qed.
@@ -202,9 +202,9 @@ Lemma ana_arr `{F : Container Sh P} `{eA : equiv A} (h : FCoAlg F A)
 Proof.
   unfold ana_f. intros x y. generalize (finite h x) (finite h y). revert x y.
   fix Ih 3. intros x y [x' Fx] [y' Fy] Hxy. simpl. split.
-  - destruct (f_eq h Hxy). auto.
+  - destruct (app_eq h Hxy). auto.
   - intros e d1 d2. simpl. apply Ih. Guarded.
-    destruct (f_eq h Hxy). auto.
+    destruct (app_eq h Hxy). auto.
 Qed.
 
 Lemma LFixR_fold `{F : Container Sh P} (x y : LFix F) : LFixR x y = (x =e y).
@@ -218,7 +218,7 @@ Definition ana `(F : Container Sh P) A (eA : equiv A)
                     LFix_in (MkCont (shape hx)
                                (fun e => f (cont hx e) (FinF_inv H e)))
                  ) x (finite h x);
-       f_eq := ana_arr h
+       app_eq := ana_arr h
      |}.
 
 Lemma ana_univ_r `(F : Container Sh P) A (eA : equiv A)
