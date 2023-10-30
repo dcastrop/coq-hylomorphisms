@@ -1,6 +1,8 @@
 Generalizable All Variables.
 Set Implicit Arguments.
+
 Unset Strict Implicit.
+Unset Auto Template Polymorphism.
 
 Require Import Coq.Logic.Eqdep_dec.
 Require Export Setoid.
@@ -18,8 +20,7 @@ Definition bool_irrelevance {b1 b2 : bool} (p1 p2 : b1 = b2) : p1 = p2 :=
   DecBool.UIP b1 b2 p1 p2.
 
 Reserved Notation "f =e g" (at level 70, no associativity).
-#[universes(template)]
-  Class equiv A : Type :=
+Class equiv A : Type :=
   MkEquiv
     { eqRel : A -> A -> Prop;
       e_refl : forall x, eqRel x x;
@@ -72,6 +73,14 @@ Proof with eauto with ffix.
   - intros [x|x] [y|y] [z|z]...
     * intros [].
     * intros [].
+Defined.
+
+#[export] Instance prop_eq : equiv Prop.
+Proof with eauto with ffix.
+  apply (@MkEquiv _ (fun p q => p <-> q)).
+  - intros. split; trivial.
+  - intros. rewrite H; split;  trivial.
+  - intros. rewrite H; trivial.
 Defined.
 
 Class equivs (A : list Type) : Type.

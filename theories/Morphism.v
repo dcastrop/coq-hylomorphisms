@@ -1,6 +1,8 @@
 Generalizable All Variables.
 Set Implicit Arguments.
+
 Unset Strict Implicit.
+Unset Auto Template Polymorphism.
 
 Require Import HYLO.Equivalence.
 

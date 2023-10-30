@@ -1,6 +1,8 @@
 Generalizable All Variables.
 Set Implicit Arguments.
+
 Unset Strict Implicit.
+Unset Auto Template Polymorphism.
 
 Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.
@@ -42,7 +44,7 @@ Class Container `{Esh : equiv Sh} (P : Type) :=
   }.
 Arguments Container Sh {Esh} P.
 
-#[universes(template)] Record Pos `{Container Sh P} (s : Sh) :=
+Record Pos `{Container Sh P} (s : Sh) :=
   MkElem {
       val : P;
       InDom : dom (s, val) = true
@@ -69,8 +71,7 @@ Proof.
   exists (MkElem v d2); auto.
 Qed.
 
-#[universes(template)]
-  Record App `{F : Container Sh P} (X : Type) :=
+Record App `{F : Container Sh P} (X : Type) :=
   MkCont
     { shape : Sh;
       cont : Pos shape -> X

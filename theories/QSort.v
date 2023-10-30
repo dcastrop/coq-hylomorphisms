@@ -6,6 +6,8 @@ Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.
 Require Import HYLO.Container.
 Require Import HYLO.Algebra.
+Require Import HYLO.Coalgebra.
+Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
 
 Require List.
@@ -76,7 +78,7 @@ Definition merge : Alg (TreeF nat) (list nat).
   rewrite R1,R2. reflexivity.
 Defined.
 
-Definition c_split : CoAlg (TreeF nat) (list nat).
+Definition c_split : Coalg (TreeF nat) (list nat).
   refine {|
       app := fun x =>
                match x with
@@ -106,7 +108,7 @@ Qed.
   (* Needs to be defined, otherwise qsort does not reduce!
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
-Lemma split_fin : forall x, FinF c_split x.
+Lemma split_fin : forall x, RecF c_split x.
 Proof.
   intros x. generalize (PeanoNat.Nat.leb_refl (List.length x)).
   generalize (length x) at 2. intros n. revert x.
@@ -116,7 +118,7 @@ Proof.
   destruct se; simpl in *; apply Ih, length_filter, H.
 Qed.
 
-Definition tsplit : FCoAlg (TreeF nat) (list nat)
+Definition tsplit : RCoalg (TreeF nat) (list nat)
     := exist _ c_split split_fin.
 
 
@@ -124,7 +126,7 @@ Definition tsplit : FCoAlg (TreeF nat) (list nat)
 (* UPDATE 12/09/2023 by DC: this used to be mergesort, and at some
  * point I simply changed the implementation ...
  *)
-Definition qsort : Spec (cata merge \o ana tsplit).
+Definition qsort : Spec (cata merge \o rana tsplit).
   calculate.
   rewrite cata_ana_hylo.
   reflexivity.
@@ -140,10 +142,8 @@ Extraction Inline projT1.
 Extraction Inline projT2.
 Extraction Inline comp.
 
-Extraction Inline Pos.
 Extraction Inline val.
 Extraction Inline InDom.
-Extraction Inline MkElem.
 
 Extraction Inline app.
 Extraction Inline coalg.
@@ -153,6 +153,7 @@ Extraction Inline cont.
 Extraction Inline hylo.
 Extraction Inline cata.
 Extraction Inline ana.
+Extraction Inline rana.
 Extraction Inline hylo_f.
 Extraction Inline hylo_f_.
 Extraction Inline LFix_out.
