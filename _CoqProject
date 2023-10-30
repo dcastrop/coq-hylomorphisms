@@ -2,6 +2,7 @@
 -R util/ "Util"
 -arg -w
 -arg all
+util/Cofix.v
 theories/Equivalence.v
 theories/Morphism.v
 theories/Container.v
@@ -10,4 +11,3 @@ theories/Coalgebra.v
 theories/FCoalgebra.v
 theories/Hylo.v
 theories/QSort.v
-util/Cofix.v
