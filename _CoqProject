@@ -11,4 +11,5 @@ theories/Algebra.v
 theories/Coalgebra.v
 theories/FCoalgebra.v
 theories/Hylo.v
+examples/BTree.v
 examples/QSort.v

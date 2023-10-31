@@ -9,73 +9,19 @@ Require Import HYLO.Algebra.
 Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
+Require Import Examples.BTree.
 
 Require List.
-
-(* Defining a tree *)
-
-Unset Auto Template Polymorphism.
-
-(* shapes *)
-Inductive Ts A := | Leaf | Node (ELEM : A).
-Inductive Tp := | Lbranch | Rbranch. (* positions *)
-(* position valid in shape? *)
-Definition t_dom A : Ts A * Tp ~> bool.
-  refine {| app := fun x =>
-                     match x with
-                     | (Node _, _)  => true
-                     | _            => false
-                     end
-         |}.
-  intros [??] [??] [E1 E2]. simpl in *.  subst. auto.
-Defined.
-#[local]
-  Instance TreeF (A : Type) : Container (Ts A) Tp :=
-  { dom := t_dom A }.
-Definition Tree A := LFix (TreeF A).
-
-Lemma dom_leaf_false A : Pos (F:=TreeF A) (Leaf A) -> False.
-Proof. intros []. simpl in *. discriminate. Qed.
-Definition dom_leaf A B (x : Pos (F:=TreeF A) (Leaf A)) : B :=
-  False_rect _ (dom_leaf_false x).
-
-Definition a_leaf (A X : Type)
-  : App (TreeF A) X := MkCont (Leaf A) (@dom_leaf A X).
-Arguments a_leaf & {A X}.
-Definition a_node A X (x : A) (l r : X) : App (TreeF A) X :=
-  MkCont (Node x) (fun p => match val p with
-                            | Lbranch => l
-                            | Rbranch => r
-                            end).
-Arguments a_node & {A X}.
-
-Definition a_out A X (x : App (TreeF A) X)
-  : option (A * X * X)
-    :=
-    let (s, k) := x in
-    match s return (Pos s -> X) -> _ with
-       | Leaf _ => fun _ => None
-    | Node x =>
-        fun k=>
-          Some (x,
-              k (MkElem Lbranch eq_refl),
-              k (MkElem Rbranch eq_refl))
-    end k.
 
 Definition merge : Alg (TreeF nat) (list nat).
   refine {|
       app := fun (x : App (TreeF nat) (list nat)) =>
-               match a_out x with
+               match app a_out x with
                | None => nil
                | Some (h, l, r) => Datatypes.app l (h :: r)
                end
     |}.
-  intros [[|hx] kx] [[|hy] ky] [Hs Hk]; simpl in *; try discriminate; auto.
-  inversion Hs. subst. clear Hs.
-  set (R1 := Hk (MkElem Lbranch eq_refl) (MkElem Lbranch eq_refl) eq_refl).
-  set (R2 := Hk (MkElem Rbranch eq_refl) (MkElem Rbranch eq_refl) eq_refl).
-  simpl in *.
-  rewrite R1,R2. reflexivity.
+  intros x y Exy. rewrite Exy. destruct (a_out y); reflexivity.
 Defined.
 
 Definition c_split : Coalg (TreeF nat) (list nat).
@@ -92,19 +38,6 @@ Definition c_split : Coalg (TreeF nat) (list nat).
   intros x y ->. auto with ffix.
 Defined.
 
-Lemma length_filter A (p : A -> bool) (l : list A) n :
-  Nat.leb (length l) n = true ->
-  Nat.leb (length (List.filter p l)) n = true.
-Proof with (simpl in *; try discriminate; auto).
-  revert n.
-  induction l as [|h t Ih]...
-  intros [|n]...
-  destruct (p h)...
-    intros H. specialize (Ih n H). clear H.
-    generalize dependent (length (List.filter p t)). intros m. revert n.
-    induction m as [|m Ih]; intros n; auto.
-    destruct n as [|n]; simpl in *; try discriminate. apply Ih.
-Qed.
   (* Needs to be defined, otherwise qsort does not reduce!
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
@@ -137,6 +70,8 @@ From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
 (* Set Extraction Conservative Types. *)
+Extraction Inline e_lbranch.
+Extraction Inline e_rbranch.
 Extraction Inline dom_leaf.
 Extraction Inline projT1.
 Extraction Inline projT2.
