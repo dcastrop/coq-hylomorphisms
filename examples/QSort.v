@@ -62,9 +62,10 @@ Definition tsplit : RCoalg (TreeF nat) (list nat)
  *)
 Definition qsort : Spec (cata merge \o rana tsplit).
   calculate.
-  rewrite cata_ana_hylo.
   reflexivity.
 Defined.
+
+Print qsort.
 
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.

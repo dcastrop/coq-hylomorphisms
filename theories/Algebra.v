@@ -103,20 +103,30 @@ Section AlgDef.
   Qed.
 
   Definition cata_f `{eA : equiv A} (g : Alg F A) : LFix -> A
-    := fix f x := g (fmapA (F:=F) f (LFix_out x)).
+    := fix f (x : LFix) :=
+      match x with
+      | LFix_in ax =>
+          let (sx, kx) := ax in
+          g (MkCont sx (fun e => f (kx e)))
+      end.
 
   Lemma cata_arr1 `{eA : equiv A} (g : Alg F A)
     : forall x y, x =e y -> cata_f g x =e cata_f g y.
   Proof.
     induction x as [sx Ih]. intros [sy]. simpl in *. intros [Es Ek].
+    destruct sx as [sx kx]. destruct sy as [sy ky]. simpl in *.
     apply (app_eq g). split; [trivial|intros e1 e2 Hv]. apply Ih. auto.
   Qed.
 
   Notation cata_ F a
     := (
-      {| app := fix f x :=
-            a ((fun x => MkCont (F:=F) (shape x)
-                           (fun e => f (cont x e))) (LFix_out x));
+      {| app :=
+          fix f (x : LFix) :=
+            match x with
+            | LFix_in ax =>
+                let (sx, kx) := ax in
+                a (MkCont sx (fun e => f (kx e)))
+            end;
         app_eq := cata_arr1 a
       |}
     ).
@@ -125,7 +135,8 @@ Section AlgDef.
     : forall f g : Alg F A, f =e g -> cata_ F f =e cata_ F g.
   Proof.
     intros x y E t. induction t as [sx Ih].
-    simpl.  rewrite E. apply app_eq. simpl.
+    destruct sx as [sx kx]. simpl in *.
+    rewrite E. apply app_eq. simpl.
     apply cont_ext_eq. intros.
     apply Ih.
   Qed.
@@ -135,7 +146,8 @@ Section AlgDef.
   Lemma cata_univ_r `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
     : f =e g \o fmap f \o l_out -> f =e cata g.
   Proof.
-    intros H e. induction e as [e Ih]. simpl in *. rewrite H. apply app_eq.
+    intros H e. induction e as [e Ih]. destruct e as [se ke].
+    simpl in *. rewrite H. apply app_eq.
     split; try auto with ffix. simpl in *. intros e1 e2 Hv. rewrite Ih.
     rewrite (elem_val_eq Hv). reflexivity.
   Qed.
@@ -143,7 +155,8 @@ Section AlgDef.
   Lemma cata_univ_l `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
     : f =e cata g -> f =e g \o fmap f \o l_out.
   Proof.
-    intros H [e]. simpl in *. rewrite H. apply app_eq. simpl.
+    intros H [e]. simpl in *. rewrite H. destruct e as [se ke].
+    apply app_eq. simpl.
     split; auto with ffix. simpl. intros e1 e2 Hv. rewrite H.
     rewrite (elem_val_eq Hv). reflexivity.
   Qed.
