@@ -16,12 +16,12 @@ Require List.
 Definition merge : Alg (TreeF nat) (list nat).
   refine {|
       app := fun (x : App (TreeF nat) (list nat)) =>
-               match app a_out x with
+               match a_out x with
                | None => nil
                | Some (h, l, r) => Datatypes.app l (h :: r)
                end
     |}.
-  intros x y Exy. rewrite Exy. destruct (a_out y); reflexivity.
+  intros x y ->. auto with ffix.
 Defined.
 
 Definition c_split : Coalg (TreeF nat) (list nat).
