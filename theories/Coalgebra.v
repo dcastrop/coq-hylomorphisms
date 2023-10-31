@@ -48,6 +48,14 @@ Section CoalgDef.
   Qed.
   Hint Resolve GFixR_mon : gfix.
 
+  Lemma GFixR_unfold x y (R : GFixR x y)
+    : (gshape x =e gshape y) /\
+        (forall e1 e2, val e1 = val e2 -> GFixR (gcont x e1) (gcont y e2)).
+  Proof.
+    apply paco2_unfold in R; auto with gfix. destruct R as [SE KE].
+    split; trivial. intros e1 e2 Hv. destruct (KE e1 e2 Hv) as [|[]]. trivial.
+  Qed.
+
   Lemma GFixR_refl : forall x, GFixR x x.
   Proof.
     intro x. coind CH. intros x.
@@ -190,4 +198,5 @@ Section CoalgDef.
 End CoalgDef.
 
 Arguments ana {Sh}%type_scope {Esh} {P}%type_scope {F} {A}%type_scope {eA}.
-Opaque ana.
+Arguments g_in & {Sh}%type_scope {Esh} {P}%type_scope {F}.
+Arguments g_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.

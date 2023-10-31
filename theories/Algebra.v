@@ -152,6 +152,16 @@ Section AlgDef.
     : f =e cata g <-> f =e g \o fmap f \o l_out.
   Proof. split;[apply cata_univ_l|apply cata_univ_r]. Qed.
 
+  Corollary cata_unfold `{eA : equiv A} (g : Alg F A)
+    : cata g =e g \o fmap (cata g) \o l_out.
+  Proof. rewrite <- cata_univ. reflexivity. Qed.
+
+  Lemma cata_in_id : cata l_in =e id.
+  Proof.
+    symmetry; apply cata_univ.
+    rewrite fmap_id, idKr, l_in_out.
+    reflexivity.
+  Qed.
 End AlgDef.
 
 Arguments l_in & {Sh}%type_scope {Esh} {Po}%type_scope {F}.

@@ -110,13 +110,6 @@ Corollary hylo_unr `{F : Container Sh P}
   : hylo g h =e g \o fmap (hylo g h) \o h.
 Proof. rewrite <-hylo_univ. reflexivity. Qed.
 
-Lemma fin_out `(F : Container Sh P) : forall x, RecF (F:=F) l_out x.
-Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
-
-Definition f_out `(F : Container Sh P) : RCoalg F (LFix F) :=
-  exist _ _ (fin_out (F:=F)).
-Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
-
 Lemma hylo_cata `{F : Container Sh P} B {eB : equiv B} (g : Alg F B)
   : cata g =e hylo g f_out.
 Proof. rewrite hylo_univ. apply cata_univ. reflexivity. Qed.
@@ -191,3 +184,9 @@ Corollary cata_ana_hylo `(F : Container Sh P)
           (g : Alg F B) (h : RCoalg F A)
   : cata g \o rana h =e hylo g h.
 Proof. rewrite hylo_cata,hylo_ana. apply deforest, l_out_in. Qed.
+
+Corollary cata_ana_hylo_f `(F : Container Sh P)
+          A B {eA : equiv A} {eB : equiv B}
+          (g : Alg F B) (h : RCoalg F A)
+  : cata g \o ccata l_in \o liftP (ana h) (rcoalg_fin h) =e hylo g h.
+Proof. rewrite <- compA, ana_rana, cata_ana_hylo. reflexivity. Qed.

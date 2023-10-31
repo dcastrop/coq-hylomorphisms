@@ -25,6 +25,7 @@ Section Defn.
 End Defn.
 Arguments morph A {eA} B {eB}.
 Notation "x ~> y" := (morph x y).
+#[export] Hint Resolve app_eq : ffix.
 
 Lemma f_equal `{equiv A} `{equiv B} (f g : A ~> B)
   : forall x, f =e g -> f x =e g x.
@@ -225,3 +226,22 @@ Section SpecDef.
 End SpecDef.
 
 Ltac calculate := eapply MkSpec.
+
+
+Section PredSubty.
+  Context `{eA : equiv A} `{eB : equiv B}.
+
+  Definition liftP_f_ (f : A ~> B) (P : B -> Prop) (Pf : forall x, P (f x))
+    : A -> {x : B | P x}
+    := (fun x => exist (fun fx => _) (f x) (Pf x)).
+
+  Lemma liftP_f_arr (P : B -> Prop) (f : A ~> B) (Pf : forall x, P (f x))
+    : forall x y, x =e y -> liftP_f_ Pf x =e liftP_f_ Pf y.
+  Proof. simpl; auto with ffix. Qed.
+
+  Definition liftP (f : A ~> B) (P : B -> Prop) (Pf : forall x, P (f x))
+    : A ~> {x : B | P x}
+    := MkMorph (liftP_f_arr Pf).
+End PredSubty.
+
+Arguments liftP {A}%type_scope {eA} {B}%type_scope {eB} f {P} Pf%function_scope.

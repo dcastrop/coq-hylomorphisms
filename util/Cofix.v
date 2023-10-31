@@ -1,6 +1,8 @@
 Require Export ssreflect.
 Require Import Paco.paco.
 
+Unset Auto Template Polymorphism.
+
 Ltac done :=
   eauto; hnf; intros; solve
    [ do ![solve [eauto | apply: sym_equal; eauto]

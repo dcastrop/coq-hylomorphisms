@@ -60,14 +60,17 @@ Section FCoalgDef.
 
   (* Finite Trees *)
   Inductive FinF : GFix F -> Prop :=
-  | FinF_fold (x : GFix F) : (forall e, FinF (cont (GFix_out x) e)) -> FinF x.
+  | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
+
+  Lemma FinF_inv (x : GFix F) : FinF x -> forall e, FinF (cont (g_out x) e).
+  Proof. intros []. auto. Defined.
 
   Lemma ana_rcoalg_fin `{equiv A} (c : Coalg F A) (Rc : Rec c)
     : forall x, FinF (ana c x).
   Proof.
     simpl. intros x. generalize (Rc x).
-    intros Rcx. induction Rcx as [x _ Ih]. constructor. rewrite unfold_ana_f.
-    simpl. exact Ih.
+    intros Rcx. induction Rcx as [x _ Ih]. constructor. simpl in *.
+    rewrite unfold_ana_f. simpl. exact Ih.
   Qed.
 
   Lemma fin_ana_rcoalg `{equiv A}
@@ -83,6 +86,14 @@ Section FCoalgDef.
   Corollary ana_rec_term `{equiv A} (h : Coalg F A)
     : (forall x, FinF (ana h x)) <-> Rec h.
   Proof. split; try apply ana_rcoalg_fin; apply fin_ana_rcoalg. Qed.
+
+  Corollary rcoalg_fin `{equiv A} (h : RCoalg A) : forall x, FinF (ana h x).
+  Proof. apply ana_rcoalg_fin. destruct h; trivial. Qed.
+
+  Lemma fin_out : forall x, RecF l_out x.
+  Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
+
+  Definition f_out : RCoalg (LFix F) := exist _ _ fin_out.
 
   Notation rana_f__ h :=
     (fix f x H :=
@@ -157,7 +168,224 @@ Section FCoalgDef.
   Lemma rana_univ A {eA : equiv A} (h : RCoalg A) (f : A ~> LFix F)
     : f =e rana h <-> f =e l_in \o fmap f \o h.
   Proof. split;[apply rana_univ_l|apply rana_univ_r]. Qed.
+
+  Corollary rana_unfold A {eA : equiv A} (h : RCoalg A)
+    : rana h =e l_in \o fmap (rana h) \o h.
+  Proof. rewrite <- rana_univ. reflexivity. Qed.
 End FCoalgDef.
 Arguments RCoalg {Sh Esh P} F A {eA}.
 
 Arguments rana & {Sh}%type_scope {Esh} {P}%type_scope {F} {A}%type_scope {eA}.
+
+Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
+
+Section CAlgDef.
+  Context `{F : Container Sh Po}.
+
+  Definition ccata_f_ `{eA : equiv A} (g : Alg F A)
+    : forall x : GFix F, FinF x -> A
+    := fix f x H :=
+      let hx := g_out x in
+      g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
+
+  Lemma ccata_f_irr `{eA : equiv A} (h : Alg F A)
+    : forall x (F1 F2 : FinF x), ccata_f_ h F1 =e ccata_f_ h F2.
+  Proof.
+    fix Ih 2. intros x F1 F2. destruct F1 as [x F1]. destruct F2 as [x F2].
+    apply app_eq. simpl. constructor; simpl; try reflexivity.
+    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply Ih. Guarded.
+  Qed.
+
+  Definition ccata_f `{eA : equiv A} (g : Alg F A) : {x : GFix F | FinF x} -> A
+    := fun x => ccata_f_ g (proj2_sig x).
+
+  Lemma ccata_arr1 `{eA : equiv A} (g : Alg F A)
+    : forall x y, x =e y -> ccata_f g x =e ccata_f g y.
+  Proof.
+    intros [x Fx] [y Fy] Rxy. simpl in *.
+    unfold ccata_f. simpl. revert x y Fx Fy Rxy. fix Ih 3. intros x y Fx Fy.
+    destruct Fx as [x Fx]. destruct Fy as [y Fy]. simpl in *.
+    intros Rxy. apply GFixR_unfold in Rxy. destruct Rxy as [ES EK].
+    apply app_eq. simpl. constructor; simpl; trivial. intros e1 e2 Hv.
+    apply Ih. Guarded.
+    apply EK. trivial.
+  Qed.
+
+  Definition ccata_ `{eA : equiv A} g : {x : GFix F | FinF x} ~> A
+    := MkMorph (ccata_arr1 g).
+
+  Lemma ccata_arr `{eA : equiv A}
+    : forall x y : Alg F A, x =e y -> ccata_ x =e ccata_ y.
+  Proof.
+    intros x y Hxy [g Fg]. unfold ccata_, ccata_f. simpl.
+    revert g Fg. fix Ih 2. intros g Fg. destruct Fg as [ES EK]. simpl.
+    rewrite Hxy. apply app_eq. constructor; simpl; auto with ffix.
+    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply Ih.
+  Qed.
+
+  Definition ccata `{eA : equiv A} : Alg F A ~> {x : GFix F | FinF x} ~> A
+    := MkMorph ccata_arr.
+
+  Definition lg_out_ (x : GFix F | FinF x) : App F {x : GFix F | FinF x}
+    := let hx := g_out (proj1_sig x) in
+       MkCont (shape hx)
+         (fun e => exist (fun ex => _) (cont hx e) (FinF_inv (proj2_sig x) e)).
+
+  Lemma lg_out_arr : forall x y, x =e y -> lg_out_ x =e lg_out_ y.
+  Proof.
+    intros [x Fx] [y Fy] Rxy. simpl in *.
+    destruct (GFixR_unfold Rxy) as [Sxy Kxy].
+    constructor; trivial.
+  Qed.
+
+  Definition lg_out : {x : GFix F | FinF x} ~> App F {x : GFix F | FinF x}
+    := MkMorph lg_out_arr.
+
+  Definition lg_in_ (x : App F {g : GFix F | FinF g}) : {x : GFix F | FinF x}
+    := let gx := g_in (MkCont (shape x) (fun e => proj1_sig (cont x e))) in
+       exist (fun g => _) gx
+         (FinF_fold (fun e : Pos (shape (g_out gx)) => proj2_sig (cont x e))).
+
+  Lemma lg_in_arr : forall x y, x =e y -> lg_in_ x =e lg_in_ y.
+  Proof.
+    intros [Sx Kx] [Sy Ky] [Sxy Kxy]. simpl in *.
+    apply GFixR_in; simpl; trivial.
+  Qed.
+
+  Definition lg_in : App F {g : GFix F | FinF g} ~> {x : GFix F | FinF x}
+    := MkMorph lg_in_arr.
+
+  Lemma lg_in_out : lg_in \o lg_out =e id.
+  Proof.
+    intros [g Pg]. simpl. apply GFixR_in; simpl; try reflexivity.
+    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply GFixR_refl.
+  Qed.
+
+  Lemma lg_out_in : lg_out \o lg_in =e id.
+  Proof.
+    intros [Sx Kx]. simpl. constructor; simpl; try reflexivity.
+    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply GFixR_refl.
+  Qed.
+
+  Lemma ccata_univ_r `{eA : equiv A} (g : Alg F A)
+    (f : {x : GFix F | FinF x} ~> A)
+    : f =e g \o fmap f \o lg_out -> f =e ccata g.
+  Proof.
+    intros H [e Fe]. simpl. unfold ccata_f. simpl.
+    revert e Fe. fix Ih 2. intros e Fe. destruct Fe as [e Fe].
+    rewrite H. simpl. apply app_eq. constructor; simpl; try reflexivity.
+    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply Ih.
+  Qed.
+
+  Lemma ccata_univ_l `{eA : equiv A} (g : Alg F A)
+    (f : {x : GFix F | FinF x} ~> A)
+    : f =e ccata g -> f =e g \o fmap f \o lg_out.
+  Proof.
+    intros ->. clear f. intros [x Fx]. simpl. unfold ccata_f. simpl.
+    destruct Fx as [x Fx]. simpl. reflexivity.
+  Qed.
+
+  Lemma ccata_univ `{eA : equiv A} (g : Alg F A)
+    (f : {x : GFix F | FinF x} ~> A)
+    : f =e ccata g <-> f =e g \o fmap f \o lg_out.
+  Proof. split;[apply ccata_univ_l|apply ccata_univ_r]. Qed.
+
+  Corollary ccata_unfold `{eA : equiv A} (g : Alg F A)
+    : ccata g =e g \o fmap (ccata g) \o lg_out.
+  Proof. rewrite <- ccata_univ. reflexivity. Qed.
+
+  Lemma ccata_in_id : ccata lg_in =e id.
+  Proof.
+    symmetry; apply ccata_univ.
+    rewrite fmap_id, idKr, lg_in_out.
+    reflexivity.
+  Qed.
+End CAlgDef.
+
+Section FinRec.
+  Context `{F : Container Sh Po}.
+
+  Lemma cata_ccata `{equiv A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
+  Proof.
+    apply ccata_univ.
+    rewrite fmap_comp, <- (idKl (fmap (ccata _))), <- l_out_in.
+    rewrite compA, compA, compA.
+    rewrite <- cata_unfold.
+    rewrite <- compA, <- compA, (compA l_in).
+    rewrite <- ccata_unfold.
+    reflexivity.
+  Qed.
+
+  Lemma ccata_cata `{equiv A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
+  Proof.
+    apply cata_univ.
+    rewrite fmap_comp, <- (idKl (fmap (cata _))), <- lg_out_in.
+    rewrite compA, compA, compA.
+    rewrite <- ccata_unfold.
+    rewrite <- compA, <- compA, (compA lg_in).
+    rewrite <- cata_unfold.
+    reflexivity.
+  Qed.
+
+  Definition f_to_fg : LFix F ~> {x : GFix F | FinF x} := cata lg_in.
+  Definition fg_to_f : {x : GFix F | FinF x} ~> LFix F := ccata l_in.
+
+  Corollary fg_to_fI : fg_to_f \o f_to_fg =e id.
+  Proof.
+    unfold fg_to_f, f_to_fg.
+    rewrite <- cata_in_id. apply ccata_cata.
+  Qed.
+
+  Corollary f_to_fgI : f_to_fg \o fg_to_f =e id.
+  Proof.
+    unfold fg_to_f, f_to_fg.
+    rewrite <- ccata_in_id. apply cata_ccata.
+  Qed.
+
+
+  Lemma ccata_ana_r `{equiv A}
+    (f : A ~> GFix F) (Ff : forall x, FinF (f x)) (g : A ~> LFix F)
+    : ccata l_in \o liftP f Ff =e g -> f =e ana f_out \o g.
+  Proof.
+    unfold liftP,liftP_f_. simpl. unfold ccata_f.  simpl. intros Hx x.
+    specialize (Hx x). generalize dependent (Ff x). generalize (g x) (f x).
+    clear Ff f g x.
+    intros l. induction l as [l Ih]. intros y Fy. destruct Fy as [y Fy].
+    simpl in *. intros [Sfg Rk].
+    apply GFixR_in; trivial. rewrite unfold_ana_f. simpl. intros e1 e2 Hv.
+    apply Ih with (f:=Fy e1), Rk, Hv.
+  Qed.
+
+  Lemma ccata_ana_l `{equiv A}
+    (f : A ~> GFix F) (Ff : forall x, FinF (f x)) (g : A ~> LFix F)
+    : f =e ana f_out \o g -> ccata l_in \o liftP f Ff =e g.
+  Proof.
+    unfold liftP,liftP_f_. simpl. unfold ccata_f.  simpl. intros Hx x.
+    specialize (Hx x). revert Hx. generalize (g x) (f x) (Ff x).
+    clear f Ff g x. induction l as [l Ih]. intros g Ff.
+    destruct Ff as [g Fg]. intros Hg. simpl in *.
+    apply GFixR_unfold in Hg. rewrite unfold_ana_f in *. simpl in *.
+    destruct Hg as [Sg Kg]. split; trivial. intros e1 e2 Hv.
+    apply Ih, Kg, Hv.
+  Qed.
+
+  Lemma ccata_ana `{equiv A}
+    (f : A ~> GFix F) (Ff : forall x, FinF (f x)) (g : A ~> LFix F)
+    : f =e ana f_out \o g <-> ccata l_in \o liftP f Ff =e g.
+  Proof. split; [apply ccata_ana_l| apply ccata_ana_r]. Qed.
+
+  Lemma rana_ana `{equiv A} (f : RCoalg F A) : ana f =e ana f_out \o rana f.
+  Proof.
+    symmetry. apply ana_univ.
+    rewrite fmap_comp, <- (idKl (fmap (rana _))), <- l_out_in.
+    rewrite compA, compA, compA.
+    rewrite <- ana_unfold.
+    rewrite <- compA, <- compA, (compA l_in).
+    rewrite <- rana_unfold.
+    reflexivity.
+  Qed.
+
+  Corollary ana_rana `{equiv A} (f : RCoalg F A)
+    : ccata l_in \o liftP (ana f) (rcoalg_fin f) =e rana f.
+  Proof. rewrite <- ccata_ana. apply rana_ana. Qed.
+End FinRec.

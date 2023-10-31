@@ -83,6 +83,12 @@ Proof with eauto with ffix.
   - intros. rewrite H; trivial.
 Defined.
 
+#[export] Instance pred_sub `{eA : equiv A} {P : A -> Prop}
+  : equiv {a : A | P a}.
+Proof with eauto with ffix.
+  apply (@ MkEquiv _ (fun px py => proj1_sig px =e proj1_sig py))...
+Defined.
+
 Class equivs (A : list Type) : Type.
 #[export] Instance e_nil : equivs (@nil Type).
 Defined.
