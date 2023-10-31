@@ -1,5 +1,6 @@
 -R theories/ "HYLO"
 -R util/ "Util"
+-R examples/ "Examples"
 -arg -w
 -arg all
 util/Cofix.v
@@ -10,4 +11,4 @@ theories/Algebra.v
 theories/Coalgebra.v
 theories/FCoalgebra.v
 theories/Hylo.v
-theories/QSort.v
+examples/QSort.v

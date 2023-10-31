@@ -112,11 +112,11 @@ Proof. rewrite <-hylo_univ. reflexivity. Qed.
 
 Lemma hylo_cata `{F : Container Sh P} B {eB : equiv B} (g : Alg F B)
   : cata g =e hylo g f_out.
-Proof. rewrite hylo_univ. apply cata_univ. reflexivity. Qed.
+Proof. rewrite hylo_univ. rewrite<-cata_univ. reflexivity. Qed.
 
 Lemma hylo_ana `{F : Container Sh P} A {eA : equiv A} (h : RCoalg F A)
   : rana h =e hylo l_in h.
-Proof. rewrite hylo_univ. apply rana_univ. reflexivity. Qed.
+Proof. rewrite hylo_univ. rewrite <-rana_univ. reflexivity. Qed.
 
 Lemma splitC A B C
       {eA : equiv A} {eB : equiv B} {eC : equiv C}
