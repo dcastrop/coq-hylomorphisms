@@ -62,6 +62,9 @@ Definition tsplit : RCoalg (TreeF nat) (list nat)
  *)
 Definition qsort : Spec (cata merge \o rana tsplit).
   calculate.
+  (* rewrite <- ana_rana. *)
+  (* rewrite compA, cata_ccata. *)
+  rewrite cata_ana_hylo.
   reflexivity.
 Defined.
 
@@ -89,11 +92,27 @@ Extraction Inline shape.
 Extraction Inline cont.
 Extraction Inline hylo.
 Extraction Inline cata.
+Extraction Inline ccata.
+Extraction Inline ccata_.
+Extraction Inline ccata_f.
+Extraction Inline ccata_f_.
+Extraction Inline liftP.
+Extraction Inline liftP_f_.
 Extraction Inline ana.
+Extraction Inline ana_f.
+Extraction Inline ana_f_.
+Extraction Inline ana_f_u.
 Extraction Inline rana.
 Extraction Inline hylo_f.
 Extraction Inline hylo_f_.
 Extraction Inline LFix_out.
+Extraction Inline l_in.
+Extraction Inline l_out.
+Extraction Inline g_in.
+Extraction Inline g_out.
+Extraction Inline lg_in.
+Extraction Inline lg_out.
+Extraction Inline GFix_out.
 
 Extraction Inline merge.
 Extraction Inline a_leaf.
