@@ -41,14 +41,26 @@ Section FCoalgDef.
     intros. simpl. split; apply ext_eq_fin; trivial; symmetry; trivial.
   Qed.
 
-  Definition Rec `{eA : equiv A} (c : Coalg F A) := forall x, RecF c x.
-  Definition RCoalg `{eA : equiv A} := sig Rec.
+  Definition RecP `{eA : equiv A} (c : Coalg F A) := forall x, RecF c x.
+
+  Add Parametric Morphism `{eA : equiv A} : (@RecP A eA)
+    with signature
+    (eqRel (A := Coalg F A))
+      ==> (eqRel (A:=Prop))
+      as RecPMorphism.
+  Proof.
+    intros f g H. simpl; split.
+    - intros Pf x. rewrite <- H. trivial.
+    - intros Pf x. rewrite    H. trivial.
+  Qed.
+
+  Record RCoalg `{eA : equiv A} :=
+    Rec {
+        coalg :> Coalg F A;
+        recP : RecP coalg
+      }.
   Arguments RCoalg A {eA}.
-
-  Coercion coalg `{equiv A} : RCoalg A -> A ~> App F A := @proj1_sig _ _.
-
-  Definition terminating `{equiv A} :
-    forall (h : RCoalg A) x, RecF h x := @proj2_sig _ _.
+  Arguments Rec {A eA} coalg recP.
 
   #[export] Instance equiv_rcoalg `{equiv A} : equiv (RCoalg A).
   Proof with auto with ffix.
@@ -58,6 +70,10 @@ Section FCoalgDef.
     intros x y z H1 H2. transitivity y...
   Defined.
 
+  Lemma terminating `{equiv A} : forall (h : RCoalg A) x, RecF h x.
+  Proof. destruct h. trivial. Qed.
+
+
   (* Finite Trees *)
   Inductive FinF : GFix F -> Prop :=
   | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
@@ -65,7 +81,7 @@ Section FCoalgDef.
   Lemma FinF_inv (x : GFix F) : FinF x -> forall e, FinF (cont (g_out x) e).
   Proof. intros []. auto. Defined.
 
-  Lemma ana_rcoalg_fin `{equiv A} (c : Coalg F A) (Rc : Rec c)
+  Lemma ana_rcoalg_fin `{equiv A} (c : Coalg F A) (Rc : RecP c)
     : forall x, FinF (ana c x).
   Proof.
     simpl. intros x. generalize (Rc x).
@@ -74,7 +90,7 @@ Section FCoalgDef.
   Qed.
 
   Lemma fin_ana_rcoalg `{equiv A}
-    (h : Coalg F A) (FT : forall x, FinF (ana h x)) : Rec h.
+    (h : Coalg F A) (FT : forall x, FinF (ana h x)) : RecP h.
   Proof.
     intros x. specialize (FT x). revert FT.
     generalize (eq_refl (ana h x)). generalize (ana h x) at -1. intros g Eg HF.
@@ -84,7 +100,7 @@ Section FCoalgDef.
   Qed.
 
   Corollary ana_rec_term `{equiv A} (h : Coalg F A)
-    : (forall x, FinF (ana h x)) <-> Rec h.
+    : (forall x, FinF (ana h x)) <-> RecP h.
   Proof. split; try apply ana_rcoalg_fin; apply fin_ana_rcoalg. Qed.
 
   Corollary rcoalg_fin `{equiv A} (h : RCoalg A) : forall x, FinF (ana h x).
@@ -93,7 +109,7 @@ Section FCoalgDef.
   Lemma fin_out : forall x, RecF l_out x.
   Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
 
-  Definition f_out : RCoalg (LFix F) := exist _ _ fin_out.
+  Definition f_out : RCoalg (LFix F) := Rec _ fin_out.
 
   Notation rana_f__ h :=
     (fix f x H :=

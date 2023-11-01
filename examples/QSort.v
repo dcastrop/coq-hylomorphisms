@@ -52,8 +52,7 @@ Proof.
   destruct se; simpl in *; apply Ih, length_filter, H.
 Qed.
 
-Definition tsplit : RCoalg (TreeF nat) (list nat)
-    := exist _ c_split split_fin.
+Definition tsplit : RCoalg (TreeF nat) (list nat) := Rec split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
@@ -67,9 +66,6 @@ Definition qsort : Spec (cata merge \o rana tsplit).
   rewrite cata_ana_hylo.
   reflexivity.
 Defined.
-
-Print qsort.
-
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
@@ -91,6 +87,8 @@ Extraction Inline val.
 Extraction Inline shape.
 Extraction Inline cont.
 Extraction Inline hylo.
+Extraction Inline hylo_f__.
+Extraction Inline hylo_def.
 Extraction Inline cata.
 Extraction Inline ccata.
 Extraction Inline ccata_.
