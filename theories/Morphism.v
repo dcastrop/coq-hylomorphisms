@@ -44,6 +44,16 @@ Proof.
   apply app_eq, Exy.
 Qed.
 
+Add Parametric Morphism `{eA : equiv A} `{eB : equiv B}
+  : (@app A eA B eB)
+    with signature
+    (eqRel (A:=A~>B))
+      ==> (eqRel (A:=A->B))
+      as appMorphism2.
+Proof.
+  intros ?? E. apply E.
+Qed.
+
 Section Id.
   Context `{eA : equiv A}.
 
@@ -218,15 +228,14 @@ Definition curry `{equiv A} `{equiv B} `{equiv C} (f : A * B ~> C)
 
 Section SpecDef.
   Context `{eA : equiv A} `{eB : equiv B}.
-  Record Spec (f : A ~> B) :=
-    MkSpec
-      { target :> A ~> B;
-        tgt_eq : f =e target;
+  Record Ext (f : A ~> B) :=
+    MkExt
+      { target :> A -> B;
+        tgt_eq : app f =e target;
       }.
 End SpecDef.
 
-Ltac calculate := eapply MkSpec.
-
+Ltac calculate := eapply MkExt.
 
 Section PredSubty.
   Context `{eA : equiv A} `{eB : equiv B}.

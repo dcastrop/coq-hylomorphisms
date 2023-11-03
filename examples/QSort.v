@@ -59,7 +59,7 @@ Definition tsplit : RCoalg (TreeF nat) (list nat) := Rec split_fin.
 (* UPDATE 12/09/2023 by DC: this used to be mergesort, and at some
  * point I simply changed the implementation ...
  *)
-Definition qsort : Spec (cata merge \o rana tsplit).
+Definition qsort : Ext (cata merge \o rana tsplit).
   calculate.
   (* rewrite <- ana_rana. *)
   (* rewrite compA, cata_ccata. *)
