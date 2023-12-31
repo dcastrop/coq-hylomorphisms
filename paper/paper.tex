@@ -23,6 +23,9 @@
 \usepackage{rotating}
 \usepackage{quiver}
 \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
+\usepackage{minted}
+\usepackage{newunicodechar}
+
 \addbibresource{references.bib}
 \usepackage{array}   % for \newcolumntype macro
 \newcolumntype{C}{>{$}c<{$}} % math-mode version of "l" column type
@@ -73,7 +76,7 @@
 \newcommand{\ana}[1]{\llens #1 \rlens}
 \newcommand{\fold}[1]{\catamor{#1}}
 \newcommand{\unfold}[1]{\anamor{#1}}
-
+\newcommand{\comp}{\cdot}
 \newcommand{\operator}[1]{\textsf{#1}}
 \newcommand{\Alg}{\text{-Alg}}
 \newcommand{\Free}{\text{Free\xspace}}
@@ -91,26 +94,98 @@
 \newcommand{\pair}[2]{\langle #1, #2 \rangle}
 \newcommand{\InIso}{\text{In}}
 
-\newcommand{\comp}{\cdot}
+\newcommand{\haskell}[1]{\mintinline{haskell}{#1}}
 
-\title{Hylomorphisms in Coq}
+\title{A Mechanised Library for Generic (Co)Programming}
 
 \author{}
 
 \begin{document}
 
 \maketitle
-\section{Goals and Motivations}
+\section{Introduction}
+Recursive definitions cannot be proven well-defined automatically. Modern proof
+assistants like Coq or Agda provide a sound, but incomplete algorithm which
+automatically checks for termination or productivity. For recursion, this is
+done by trying to (automatically) infer which argument in the recursive call
+gets smaller with respects to the original input argument. For productivity, the
+algorithm checks that the (co)recursive call appears directly under a
+constructor to make sure that this function always produce at least one element
+after each recursive step.
+
+As mentioned, these algorithms are incomplete meaning that some functions,
+though well-defined, cannot be recognized so by the proof assistant.
+
+One example of this fact is the quicksort algorithm given by the
+\haskell{partition} and \haskell{quicksort} function below (written in Haskell
+code):
+\begin{minted}{haskell}
+partition :: [a] -> ([a], a, [a])
+partition (x:xs) = ((filter (x <=) xs), x, (filter (x >) xs))
+
+quicksort :: [a] -> [a]
+quicksort [] = []
+quicksort ls = let (xs, x, ys) = partition ls in
+                        (quicksort xs) ++ [x] ++ (quicksort ys)
+\end{minted}
+While both \haskell{partition} and the \haskell{quicksort} program using it are
+well-defined functions a proof assistant such as Agda or Coq cannot accept such
+definitions.
+
+The argument can be given on pen-and-paper by showing the \haskell{partition} is
+a function that always returns two sublists which are smaller than the one we
+started with which means the repeated application of \haskell{partition} will
+eventually lead to termination.
+
+The quicksort algorithm is a \emph{divide-and-conquer} algorithm. Such
+algorithms are structured in three parts: first, the input is broken down in
+smaller sub-problems by means of a \emph{well-founded coalgebra}.Secondly, these
+sub-problems are computed recursively and, finally, the results of the recursive
+call are put together by a an algebra.
+
+Practically, every program can be turned into an hylomorphism by means of the
+conjugate rule~\cite{HinzeWG15}. This can be paraphrased by saying
+\begin{center}
+  ``\emph{every recursion scheme can be formalised as an hylomorphism}''
+\end{center}
+
+This has been a useful for structuring functional programs in a way that it
+guarantees termination (or productivity) even in programming languages with
+general recursion~\cite{DanielssonHJG06}.
+
+With this work we intend to begin a study of recursion scheme beyond the world
+of functional programming to the one of dependently typed languages such as a
+the ones employed in proof assistants like Agda or Coq.
+
+One of the challenges here is to be able to keep the theory of recursions
+schemes as general as possible while maintaining its practical usefulness. In
+order to do this, we have to make some design choices which differ a bit from
+the general theory.  For instance, formalising the conjugate rule would require
+us to mechanise a non-trivial fragment of category theory inside the prover's
+logic.  Secondly, the general conjugate rule is a statement of correspondence of
+arrows rather than a proof that these programs actually exists. In functional
+programming languages like for instance Haskell this is not a problem, since
+every functor is strong and has a fixed-point.  On the other hand, in a type
+theory we have to restrict to those so-called polynomial functors. In this work
+we do not make use of these assumptions. By restricting ourselves to polynomial
+functors given in terms of containers~\cite{AbbottAG05} we are able to prove the
+recursion schemes within the proof assistant and at the same time to maintain a
+certain level of data abstraction.
+
+First we prove that the hylo equation has a unique solution
+\[
+  x = a \comp F(x) \comp c
+\]
+for every recursive coalgebra $c$ for a polynomial $F$. Then we prove each
+recursion scheme by reducing it to a hylo. The following recursion schemes can
+all be proven by reducing them to an hylo: folds, mutual recursive functions,
+recursion schemes from comonads and their respective coinductive dual.
+
+The contributions we make in this paper are as follows:
 \begin{itemize}
   \item We provide a framework for \emph{generic programming} with recursion schemes in Coq
-  \item The hylomorphism and its connected theory with adjunctions provides the most general framework we can work with and provides some built-in optimisations as well
-        \item We formalise algorithms for
-        \begin{itemize}
-          \item  divide and conquer
-          \item dynamic programming
-          \item mutual recursion
-        \end{itemize}
-  \item We show these can be optimised in Coq and extracted to OCaml.
+  \item We formalise algorithms for divide and conquer, dynamic programming and mutual recursion
+  \item We validated optimisations in Coq and extract the resulting code to OCaml.
 \end{itemize}
 
 \section{Background on Adjoint Folds}
@@ -148,6 +223,7 @@ numbers.
 
 This is an instance of a more general phenonema whose argumet uses category
 theory.
+
 \section{Adjoint Folds}
 In order to transform $\operator{even-odd}$ into two functions $\operator{even}$
 and $\operator{odd}$ we are going to use something called an ``adjunction''.  In
@@ -305,4 +381,11 @@ wrapped up in $L$. The transformation is done by just applying the isomorphism
 
 In the following section we instantiate the adjoint fold with some instances
 taken from the literature.
+
+\printbibliography[heading=bibintoc]
+
 \end{document}
+
+%%% Local Variables:
+%%% TeX-command-extra-options: "-shell-escape"
+%%% End:
