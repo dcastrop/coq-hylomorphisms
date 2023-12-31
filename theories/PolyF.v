@@ -1,348 +1,58 @@
-(* From mathcomp Require Import all_ssreflect. *)
-Require Import Coq.Logic.Eqdep_dec.
-Require Import Setoid.
-
-
 Generalizable All Variables.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Unset Auto Template Polymorphism.
+Require Import HYLO.Equivalence.
+Require Import HYLO.Morphism.
+Require Import HYLO.Container.
 
-
-Module BoolEq <: DecidableType.
-  Definition U := bool.
-  Lemma eq_dec (b1 b2 : U) : {b1 = b2} + {b1 <> b2}.
-  Proof.
-    decide equality.
-  Qed.
-End BoolEq.
-Module DecBool := DecidableEqDep(BoolEq).
-
-Definition bool_irrelevance {b1 b2 : bool} (p1 p2 : b1 = b2) : p1 = p2 :=
-  DecBool.UIP b1 b2 p1 p2.
-
-(****************************************************************************)
-(** Assumptions and Strict positivisation of functors                      **)
-(****************************************************************************)
-Class equiv A : Type :=
-  MkEquiv
-    { eqRel : A -> A -> Prop;
-      e_refl : forall x, eqRel x x;
-      e_sym : forall x y, eqRel x y -> eqRel y x;
-      e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
-    }.
-
-#[export] Hint Resolve e_refl : ffix.
-#[export] Hint Resolve e_sym : ffix.
-#[export] Hint Resolve e_trans : ffix.
-
-#[export] Instance def_eq A : equiv A | 100 :=
-  {| eqRel := @eq A;
-     e_refl := @eq_refl A;
-     e_sym := @eq_sym A;
-     e_trans := @eq_trans A;
-  |}.
-
-Add Parametric Relation `{eq : equiv A} : A (@eqRel A eq)
-    reflexivity proved by (@e_refl A eq)
-    symmetry proved by (@e_sym A eq)
-    transitivity proved by (@e_trans A eq)
-      as ExtEq.
-
-Reserved Notation "f =e g" (at level 70, no associativity).
-Notation "f =e g" := (eqRel f g).
-
-#[export] Instance ext_eq (A : Type) `{eq_B : equiv B} : equiv (A -> B).
-Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun f g =>forall x, eqRel (f x) (g x)))...
-Defined.
-
-#[export] Instance pair_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A * B).
-Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun x y => fst x =e fst y /\ snd x =e snd y))...
-  - intros x y [->->]...
-  - intros x y z [->->]...
-Defined.
-
-#[export] Instance sum_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A + B).
-Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun x y =>
-                       match x, y with
-                       | inl u, inl v => u =e v
-                       | inr u, inr v => u =e v
-                       | _, _ => False
-                       end
-                       ))...
-  - intros []...
-  - intros [x|x] [y|y]...
-  - intros [x|x] [y|y] [z|z]...
-    * intros [].
-    * intros [].
-Defined.
-
-Structure morph `{eq_A : equiv A} `{eq_B : equiv B}
-  := { app :> A -> B;
-       f_eq : forall x y, x =e y -> app x =e app y
-     }.
-Arguments morph A {eq_A} B {eq_B}.
-
-Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
-Notation "x ~> y" := (morph x y).
-
-#[export] Instance eq_morph `{eq_A : equiv A} `{eq_B : equiv B}
-  : equiv (A ~> B).
-Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun f g =>forall x, app f x =e app g x))...
-Defined.
-
-(**** Identity ****)
-Definition id_eq `{equiv A}
-  : forall x y, x =e y -> (fun x => x) x =e (fun x => x) y.
-Proof. auto. Qed.
-Definition id `{equiv A} : A ~> A := {| app := _; f_eq := id_eq |}.
-
-(**** Constant ****)
-Definition const_eq `{equiv A} `{equiv B} (k : B)
-  : forall (x y : A), x =e y -> (fun x => k) x =e (fun x => k) y.
-Proof. auto with ffix. Qed.
-Definition const `{equiv A} `{equiv B} (x : B) : A ~> B
-  := {| app := _; f_eq := const_eq x |}.
-
-(**** Composition ****)
-Reserved Notation "f \o g" (at level 50, format "f  \o '/ '  g").
-Lemma comp_eq `{equiv A} `{equiv B} `{equiv C} (g : B ~> C) (f : A ~> B) :
-  forall x y, x =e y -> ((fun x => g (f x)) x) =e ((fun x => g (f x)) y).
-Proof. intros. apply f_eq,f_eq. trivial. Qed.
-Definition comp `{equiv A} `{equiv B} `{equiv C} (g : B ~> C) (f : A ~> B) :
-  A ~> C := {| app := _; f_eq := comp_eq g f |}.
-Notation "f \o g" := (comp f g).
-
-(** The justification why the class below this comment defines a functor can be
-  * found later, with the definitions: App, fmapA, etc.
-  * - [S] is the type of "shapes" of this functor
-  * - [P] is the type of "positions" in a shape
-  * - [dom] determines whether a position is valid in a shape
-  *
-  * It is defined as a class to help extract cleaner code to OCaml.
-  * An alternative definition, closer to the literature, would be to have
-  * a record,
-  * [ Record functor :=
-      { shape : Type;
-        position : Type;
-        dom : shape -> position -> bool;
-      }
-    ]
-  * use dependent types,
-  * [ Record functor :=
-      { shape : Type;
-        position : shape -> Type;
-      }
-    ]
-  * or even a straightforward "strict-positivisation" of an actual functor [F]:
-  * [ Record Apply (F : Type -> Type) (X : Type) :=
-      { witness : Type;
-        shape : F witness;
-        position : witness -> X;
-      }
-    ]
-  * However, these alternatives would lead to lots of [Obj.magic] in the
-  * generated OCaml code, and a priority of this experiment was extracting
-  * "somewhat reasonable/clean" OCaml code.
-  *)
-Class functor `{Esh : equiv Sh} `{Ep : equiv P} :=
-  { dom : Sh * P ~> bool
-  }.
-Arguments functor Sh {Esh} P {Ep}.
-
-Record elem_of `{functor Sh P} (s : Sh) :=
-  MkElem {
-      val : P;
-      InDom : dom (s, val) = true
-    }.
-(* About elem_of. *)
-Arguments elem_of & {Sh _ P _ F} s : rename.
-Arguments MkElem & {Sh _ P _ F s} val InDom : rename.
-Arguments val & {Sh _ P _ F s} : rename.
-Arguments InDom & {Sh _ P _ F s} : rename.
-
-Lemma elem_val_eq `{functor Sh P} (s : Sh) (e1 e2 : elem_of s)
-  : val e1 = val e2 -> e1 = e2.
-Proof.
-  destruct e1 as [v1 d1], e2 as [v d2]; simpl in *.
-  intros; subst. rewrite (bool_irrelevance d1 d2). auto.
-Qed.
-
-Lemma elem_dom_irr `{functor Sh P} (s1 s2 : Sh) (Eq : s1 =e s2)
-  : forall e1 : elem_of s1, exists e3 : elem_of s2, val e1 = val e3.
-Proof.
-  intros [v d1]. simpl.
-  assert (d2 : dom (s2, v) =e true).
-  { rewrite <- d1. apply f_eq. split; simpl; auto with ffix. }
-  simpl in *.
-  exists (MkElem v d2); auto.
-Qed.
-
-Record App `{F : functor Sh P} (X : Type) :=
-  MkCont
-    { shape : Sh;
-      cont : elem_of shape -> X
-    }.
-Arguments App {Sh _ P _} F X.
-Arguments cont {Sh _ P _ F X} a k.
-Arguments MkCont {Sh _ P _ F X} shape cont.
-
-Lemma cont_dom_irrelevant `{F : functor Sh Po} (X : Type) :
-  forall (x : App F X) (e1 e2 : elem_of (shape x)),
-    val e1 = val e2 -> cont x e1 = cont x e2.
-Proof.
-  intros [s p]. simpl. intros [e1 d1] [e2 d2]. simpl. intros Eq. subst.
-  rewrite (bool_irrelevance d1 d2).
-  reflexivity.
-Qed.
-
-Inductive AppR `{F : functor Sh P} (X : Type) {e : equiv X}
-           (x y : App F X) : Prop :=
-  | AppR_ext
-      (Es : shape x =e shape y)
-      (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
-#[export]
-  Hint Constructors AppR : ffix.
-
-#[export]
-  Instance App_equiv `{F : functor Sh P} `{e : equiv X} : equiv (App F X).
-Proof with eauto with ffix.
-  apply (@MkEquiv _ (@AppR Sh _ P _ F X e)).
-  - intros [shx kx]. constructor...
-    simpl.  intros [x1 d1] [x2 d2] Eq. simpl in *. subst.
-    rewrite (bool_irrelevance d1 d2).
-    reflexivity.
-  - intros x y [Sxy Exy]. split...
-  - intros x y z [Sxy Exy] [Syz Eyz]; simpl; split.
-    * rewrite Sxy...
-    * intros e1 e2 V1.
-      destruct (elem_dom_irr Sxy e1) as [e3 V2].
-      apply (e_trans (Exy e1 e3 V2)), Eyz.
-      rewrite <- V2. trivial.
-Defined.
-
-Lemma cont_ext_eq `{F : functor Sh P} (s : Sh) `{equiv X}
-  (k k' : elem_of s -> X)
-  : (forall x, k x =e k' x) -> AppR (MkCont s k) (MkCont s k').
-Proof with simpl in *; auto with ffix.
-  intros Heq. constructor...
-  intros e1 e2 Hv. rewrite (elem_val_eq Hv)...
-Qed.
-
-Definition fmapA `{F : functor Sh P} `{equiv A} `{equiv B}
-  (f : A -> B) (x : App F A) : App F B
-  := MkCont (shape x) (fun e => f (cont x e)).
-
-Lemma fmapA_eqF `{F : functor Sh P} `{equiv A} `{equiv B} (f : A ~> B)
-  : forall (x y : App F A), x =e y -> fmapA (F:= F) f x =e fmapA f y.
-Proof with eauto with ffix.
-  intros [sx kx] [sy ky] [Es Ek]. split; auto. intros.  apply f_eq. auto.
-Qed.
-
-Definition fmap `{F : functor Sh P} `{eA : equiv A} `{eB : equiv B}
-  (f : A ~> B) : App F A ~> App F B
-  := {| app := fun x => MkCont (shape x) (fun e => f (cont x e));
-       f_eq := fmapA_eqF f
-     |}.
-Arguments fmap & {Sh Esh P Ep F A eA B eB} f.
-
-Lemma fmap_id `{F : functor Sh P} `{equiv A} : fmap (F:=F) (id (A:=A)) =e id.
-Proof. intros []; reflexivity. Qed.
-
-Lemma fmap_comp `{F : functor Sh P} `{equiv A} `{equiv B} `{equiv C}
-  (f : B ~> C) (g : A ~> B) : fmap (F:=F) (f \o g) =e fmap f \o fmap g.
-Proof. intros []. reflexivity. Qed.
-
-Add Parametric Morphism `(F : functor Sh P) `{e1 : equiv A} `{e2 : equiv B}
-  : (@fmap Sh _ P _ F A e1 B e2)
-    with signature
-    (eqRel (A:=A ~> B))
-      ==> (eqRel (A:=App F A ~> App F B))
-      as fmapMorphism.
-Proof.
-  intros ??? [??]. simpl. apply cont_ext_eq.
-  intros. apply H.
-Qed.
-
-Add Parametric Morphism `{eA : equiv A} `{eB : equiv B} `{eC : equiv C}
-  : (@comp A eA B eB C eC)
-    with signature
-    (eqRel (A:=B ~> C))
-      ==> (eqRel (A:=A ~> B))
-      ==> (eqRel (A:=A ~> C))
-      as compMorphism.
-Proof.
-  intros f1 f2 Ef g1 g2 Eg x.
-  apply (e_trans (Ef (g1 x))).
-  simpl. unfold comp.
-  apply f_eq.
-  apply Eg.
-Qed.
-
-Definition Alg `{F : functor Sh P} A {eA : equiv A} := App F A ~> A.
-Arguments Alg {Sh}%type_scope {Esh} {P}%type_scope {Ep} F A {eA}.
-Definition CoAlg `{F : functor Sh P} A {eA : equiv A} := A ~> App F A.
-Arguments CoAlg {Sh}%type_scope {Esh} {P}%type_scope {Ep} F A {eA}.
+Definition Alg `{F : Container Sh P} A {eA : equiv A} := App F A ~> A.
+Arguments Alg {Sh}%type_scope {Esh} {P}%type_scope F A {eA}.
 
 Unset Elimination Schemes.
-Inductive LFix `(F : functor Sh P) : Type :=
+Inductive LFix `(F : Container Sh P) : Type :=
   LFix_in { LFix_out : App F (LFix F) }.
 Set Elimination Schemes.
-Arguments LFix {Sh}%type_scope {Esh} {P}%type_scope {Ep} F.
+Arguments LFix {Sh}%type_scope {Esh} {P}%type_scope F.
 
-Lemma LFix_rect [Sh : Type] [Esh : equiv Sh] [Po : Type] [Ep : equiv Po]
-  [F : functor Sh Po] [P : LFix F -> Type]
+Lemma LFix_rect [Sh : Type] [Esh : equiv Sh] [Po : Type]
+  [F : Container Sh Po] [P : LFix F -> Type]
   : (forall x : App F (LFix F),
-        (forall e : elem_of (shape x), P (cont x e)) ->
+        (forall e : Pos (shape x), P (cont x e)) ->
         P (LFix_in x))
     -> forall l : LFix F, P l.
 Proof.
   intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. Guarded.
 Defined.
 
-Lemma LFix_rec [Sh : Type] [Esh : equiv Sh] [Po : Type] [Ep : equiv Po]
-  [F : functor Sh Po] [P : LFix F -> Set]
+Lemma LFix_rec [Sh : Type] [Esh : equiv Sh] [Po : Type]
+  [F : Container Sh Po] [P : LFix F -> Set]
   : (forall x : App F (LFix F),
-        (forall e : elem_of (shape x), P (cont x e)) ->
+        (forall e : Pos (shape x), P (cont x e)) ->
         P (LFix_in x))
     -> forall l : LFix F, P l.
 Proof.
   intros H. apply LFix_rect, H.
 Defined.
 
-Lemma LFix_ind [Sh : Type] [Esh : equiv Sh] [Po : Type] [Ep : equiv Po]
-  [F : functor Sh Po] [P : LFix F -> Prop]
+Lemma LFix_ind [Sh : Type] [Esh : equiv Sh] [Po : Type]
+  [F : Container Sh Po] [P : LFix F -> Prop]
   : (forall x : App F (LFix F),
-        (forall e : elem_of (shape x), P (cont x e)) ->
+        (forall e : Pos (shape x), P (cont x e)) ->
         P (LFix_in x))
     -> forall l : LFix F, P l.
 Proof.
   intros H. apply LFix_rect, H.
 Qed.
 
-Definition l_shape `{F : functor Sh P} (x : LFix F) :=
-  match x with
-  | LFix_in a => shape a
-  end.
-Definition l_cont `{F : functor Sh P} (x : LFix F) :=
-  match x return elem_of (l_shape x) -> LFix F with
-  | LFix_in k => cont k
-  end.
-Arguments l_cont {Sh}%type_scope {Esh} {P}%type_scope {Ep F} x _.
-
 Section Polynomials.
   Inductive Id_ : Type := MkId.
 
-  Instance Id : functor Id_ unit :=
+  Instance Id : Container Id_ unit :=
     { dom := const true
     }.
 
-  (* Would be nice to have these kinds of isomorphisms between types/functor
+  (* Would be nice to have these kinds of isomorphisms between types/Container
    * applications, and somehow "automate" their use interchangeably ...
    * It is annoying not having "App Id A = A", but otherwise it'd be hard taking
    * fixpoints, etc
@@ -384,13 +94,13 @@ Section Polynomials.
 
   Inductive void : Set :=.
 
-  (* Instance K A : functor (K_ A) void := *)
+  (* Instance K A : Container (K_ A) void := *)
   (*   { dom := fun _ f => match f with end *)
   (*   }. *)
   (* (* Pairs *) *)
 
-  (* Instance Prod `{functor Sf Pf} `{functor Sg Pg} *)
-  (*   : functor (Sf * Sg) (Pf + Pg) := *)
+  (* Instance Prod `{Container Sf Pf} `{Container Sg Pg} *)
+  (*   : Container (Sf * Sg) (Pf + Pg) := *)
   (*   { dom := fun sh p => *)
   (*              match p with *)
   (*              | inl pf => dom (fst sh) pf *)
@@ -400,30 +110,30 @@ Section Polynomials.
   (* Arguments Prod {Sf Pf} F {Sg Pg} G : rename. *)
 
   (* Definition einl *)
-  (*   `{F : functor Sf Pf} `{G : functor Sg Pg} (sh : Sf * Sg) *)
-  (*   (k : elem_of (fst sh)) : elem_of sh := *)
+  (*   `{F : Container Sf Pf} `{G : Container Sg Pg} (sh : Sf * Sg) *)
+  (*   (k : Pos (fst sh)) : Pos sh := *)
   (*   MkElem (inl (val k)) (InDom k). *)
   (* Arguments einl & {Sf Pf F Sg Pg G sh}. *)
 
   (* Definition einr *)
-  (*   `{F : functor Sf Pf} `{G : functor Sg Pg} (sh : Sf * Sg) *)
-  (*   (k : elem_of (snd sh)) : elem_of sh := *)
+  (*   `{F : Container Sf Pf} `{G : Container Sg Pg} (sh : Sf * Sg) *)
+  (*   (k : Pos (snd sh)) : Pos sh := *)
   (*   MkElem (F := Prod F G) *)
   (*     (inr (val k)) (InDom k : dom sh (inr (val k)) = true). *)
   (* Arguments einr & {Sf Pf F Sg Pg G sh}. *)
 
-  (* Definition ecase `{F : functor Sf Pf} `{G : functor Sg Pg} *)
-  (*   (sf : Sf) (sg : Sg) (k : elem_of (F := Prod F G) (sf, sg)) *)
-  (*   : elem_of sf + elem_of sg := *)
+  (* Definition ecase `{F : Container Sf Pf} `{G : Container Sg Pg} *)
+  (*   (sf : Sf) (sg : Sg) (k : Pos (F := Prod F G) (sf, sg)) *)
+  (*   : Pos sf + Pos sg := *)
   (*   match val k as pos *)
-  (*         return dom (sf, sg) pos = true -> elem_of sf + elem_of sg *)
+  (*         return dom (sf, sg) pos = true -> Pos sf + Pos sg *)
   (*   with *)
   (*      | inl x => fun p => inl (MkElem x p) *)
   (*      | inr x => fun p => inr (MkElem x p) *)
   (*      end (InDom k). *)
   (* Arguments ecase {Sf Pf F Sg Pg G sf sg}. *)
 
-  (* Definition fproj1 `{equiv X} `{F : functor Sf Pf} `{G : functor Sg Pg} *)
+  (* Definition fproj1 `{equiv X} `{F : Container Sf Pf} `{G : Container Sg Pg} *)
   (*   : App (Prod F G) X ~> App F X. *)
   (*   refine {| app := fun p : App (Prod F G) X => *)
   (*                      MkCont (fst (shape p)) (fun x => cont p (einl x)); *)
@@ -434,7 +144,7 @@ Section Polynomials.
   (*   intros e d1 d2. simpl. apply Ek. *)
   (* Defined. *)
 
-  (* Definition fproj2 `{equiv X} `{F : functor Sf Pf} `{G : functor Sg Pg} *)
+  (* Definition fproj2 `{equiv X} `{F : Container Sf Pf} `{G : Container Sg Pg} *)
   (*   : App (Prod F G) X ~> App G X. *)
   (*   refine {| app := fun p : App (Prod F G) X => *)
   (*                      MkCont (snd (shape p)) (fun x => cont p (einr x)); *)
@@ -445,7 +155,7 @@ Section Polynomials.
   (*   intros e d1 d2. apply Ek. *)
   (* Defined. *)
 
-  (* Definition fpair `{equiv X} `{F : functor Sf Pf} `{G : functor Sg Pg} *)
+  (* Definition fpair `{equiv X} `{F : Container Sf Pf} `{G : Container Sg Pg} *)
   (*   `{equiv A} (f : A ~> App F X) (g : A ~> App G X) : A ~> App (Prod F G) X. *)
   (*   refine {| *)
   (*       app := fun x => *)
@@ -467,8 +177,8 @@ Section Polynomials.
   (*     * rewrite Hk2.  reflexivity. *)
   (* Defined. *)
 
-  (* Instance Sum `{functor Sf Pf} `{functor Sg Pg} *)
-  (*   : functor (Sf + Sg) (Pf + Pg) := *)
+  (* Instance Sum `{Container Sf Pf} `{Container Sg Pg} *)
+  (*   : Container (Sf + Sg) (Pf + Pg) := *)
   (*   { dom := fun sh p => *)
   (*              match sh, p with *)
   (*              | inl sf, inl pf => dom sf pf *)
@@ -482,32 +192,32 @@ Section Polynomials.
   (* Proof. discriminate. Qed. *)
 
 
-  (* Definition un_inl `{F : functor Sf Pf} `{G : functor Sg Pg} {sh : Sf} *)
-  (*   (p : elem_of (F := Sum F G) (inl sh)) : elem_of sh := *)
+  (* Definition un_inl `{F : Container Sf Pf} `{G : Container Sg Pg} {sh : Sf} *)
+  (*   (p : Pos (F := Sum F G) (inl sh)) : Pos sh := *)
   (*   let (pfg, Hdom) := p in *)
   (*   match pfg return dom (inl sh) pfg = true -> _ with *)
   (*   | inl pf => fun H => MkElem pf H *)
   (*   | inr pf => fun Hdom => match false_not_true Hdom with end *)
   (*   end Hdom. *)
 
-  (* Definition in_inl `{F : functor Sf Pf} `{G : functor Sg Pg} {sh : Sf} *)
-  (*   (p : elem_of (F := F) sh) : elem_of (F := Sum F G) (inl sh) := *)
+  (* Definition in_inl `{F : Container Sf Pf} `{G : Container Sg Pg} {sh : Sf} *)
+  (*   (p : Pos (F := F) sh) : Pos (F := Sum F G) (inl sh) := *)
   (*   let (p, Hp) := p in MkElem (inl p) (Hp : dom (inl sh) (inl p) = true). *)
 
-  (* Definition un_inr `{F : functor Sf Pf} `{G : functor Sg Pg} {sh : Sg} *)
-  (*   (p : elem_of (F := Sum F G) (inr sh)) : elem_of sh := *)
+  (* Definition un_inr `{F : Container Sf Pf} `{G : Container Sg Pg} {sh : Sg} *)
+  (*   (p : Pos (F := Sum F G) (inr sh)) : Pos sh := *)
   (*   let (pfg, Hdom) := p in *)
   (*   match pfg return dom (inr sh) pfg = true -> _ with *)
   (*   | inr pf => fun H => MkElem pf H *)
   (*   | inl pf => fun Hdom => match false_not_true Hdom with end *)
   (*   end Hdom. *)
 
-  (* Definition in_inr `{F : functor Sf Pf} `{G : functor Sg Pg} {sh : Sg} *)
-  (*   (p : elem_of (F := G) sh) : elem_of (F := Sum F G) (inr sh) := *)
+  (* Definition in_inr `{F : Container Sf Pf} `{G : Container Sg Pg} {sh : Sg} *)
+  (*   (p : Pos (F := G) sh) : Pos (F := Sum F G) (inr sh) := *)
   (*   let (p, Hp) := p in *)
-  (*   MkElem (inr p) (Hp : dom (functor := Sum F G) (inr sh) (inr p) = true). *)
+  (*   MkElem (inr p) (Hp : dom (Container := Sum F G) (inr sh) (inr p) = true). *)
 
-  (* Definition finj1 `{equiv X} `{F : functor Sf Pf} `{G : functor Sg Pg} *)
+  (* Definition finj1 `{equiv X} `{F : Container Sf Pf} `{G : Container Sg Pg} *)
   (*   : App F X ~> App (Sum F G) X. *)
   (*   refine {| *)
   (*     app := *)
@@ -526,7 +236,7 @@ Section Polynomials.
   (*     * discriminate. *)
   (* Defined. *)
 
-  (* Definition finj2 `{equiv X} `{F : functor Sf Pf} `{G : functor Sg Pg} *)
+  (* Definition finj2 `{equiv X} `{F : Container Sf Pf} `{G : Container Sg Pg} *)
   (*   : App G X ~> App (Sum F G) X. *)
   (*   refine {| *)
   (*     app := *)
@@ -546,13 +256,13 @@ Section Polynomials.
   (* Defined. *)
 
   (* Definition fcase `{equiv X} `{equiv A} *)
-  (*   `{F : functor Sf Pf} `{G : functor Sg Pg} *)
+  (*   `{F : Container Sf Pf} `{G : Container Sg Pg} *)
   (*   (f : App F X ~> A) (g : App G X ~> A) *)
   (*   : App (Sum F G) X ~> A. *)
   (*   refine {| *)
   (*       app := fun fgx : App (Sum F G) X => *)
   (*                let (sh, k) := fgx in *)
-  (*                match sh return (elem_of sh -> X) -> A with *)
+  (*                match sh return (Pos sh -> X) -> A with *)
   (*                | inl sh => fun k => f (MkCont sh (fun p => k (in_inl p))) *)
   (*                | inr sh => fun k => g (MkCont sh (fun p => k (in_inr p))) *)
   (*                end k *)
@@ -566,35 +276,26 @@ End Polynomials.
 (* Arguments Sum {Sf Pf} F {Sg Pg} G : rename. *)
 (* Arguments Prod {Sf Pf} F {Sg Pg} G : rename. *)
 
-Fixpoint LFixR `(F : functor Sh P) (x y : LFix F) : Prop :=
+Fixpoint LFixR `(F : Container Sh P) (x y : LFix F) : Prop :=
   let f_x := LFix_out x in
   let f_y := LFix_out y in
   shape f_x =e shape f_y /\
   (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 
-Lemma LFixR_inv_sh `{F : functor Sh P} (x y : LFix F)
-  : LFixR x y -> l_shape x =e l_shape y.
-Proof. destruct x,y. intros []. auto. Qed.
-
-Lemma LFixR_inv_k `{F : functor Sh P} (x y : LFix F)
-  : LFixR x y ->
-    forall e1 e2, val e1 = val e2 -> LFixR (l_cont x e1) (l_cont y e2).
-Proof. destruct x,y. intros []. auto. Qed.
-
-Lemma LFixR_refl `{F : functor Sh P} (x : LFix F) : LFixR x x.
+Lemma LFixR_refl `{F : Container Sh P} (x : LFix F) : LFixR x x.
 Proof.
   induction x as [x Ih]. simpl. split; try reflexivity.
   intros e1 e2 Heq. rewrite (elem_val_eq Heq). apply Ih.
 Qed.
 
-Lemma LFixR_sym `{F : functor Sh P} (x y : LFix F) : LFixR x y -> LFixR y x.
+Lemma LFixR_sym `{F : Container Sh P} (x y : LFix F) : LFixR x y -> LFixR y x.
 Proof.
   revert y. induction x as [x Ih].
   intros [y] [Sxy H]. simpl in *.
   split; auto with ffix.
 Qed.
 
-Lemma LFixR_trans `{F : functor Sh P} (x y z : LFix F)
+Lemma LFixR_trans `{F : Container Sh P} (x y z : LFix F)
   : LFixR x y -> LFixR y z -> LFixR x z.
 Proof.
   revert y z.
@@ -610,40 +311,40 @@ Proof.
   rewrite <- V2. trivial.
 Qed.
 
-#[export] Instance LFix_Eq `{F : functor Sh P} : equiv (LFix F) :=
+#[export] Instance LFix_Eq `{F : Container Sh P} : equiv (LFix F) :=
   {| eqRel := LFixR (F:=F);
      e_refl := LFixR_refl (F:=F);
      e_sym := LFixR_sym (F:=F);
      e_trans := LFixR_trans (F:=F);
   |}.
 
-Lemma l_in_eq `{F : functor Sh P} (x y : App F (LFix F))
+Lemma l_in_eq `{F : Container Sh P} (x y : App F (LFix F))
   : x =e y -> LFix_in x =e  LFix_in y.
 Proof. simpl. intros []; auto with ffix. Qed.
 
-Lemma l_out_eq `(F : functor Sh P) (x y : LFix F)
+Lemma l_out_eq `(F : Container Sh P) (x y : LFix F)
   : x =e y -> LFix_out x  =e LFix_out y.
 Proof. destruct x, y. intros []. simpl. auto with ffix. Qed.
 
-Definition l_in `{F : functor Sh P} : Alg F (LFix F) :=
+Definition l_in `{F : Container Sh P} : Alg F (LFix F) :=
   {| app := _; f_eq := l_in_eq (F:=F) |}.
-Definition l_out `{F : functor Sh P} : CoAlg F (LFix F) :=
+Definition l_out `{F : Container Sh P} : CoAlg F (LFix F) :=
   {| app := _; f_eq := l_out_eq (F:=F) |}.
 
-Lemma l_in_out `(F : functor Sh P) : l_in \o l_out =e id (A:=LFix F).
+Lemma l_in_out `(F : Container Sh P) : l_in \o l_out =e id (A:=LFix F).
 Proof.
   simpl. intros. split; try reflexivity. intros e1 e2 He.
   rewrite (elem_val_eq He). apply LFixR_refl.
 Qed.
 
-Lemma l_out_in `(F : functor Sh P)
+Lemma l_out_in `(F : Container Sh P)
   : l_out \o l_in =e id (A:=App F (LFix F)).
 Proof.
   simpl. intros. split; try reflexivity. intros e1 e2 He.
   rewrite (elem_val_eq He). apply LFixR_refl.
 Qed.
 
-(* Definition what_was_the_name_f S P {F : functor S P} `{equiv A} `{equiv B} *)
+(* Definition what_was_the_name_f S P {F : Container S P} `{equiv A} `{equiv B} *)
 (*   (g : App (Prod F (K B)) A ~> A) *)
 (*   : LFix F -> B -> A. *)
 (*   refine (fix f x b := *)
@@ -652,27 +353,27 @@ Qed.
 (*        end). *)
 (*   About LFix_in. *)
 
-Definition cata_f `{F : functor Sh P} A {eA : equiv A} (g : Alg F A)
+Definition cata_f `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
   : LFix F -> A
   := fix f x := g (fmapA (F:=F) f (LFix_out (F:=F) x)).
-Arguments cata_f {Sh Esh P Ep F A eA} g.
+Arguments cata_f {Sh Esh P F A eA} g.
 
-Lemma cata_arr `{F : functor Sh P} A {eA : equiv A} (g : Alg F A)
+Lemma cata_arr `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
   : forall x y, x =e y -> cata_f g x =e cata_f g y.
 Proof.
   induction x as [sx Ih]. intros [sy]. simpl in *. intros [Es Ek].
   apply (f_eq g). split; [trivial|intros e1 e2 Hv]. apply Ih. auto.
 Qed.
 
-Definition cata `{F : functor Sh P} A {eA : equiv A} (g : Alg F A)
+Definition cata `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
   : LFix F ~> A
   := {| app := fix f x :=
            g ((fun x => MkCont (F:=F) (shape x)
                           (fun e => f (cont x e))) (LFix_out (F:=F) x));
        f_eq := cata_arr g |}.
-Arguments cata {Sh}%type_scope {Esh} {P}%type_scope {Ep F} [A]%type_scope {eA} g.
+Arguments cata {Sh}%type_scope {Esh} {P}%type_scope {F} [A]%type_scope {eA} g.
 
-Lemma cata_univ_r `{F : functor Sh P} `{eA : equiv A} (g : Alg F A)
+Lemma cata_univ_r `{F : Container Sh P} `{eA : equiv A} (g : Alg F A)
       (f : LFix F ~> A)
   : f =e g \o fmap f \o l_out -> f =e cata g.
 Proof.
@@ -681,7 +382,7 @@ Proof.
   rewrite (elem_val_eq Hv). reflexivity.
 Qed.
 
-Lemma cata_univ_l `{F : functor Sh P} `{eA : equiv A} (g : Alg F A)
+Lemma cata_univ_l `{F : Container Sh P} `{eA : equiv A} (g : Alg F A)
       (f : LFix F ~> A)
   : f =e cata g -> f =e g \o fmap f \o l_out.
 Proof.
@@ -690,39 +391,39 @@ Proof.
   rewrite (elem_val_eq Hv). reflexivity.
 Qed.
 
-Lemma cata_univ `{F : functor Sh P} `{eA : equiv A} (g : Alg F A)
+Lemma cata_univ `{F : Container Sh P} `{eA : equiv A} (g : Alg F A)
       (f : LFix F ~> A)
   : f =e cata g <-> f =e g \o fmap f \o l_out.
 Proof. split;[apply cata_univ_l|apply cata_univ_r]. Qed.
 
 (* Finite anamorphisms *)
-Inductive FinF `{F : functor Sh P} `{equiv A}
+Inductive FinF `{F : Container Sh P} `{equiv A}
           (h : CoAlg F A) : A -> Prop :=
 | FinF_fold x : (forall e, FinF h (cont (h x) e)) -> FinF h x.
 #[export] Hint Constructors FinF : ffix.
 
-Lemma FinF_inv `{F : functor Sh P} `{eA : equiv A} (h : CoAlg F A) x
+Lemma FinF_inv `{F : Container Sh P} `{eA : equiv A} (h : CoAlg F A) x
   : FinF h x -> forall e, FinF h (cont (h x) e).
 Proof. intros []. auto. Defined.
 
 (* Finite coalgebras *)
-Definition FCoAlg `{F : functor Sh P} `{equiv A} :=
+Definition FCoAlg `{F : Container Sh P} `{equiv A} :=
   sig (fun f => forall x, FinF (F:=F) f x).
-Arguments FCoAlg {Sh Esh P Ep} F A {eA} : rename.
+Arguments FCoAlg {Sh Esh P} F A {eA} : rename.
 
-Coercion coalg `{F : functor Sh P} `{equiv A}
+Coercion coalg `{F : Container Sh P} `{equiv A}
   : FCoAlg F A -> A ~> App F A := @proj1_sig _ _.
 
-Definition finite `{F : functor Sh P} `{equiv A}
+Definition finite `{F : Container Sh P} `{equiv A}
   : forall (h : FCoAlg F A) x, FinF h x := @proj2_sig _ _.
 
-Definition ana_f_ `{F : functor Sh P} `{eA : equiv A} (h : CoAlg F A)
+Definition ana_f_ `{F : Container Sh P} `{eA : equiv A} (h : CoAlg F A)
   : forall (x : A), FinF h x -> LFix F
   := fix f x H :=
        let hx := h x in
        LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
 
-Lemma ana_f_irr `{F : functor Sh P} `{eA : equiv A} (h : CoAlg F A)
+Lemma ana_f_irr `{F : Container Sh P} `{eA : equiv A} (h : CoAlg F A)
   : forall (x : A) (F1 F2 : FinF h x), ana_f_ F1 =e ana_f_ F2.
 Proof.
   simpl. fix Ih 2. intros x0 [x Fx] F2. clear x0. destruct F2 as [x Fy].
@@ -730,11 +431,11 @@ Proof.
   apply Ih. Guarded.
 Qed.
 
-Definition ana_f `{F : functor Sh P} `{eA : equiv A} (h : FCoAlg F A)
+Definition ana_f `{F : Container Sh P} `{eA : equiv A} (h : FCoAlg F A)
   : A -> LFix F
   := fun x => ana_f_ (finite h x).
 
-Lemma ana_arr `{F : functor Sh P} `{eA : equiv A} (h : FCoAlg F A)
+Lemma ana_arr `{F : Container Sh P} `{eA : equiv A} (h : FCoAlg F A)
   : forall x y, x =e y -> ana_f h x =e ana_f h y.
 Proof.
   unfold ana_f. intros x y. generalize (finite h x) (finite h y). revert x y.
@@ -744,10 +445,10 @@ Proof.
     destruct (f_eq h Hxy). auto.
 Qed.
 
-Lemma LFixR_fold `{F : functor Sh P} (x y : LFix F) : LFixR x y = (x =e y).
+Lemma LFixR_fold `{F : Container Sh P} (x y : LFix F) : LFixR x y = (x =e y).
 Proof. auto. Qed.
 
-Definition ana `(F : functor Sh P) A (eA : equiv A)
+Definition ana `(F : Container Sh P) A (eA : equiv A)
            (h : FCoAlg F A) : A ~> LFix F
   := {| app := fun x =>
                  (fix f x H :=
@@ -758,7 +459,7 @@ Definition ana `(F : functor Sh P) A (eA : equiv A)
        f_eq := ana_arr h
      |}.
 
-Lemma ana_univ_r `(F : functor Sh P) A (eA : equiv A)
+Lemma ana_univ_r `(F : Container Sh P) A (eA : equiv A)
       (h : FCoAlg F A) (f : A ~> LFix F)
   : f =e l_in \o fmap f \o h -> f =e ana h.
 Proof.
@@ -768,7 +469,7 @@ Proof.
   split; [reflexivity| intros d1 d2 e]. rewrite (elem_val_eq e). apply Ih.
 Qed.
 
-Lemma ana_univ_l `{F : functor Sh P} A {eA : equiv A}
+Lemma ana_univ_l `{F : Container Sh P} A {eA : equiv A}
       (h : FCoAlg F A) (f : A ~> LFix F)
   : f =e ana h -> f =e l_in \o fmap f \o h.
 Proof.
@@ -779,27 +480,27 @@ Proof.
   intros Hrw. rewrite Hrw. apply ana_f_irr.
 Qed.
 
-Lemma ana_univ `{F : functor Sh P} A {eA : equiv A}
+Lemma ana_univ `{F : Container Sh P} A {eA : equiv A}
       (h : FCoAlg F A) (f : A ~> LFix F)
   : f =e ana h <-> f =e l_in \o fmap f \o h.
 Proof. split;[apply ana_univ_l|apply ana_univ_r]. Qed.
 
 (** Hylomorphisms **)
 
-Definition hylo_f_ `{F : functor Sh P}
+Definition hylo_f_ `{F : Container Sh P}
            A B {eA : equiv A} {eB : equiv B}
            (g : Alg F B) (h : CoAlg F A)
   : forall (x : A), FinF h x -> B
   := fix f x H :=
        match h x as h0
              return
-             (forall e : elem_of (shape h0), FinF h (cont h0 e)) ->
+             (forall e : Pos (shape h0), FinF h (cont h0 e)) ->
              B
        with
        | MkCont s_x c_x => fun H => g (MkCont s_x (fun e => f (c_x e) (H e)))
        end (FinF_inv H).
 
-Lemma hylo_f_irr `{F : functor Sh P}
+Lemma hylo_f_irr `{F : Container Sh P}
            A B {eA : equiv A} {eB : equiv B}
            (g : Alg F B) (h : CoAlg F A)
   : forall (x : A) (F1 F2 : FinF h x), hylo_f_ g F1 =e hylo_f_ g F2.
@@ -810,12 +511,12 @@ Proof.
   rewrite (elem_val_eq e). simpl in *. apply Ih. Guarded.
 Qed.
 
-Definition hylo_f `{F : functor Sh P}
+Definition hylo_f `{F : Container Sh P}
            A B {eA : equiv A} {eB : equiv B}
            (g : Alg F B) (h : FCoAlg F A)
   := fun x => hylo_f_ g (finite h x).
 
-Lemma hylo_arr `{F : functor Sh P}
+Lemma hylo_arr `{F : Container Sh P}
            A B {eA : equiv A} {eB : equiv B}
            (g : Alg F B) (h : FCoAlg F A)
   : forall x y, x =e y -> hylo_f g h x =e hylo_f g h y.
@@ -830,7 +531,7 @@ Proof.
   apply Ih. Guarded. apply Ec, e.
 Qed.
 
-Definition hylo `{F : functor Sh P}
+Definition hylo `{F : Container Sh P}
            A B {eA : equiv A} {eB : equiv B}
            (g : Alg F B) (h : FCoAlg F A)
   : A ~> B
@@ -839,7 +540,7 @@ Definition hylo `{F : functor Sh P}
            (fix f x H :=
               match h x as h0
                     return
-                    (forall e : elem_of (shape h0), FinF h (cont h0 e)) ->
+                    (forall e : Pos (shape h0), FinF h (cont h0 e)) ->
                     B
               with
               | MkCont s_x c_x =>
@@ -850,7 +551,7 @@ Definition hylo `{F : functor Sh P}
 (* "universal" (quotes) because these are *finite* hylos, otherwise this
    direction would not work
  *)
-Lemma hylo_univ_r `{F : functor Sh P}
+Lemma hylo_univ_r `{F : Container Sh P}
       A B {eA : equiv A} {eB : equiv B}
       (g : Alg F B) (h : FCoAlg F A) (f : A ~> B)
   : f =e g \o fmap f \o h -> f =e hylo g h.
@@ -863,7 +564,7 @@ Proof.
   rewrite (elem_val_eq e). apply Ih. Guarded.
 Qed.
 
-Lemma hylo_univ_l `{F : functor Sh P}
+Lemma hylo_univ_l `{F : Container Sh P}
       A B {eA : equiv A} {eB : equiv B}
       (g : Alg F B) (h : FCoAlg F A) (f : A ~> B)
   : f =e hylo g h -> f =e g \o fmap f \o h.
@@ -875,30 +576,30 @@ Proof.
   rewrite (elem_val_eq e). apply hylo_f_irr.
 Qed.
 
-Lemma hylo_univ `{F : functor Sh P}
+Lemma hylo_univ `{F : Container Sh P}
       A B {eA : equiv A} {eB : equiv B}
       (g : Alg F B) (h : FCoAlg F A) (f : A ~> B)
   : f =e hylo g h <-> f =e g \o fmap f \o h.
 Proof. split;[apply hylo_univ_l|apply hylo_univ_r]. Qed.
 
-Corollary hylo_unr `{F : functor Sh P}
+Corollary hylo_unr `{F : Container Sh P}
       A B {eA : equiv A} {eB : equiv B}
       (g : Alg F B) (h : FCoAlg F A)
   : hylo g h =e g \o fmap (hylo g h) \o h.
 Proof. rewrite <-hylo_univ. reflexivity. Qed.
 
-Lemma fin_out `(F : functor Sh P) : forall x, FinF (F:=F) l_out x.
+Lemma fin_out `(F : Container Sh P) : forall x, FinF (F:=F) l_out x.
 Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
 
-Definition f_out `(F : functor Sh P) : FCoAlg F (LFix F) :=
+Definition f_out `(F : Container Sh P) : FCoAlg F (LFix F) :=
   exist _ _ (fin_out (F:=F)).
-Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {Ep F}.
+Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
 
-Lemma hylo_cata `{F : functor Sh P} B {eB : equiv B} (g : Alg F B)
+Lemma hylo_cata `{F : Container Sh P} B {eB : equiv B} (g : Alg F B)
   : cata g =e hylo g f_out.
 Proof. rewrite hylo_univ. apply cata_univ. reflexivity. Qed.
 
-Lemma hylo_ana `{F : functor Sh P} A {eA : equiv A} (h : FCoAlg F A)
+Lemma hylo_ana `{F : Container Sh P} A {eA : equiv A} (h : FCoAlg F A)
   : ana h =e hylo l_in h.
 Proof. rewrite hylo_univ. apply ana_univ. reflexivity. Qed.
 
@@ -922,7 +623,7 @@ Lemma splitC A B C
   : f1 =e f2 -> g1 =e g2 -> f1 \o g1 =e f2 \o g2.
 Proof. intros ->->. reflexivity. Qed.
 
-Lemma hylo_fusion_l `{F : functor Sh P} A B C
+Lemma hylo_fusion_l `{F : Container Sh P} A B C
       {eA : equiv A} {eB : equiv B} {eC : equiv C}
       (h1 : FCoAlg F A) (g1 : Alg F B) (g2 : Alg F C) (f2 : B ~> C)
       (E2 : f2 \o g1 =e g2 \o fmap f2)
@@ -939,7 +640,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma hylo_fusion_r `{F : functor Sh P} A B C
+Lemma hylo_fusion_r `{F : Container Sh P} A B C
       {eA : equiv A} {eB : equiv B} {eC : equiv C}
       (h1 : FCoAlg F B) (g1 : Alg F C) (h2 : FCoAlg F A)
       (f1 : A ~> B) (E1 : h1 \o f1 =e fmap f1 \o h2)
@@ -956,7 +657,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma deforest `{F : functor Sh P} A B C
+Lemma deforest `{F : Container Sh P} A B C
       {eA : equiv A} {eB : equiv B} {eC : equiv C}
       (h1 : FCoAlg F A) (g1 : Alg F B) (h2 : FCoAlg F B) (g2 : Alg F C)
       (INV: h2 \o g1 =e id)
@@ -977,7 +678,7 @@ Proof.
   reflexivity.
 Qed.
 
-Corollary cata_ana_hylo `(F : functor Sh P)
+Corollary cata_ana_hylo `(F : Container Sh P)
           A B {eA : equiv A} {eB : equiv B}
           (g : Alg F B) (h : FCoAlg F A)
   : cata g \o ana h =e hylo g h.
@@ -1029,13 +730,13 @@ Section ExQsort.
            |}.
     intros [??] [??] [E1 E2]. simpl in *.  subst. auto.
   Defined.
-  Instance TreeF (A : Type) : functor (Ts A) Tp :=
+  Instance TreeF (A : Type) : Container (Ts A) Tp :=
     { dom := t_dom A }.
   Definition Tree A := LFix (TreeF A).
 
-  Lemma dom_leaf_false A : elem_of (F:=TreeF A) (Leaf A) -> False.
+  Lemma dom_leaf_false A : Pos (F:=TreeF A) (Leaf A) -> False.
   Proof. intros []. simpl in *. discriminate. Qed.
-  Definition dom_leaf A B (x : elem_of (F:=TreeF A) (Leaf A)) : B :=
+  Definition dom_leaf A B (x : Pos (F:=TreeF A) (Leaf A)) : B :=
     False_rect _ (dom_leaf_false x).
 
   Definition a_leaf (A X : Type)
@@ -1052,7 +753,7 @@ Section ExQsort.
     : option (A * X * X)
     :=
     let (s, k) := x in
-       match s return (elem_of s -> X) -> _ with
+       match s return (Pos s -> X) -> _ with
        | Leaf _ => fun _ => None
        | Node x =>
            fun k=>
@@ -1141,10 +842,10 @@ Section ExQsort.
   Proof.
     intros x. generalize (PeanoNat.Nat.leb_refl (List.length x)).
     generalize (length x) at 2. intros n. revert x.
-    induction n as [|n Ih]; simpl;intros [|h t] H; simpl in *; try discriminate;
-      constructor; simpl; intros e; try destruct (dom_leaf_false e).
+    induction n as [|n Ih]; intros [|h t] H; simpl in *; try discriminate;
+      constructor; intros e; try destruct (dom_leaf_false e).
     destruct e as [se ke].
-    destruct se; simpl in *; clear ke; apply Ih, length_filter; trivial.
+    destruct se; simpl in *; apply Ih, length_filter, H.
   Qed.
 
   Definition tsplit : FCoAlg (TreeF nat) (list nat)
@@ -1158,8 +859,29 @@ Section ExQsort.
   Definition qsort : list nat -> list nat := hylo merge tsplit.
 End ExQsort.
 
-From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 
+Require Import Program.
+
+Program Fixpoint qsort_proc (l : list nat) {measure (length l)} :=
+  match l with
+  | nil => nil
+  | cons h t => qsort_proc (List.filter (fun x => Nat.leb x h) t) ++
+                  h :: qsort_proc (List.filter (fun x => negb (Nat.leb x h)) t)
+  end%list.
+Next Obligation.
+  simpl. clear qsort_proc. induction t; simpl; auto.
+  elim (Nat.leb a h); simpl.
+  - apply Arith_prebase.lt_n_S_stt, IHt.
+  - apply PeanoNat.Nat.lt_lt_succ_r, IHt.
+Qed.
+Next Obligation.
+  simpl. clear qsort_proc. induction t; simpl; auto.
+  elim (Nat.leb a h); simpl.
+  - apply PeanoNat.Nat.lt_lt_succ_r, IHt.
+  - apply Arith_prebase.lt_n_S_stt, IHt.
+Qed.
+
+From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
 (* Set Extraction Conservative Types. *)
@@ -1170,6 +892,7 @@ Extraction Inline comp.
 Extraction Inline app.
 Extraction Inline coalg.
 Extraction Inline val.
+Extraction Inline shape.
 Extraction Inline cont.
 Extraction Inline hylo.
 Extraction Inline hylo_f.
