@@ -128,34 +128,60 @@ quicksort [] = []
 quicksort ls = let (xs, x, ys) = partition ls in
                         (quicksort xs) ++ [x] ++ (quicksort ys)
 \end{minted}
-While both \haskell{partition} and the \haskell{quicksort} program using it are
-well-defined functions a proof assistant such as Agda or Coq cannot accept such
-definitions.
+While \haskell{quicksort} is a well-defined mathematical function, a proof
+assistant such as Agda or Coq is not able to accept such definitions. The reason
+is that the function \emph{destructuring} the input, that is the
+\haskell{partition} function is not simply destructuring the list returning the
+head and the tail of it, but it returns two sublists with the head as a pivot.
 
-The argument can be given on pen-and-paper by showing the \haskell{partition} is
-a function that always returns two sublists which are smaller than the one we
-started with which means the repeated application of \haskell{partition} will
-eventually lead to termination.
+While the syntactic checker of a proof assistant cannot understand that these
+two sublists are eventually going to be smaller than the original input we can
+can give a pen-and-paper by showing the \haskell{partition} is a
+\emph{well-founded coalgebra} on the functor $(- \times A \times -)$ for a fixed
+type $A$. Here the term ``well-founded'' refers to the fact that the infinite
+iteration of this coalgebra will produce a \emph{finite} binary tree with nodes
+in $A$.
 
-The quicksort algorithm is a \emph{divide-and-conquer} algorithm. Such
-algorithms are structured in three parts: first, the input is broken down in
-smaller sub-problems by means of a \emph{well-founded coalgebra}.Secondly, these
-sub-problems are computed recursively and, finally, the results of the recursive
-call are put together by a an algebra.
+More generally, this is an instance of a \emph{divide-and-conquer} algorithm.
+Such algorithms are structured in three parts: first, the input is broken down
+in smaller sub-problems by means of a well-founded coalgebra. Secondly,
+these sub-problems are computed recursively and, finally, the results of the
+recursive call are put together by a an algebra. This particular way of
+doing recursion has been named in the functional programming literature as a hylomorphism~\cite{MeijerFP91, HuIT96}.
 
-Practically, every program can be turned into an hylomorphism by means of the
-conjugate rule~\cite{HinzeWG15}. This can be paraphrased by saying
+Many years later Hinze et al.~\cite{HinzeWG15} showed that every recursive
+program can be turned into an hylomorphism by means of the conjugate rule. The
+essence of this result is that every complex recursion scheme can be explained by its associated \emph{adjunction} which establishes a way of reducing the proof obligation
+for the complex recursion scheme into the proof obligation for a basic hylomorphism.
+This can be paraphrased by saying
 \begin{center}
   ``\emph{every recursion scheme can be formalised as an hylomorphism}''
 \end{center}
 
-This has been a useful for structuring functional programs in a way that it
-guarantees termination (or productivity) even in programming languages with
-general recursion~\cite{DanielssonHJG06}.
+Since then this result has had huge impact in the functional programming
+community for structuring functional programs in a way that it guarantees
+termination (or productivity) in programming languages with general
+recursion~\cite{DanielssonHJG06}.
+
+There is a tension:
+\begin{itemize}
+\item On one hand we can allow general recursion and the employ recursion schemes to help the programmer structuring programs so that they terminate
+  \item on the other hand we could forbid non-termination, but at this point there is no algorithm to tell termination and non-termination apart.
+\end{itemize}
+
+The first option, helps the programmer but does not guarantee termination, since the programmer can still feed to the recursion scheme a functor that does not have a fixed-point
+or that has an algebra that does not terminate.
+
+The second option forbids non-termination, but does not allow all terminating programs.
 
 With this work we intend to begin a study of recursion scheme beyond the world
-of functional programming to the one of dependently typed languages such as a
-the ones employed in proof assistants like Agda or Coq.
+of functional programming to the one of dependent type theories such as a the
+ones employed in proof assistants like Agda or Coq where non-termination is not
+included in the language. For type theories it has been a long-standing
+challenge to come up with a sound algorithm which rejects all programs that do
+not terminate (soundness) and accepts as many well-defined programs as possible
+(completeness). Our aim is to provide an additional tool to the every-day
+programmer to be able to extend the range of recursive programs we can write.
 
 One of the challenges here is to be able to keep the theory of recursions
 schemes as general as possible while maintaining its practical usefulness. In
