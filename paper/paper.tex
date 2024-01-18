@@ -45,6 +45,7 @@
   urlcolor=BrickRed
 }
 \newcommand{\mpav}[1]{\textcolor{red}{\textsc{Marco}: #1}}
+\newcommand{\dcas}[1]{\textcolor{red}{\textsc{David}: #1}}
 \newcommand{\proofcomment}[1]{\text{\{ #1 \}}}
 \newenvironment{proofof}[1] {\begin{proof}[Proof of {#1}]}{\end{proof}}
 \newcommand{\eqdef}{\stackrel{\mathrm{\Delta}}{=}}
@@ -104,6 +105,7 @@
 
 \maketitle
 \section{Introduction}
+
 Recursive definitions cannot be proven well-defined automatically due to the
 halting problem. Modern proof assistants like Coq or Agda provide a sound, but
 incomplete algorithm which syntactically checks for termination or productivity.
@@ -160,6 +162,22 @@ community for structuring functional programs in a way that it guarantees
 termination (or productivity) in programming languages with general
 recursion~\cite{DanielssonHJG06}.
 
+\dcas{My take would be different here from now on. See below:}
+
+Recursion schemes enjoy generic algebraic laws for program manipulation. Many
+common optimisations and transformations are instances of such laws. Examples
+of this include shortcut deforestation~\cite{TakanoM95}, and
+parallelisations~\cite{Gibbons96:Third}. \dcas{TODO: add more examples?}
+
+With this work, we study the formalisation of hylomorphism laws in proof
+assistants like Coq to derive efficient and correct recursive algorithms by
+program calculation techniques. Furthermore, our encoding of hylomorphisms
+allows Coq's code extraction mechanism to produce OCaml code that resembles
+what a programmer would have writen manually.
+
+\dcas{END (TODO: merge with Marco's. I would omit (or take parts of the) below)}
+
+
 There is a tension:
 \begin{itemize}
   \item On one hand we can allow general recursion and the employ recursion
@@ -175,6 +193,7 @@ have a fixed-point or that has an algebra that does not terminate.
 The second option forbids non-termination, but does not allow all terminating
 programs.
 
+
 With this work we intend to begin a study of the applications of recursion
 schemes that goes beyond functional programming, that is to dependent type
 theories such as a the ones employed in proof assistants like Agda or Coq where
@@ -184,6 +203,8 @@ terminate (soundness) and accepts as many well-defined programs as possible
 (completeness). Our aim is to provide an additional tool to the every-day
 programmer to be able to extend the range of recursive programs we can write.
 
+
+\dcas{Note: the below is useful to keep in the intro}
 One of the challenges here is to be able to keep the theory of recursions
 schemes as general as possible while maintaining its practical usefulness. In
 order to do this, we have to make some design choices which differ a bit from
@@ -421,6 +442,17 @@ recursive function monad~\cite{McBride15, BoveC01}
 ~\cite{AtkeyM13, PaviottiMB15}
   \item PACO library~\cite{HurNDV13}
   \item Sized Types \cite{AbelPTS13, AbelP16}
+  \item IMPORTANT!!!!! Coq extraction from recursion
+    schemes~\cite{larchey2022braga} \dcas{Check bibtex}
+  \item Not that related: extraction for mutable arrays~\cite{SAKAGUCHI2020102372}
+  \item Recursion schemes in Coq (but not hylos)~\cite{MurataE19}
+  \item EVEN MORE IMPORTANT!!! 2023 POPL paper on divide and conquer code in
+    Coq~\cite{AbreuDHJMS23}.  Some differences to point out: they require
+    functional-extensionality axiom. We are axiom-free. Little discussion about
+    extraction. They focus mostly on erasing termination proofs, but they do
+    not discuss "what does their extracted code look like". Their
+    representation of Functors leads me to think that they will produce loads
+    of "Obj.magic", but we'd need to check this. 
 \end{itemize}
 
 \printbibliography[heading=bibintoc]
