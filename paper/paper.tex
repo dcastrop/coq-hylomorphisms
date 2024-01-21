@@ -114,8 +114,7 @@ directly under a constructor to make sure that this function always produce at
 least one element after each recursive step.
 
 As mentioned, some functions, though well-defined, cannot be accepted by the
-proof assistant. One example of this fact is the quicksort algorithm given by
-the \haskell{partition} and \haskell{quicksort} function below (written in
+proof assistant. One example is the quicksort algorithm. This is given by the \haskell{partition} and \haskell{quicksort} function below (written in
 Haskell code):
 \begin{minted}{haskell}
 partition :: [a] -> ([a], a, [a])
@@ -155,34 +154,30 @@ a basic hylomorphism. This can be paraphrased by saying
   ``\emph{every recursion scheme can be formalised as an hylomorphism}''
 \end{center}
 
-Since then this result has had huge impact in the functional programming
-community for structuring functional programs in a way that it guarantees
-termination (or productivity) in programming languages with general
-recursion~\cite{DanielssonHJG06}.
+This result has given a much needed unifying view of recursion scheme which
+helped understanding their nature and also in providing a unified way of
+reasoning about recursive programs by means of fusion laws.
 
-There is a tension:
-\begin{itemize}
-  \item On one hand we can allow general recursion and the employ recursion
-schemes to help the programmer structuring programs so that they terminate
-  \item on the other hand we could forbid non-termination, but at this point
-there is no algorithm to tell termination and non-termination apart.
-\end{itemize}
+All in all, the functional programming way of dealing with recursion is to just
+allow all types of recursion and then restricting ourselves to only the
+recursion schemes provided by the given libraries. This gives a way of ``fast
+and loose reasoning''~\cite{DanielssonHJG06} which works provided that the user
+is somewhat aware of the perils of feeding this libraries with potentially
+non-terminating programs.
 
-The first option, helps the programmer but does not guarantee termination, since
-the programmer can still feed to the recursion scheme a functor that does not
-have a fixed-point or that has an algebra that does not terminate.
-
-The second option forbids non-termination, but does not allow all terminating
-programs.
+The type theoretical approach instead is to reject all definitions which cannot
+be proven well-defined. It is safer, but incomplete.
 
 With this work we intend to begin a study of the applications of recursion
 schemes that goes beyond functional programming, that is to dependent type
 theories such as a the ones employed in proof assistants like Agda or Coq where
-non-termination is outright rejected.  This has been a long-standing challenge
-to come up with a sound algorithm which rejects all programs that do not
-terminate (soundness) and accepts as many well-defined programs as possible
-(completeness). Our aim is to provide an additional tool to the every-day
-programmer to be able to extend the range of recursive programs we can write.
+non-termination is outright rejected.
+
+This has been a long-standing challenge to come up with a sound algorithm which
+rejects all programs that do not terminate (soundness) and accepts as many
+well-defined programs as possible (completeness). Our aim is to provide an
+additional tool to the every-day programmer to be able to extend the range of
+recursive programs we can write.
 
 One of the challenges here is to be able to keep the theory of recursions
 schemes as general as possible while maintaining its practical usefulness. In
