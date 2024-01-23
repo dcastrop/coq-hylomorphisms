@@ -75,13 +75,16 @@
 \newcommand{\catamor}[1]{\lbans\, #1\, \rbans}
 \newcommand{\cata}[1]{\lbans #1 \rbans}
 \newcommand{\ana}[1]{\llens #1 \rlens}
+\newcommand{\hylo}[2]{\text{hylo}\;#1\;#2}
 \newcommand{\fold}[1]{\catamor{#1}}
 \newcommand{\unfold}[1]{\anamor{#1}}
 \newcommand{\comp}{\cdot}
 \newcommand{\operator}[1]{\textsf{#1}}
 \newcommand{\Alg}{\text{-Alg}}
 \newcommand{\Free}{\text{Free\xspace}}
-
+\newcommand{\fmap}[1]{\text{fmap}\;#1}
+\newcommand{\Inop}{\operator{In}^{\circ}}
+\newcommand{\In}{\operator{In}}
 \newcommand{\CatC}{\mathcal{C}}
 \newcommand{\CatD}{\mathcal{D}}
 \newcommand{\CatE}{\mathcal{E}}
@@ -234,6 +237,42 @@ mutual recursion
   \item We validated optimisations in Coq and extract the resulting code to
 OCaml.
 \end{itemize}
+
+\section{Recursive Equations}
+\subsection{Catamorphisms and Anamorphism}
+A catamorphism is the unique program defined as
+\[
+  x = a \comp \fmap{x} \comp \Inop
+\]
+Can be implemented:
+\[
+  \cata{a} = \hylo{a}{\Inop}
+\]
+
+An anamorphism is the unique program satisfying the equation
+\[
+  x = \In \comp \fmap{x} \comp{c}
+\]
+and can be implemented by hylomorphisms
+\[
+  \ana{c} = \hylo{\In}{c}
+\]
+
+\subsection{Accumulators}
+For an algebra $a : D(A^{P}) \to A$:
+\begin{align*}
+  & x : (\mu F, A) \to B\\
+  & x (d, p) = a (\fmap{(\curry f)} \comp \Inop(d), p)
+\end{align*}
+
+\subsection{Mutu-Hylo}
+For an algebra $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and an algebra
+$a_{2} : D(A_{1} \times A_{2}) \to A_{2}$:
+\begin{align*}
+  & (f,g) : (\mu F, \mu F) \to (B_{1}, B_{2})\\
+  & (f,g) = (a_{1}, a_{2}) \comp (\fmap{\pair{f}{g}},\fmap{\pair{f}{g}}) \comp (\Inop, \Inop)
+\end{align*}
+
 
 \section{Background on Adjoint Folds}
 Say that we want to prove that the two functions below are well-defined
