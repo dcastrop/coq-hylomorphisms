@@ -57,10 +57,8 @@
 \newcommand{\bden}[1]{\llparenthesis#1 \rrparenthesis}
 \newcommand{\bigslant}[2]{{\raisebox{.2em}{$#1$}\left/\raisebox{-.2em}{$#2$}\right.}}
 \newcommand{\quotient}[2]{\bigslant{#1}{#2}}
-
 \newcommand{\curry}{\Lambda}
 \newcommand{\uncurry}{\begin{sideways}\begin{sideways}$\Lambda$\end{sideways}\end{sideways}}
-
 \newcommand{\Bool}{\mathbb{B}}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\Nat}{\N}
@@ -75,29 +73,35 @@
 \newcommand{\catamor}[1]{\lbans\, #1\, \rbans}
 \newcommand{\cata}[1]{\lbans #1 \rbans}
 \newcommand{\ana}[1]{\llens #1 \rlens}
-\newcommand{\hylo}[2]{\text{hylo}\;#1\;#2}
+\newcommand{\catafree}[1]{\Lbanana #1 \Rbanana}
+\newcommand{\anacofree}[1]{\Llens #1 \Rlens}
+\newcommand{\hylo}[2]{\cata{#1 \to #2}}
+\newcommand{\cohylo}[2]{\ana{#1 \to #2}}
 \newcommand{\fold}[1]{\catamor{#1}}
 \newcommand{\unfold}[1]{\anamor{#1}}
 \newcommand{\comp}{\cdot}
 \newcommand{\operator}[1]{\textsf{#1}}
+\newcommand{\head}{\operator{head}}
+\newcommand{\tail}{\operator{tail}}
 \newcommand{\Alg}{\text{-Alg}}
 \newcommand{\Free}{\text{Free\xspace}}
 \newcommand{\fmap}[1]{\text{fmap}\;#1}
-\newcommand{\Inop}{\operator{In}^{\circ}}
-\newcommand{\In}{\operator{In}}
+
+\newcommand{\InOp}{\operator{in}^{\circ}}
+\newcommand{\InIso}{\operator{in}}
+\newcommand{\OutOp}{\operator{out}^{\circ}}
+\newcommand{\OutIso}{\operator{out}}
+\newcommand{\call}{\operator{call}}
+
 \newcommand{\CatC}{\mathcal{C}}
 \newcommand{\CatD}{\mathcal{D}}
 \newcommand{\CatE}{\mathcal{E}}
 \newcommand{\CatI}{\mathcal{I}}
-
 \newcommand{\Set}{\mathbf{Set}}
 \newcommand{\iso}{\cong}
 \newcommand{\ceiling}[1]{\lceil #1 \rceil}
 \newcommand{\floor}[1]{\lfloor #1 \rfloor}
-
 \newcommand{\pair}[2]{\langle #1, #2 \rangle}
-\newcommand{\InIso}{\text{In}}
-
 \newcommand{\haskell}[1]{\mintinline{haskell}{#1}}
 
 \title{A Mechanised Library for Generic (Co)Programming}
@@ -108,7 +112,6 @@
 
 \maketitle
 \section{Introduction}
-
 Recursive definitions cannot be proven well-defined automatically due to the
 halting problem. Modern proof assistants like Coq or Agda provide a sound, but
 incomplete algorithm which syntactically checks for termination or productivity.
@@ -119,8 +122,9 @@ directly under a constructor to make sure that this function always produce at
 least one element after each recursive step.
 
 As mentioned, some functions, though well-defined, cannot be accepted by the
-proof assistant. One example is the quicksort algorithm. This is given by the \haskell{partition} and \haskell{quicksort} function below (written in
-Haskell code):
+proof assistant. One example is the quicksort algorithm. This is given by the
+\haskell{partition} and \haskell{quicksort} function below (written in Haskell
+code):
 \begin{minted}{haskell}
 partition :: [a] -> ([a], a, [a])
 partition (x:xs) = (filter (x <=) xs, x, filter (x >) xs)
@@ -166,18 +170,17 @@ reasoning about recursive programs by means of fusion laws.
 \dcas{My take would be different here from now on. See below:}
 
 Recursion schemes enjoy generic algebraic laws for program manipulation. Many
-common optimisations and transformations are instances of such laws. Examples
-of this include shortcut deforestation~\cite{TakanoM95}, and
+common optimisations and transformations are instances of such laws. Examples of
+this include shortcut deforestation~\cite{TakanoM95}, and
 parallelisations~\cite{Gibbons96:Third}. \dcas{TODO: add more examples?}
 
 With this work, we study the formalisation of hylomorphism laws in proof
 assistants like Coq to derive efficient and correct recursive algorithms by
 program calculation techniques. Furthermore, our encoding of hylomorphisms
-allows Coq's code extraction mechanism to produce OCaml code that resembles
-what a programmer would have writen manually.
+allows Coq's code extraction mechanism to produce OCaml code that resembles what
+a programmer would have writen manually.
 
 \dcas{END (TODO: merge with Marco's. I would omit (or take parts of the) below)}
-
 
 There is a tension:
 \begin{itemize}
@@ -190,7 +193,6 @@ there is no algorithm to tell termination and non-termination apart.
 The type theoretical approach instead is to reject all definitions which cannot
 be proven well-defined. It is safer, but incomplete.
 
-
 With this work we intend to begin a study of the applications of recursion
 schemes that goes beyond functional programming, that is to dependent type
 theories such as a the ones employed in proof assistants like Agda or Coq where
@@ -201,7 +203,6 @@ rejects all programs that do not terminate (soundness) and accepts as many
 well-defined programs as possible (completeness). Our aim is to provide an
 additional tool to the every-day programmer to be able to extend the range of
 recursive programs we can write.
-
 
 \dcas{Note: the below is useful to keep in the intro}
 One of the challenges here is to be able to keep the theory of recursions
@@ -239,42 +240,94 @@ OCaml.
 \end{itemize}
 
 \section{Recursive Equations}
+
 \subsection{Catamorphisms and Anamorphism}
 A catamorphism is the unique program defined as
 \[
-  x = a \comp \fmap{x} \comp \Inop
+  x = a \comp \fmap{x} \comp \InOp
 \]
 Can be implemented:
 \[
-  \cata{a} = \hylo{a}{\Inop}
+  \cata{a} = \hylo{\InOp}{a}
 \]
 
 An anamorphism is the unique program satisfying the equation
 \[
-  x = \In \comp \fmap{x} \comp{c}
+  x = \OutOp \comp \fmap{x} \comp{c}
 \]
-and can be implemented by hylomorphisms
+The anamorphism is indicated by $\ana{c}$. Recursion schemes given by a
+corecursive algebra such as $\OutIso$ are also called hylomorphism but they are
+indicated with the symbol for the anamorphism, $\cohylo{c}{\OutOp}$.
+
+\paragraph{Free Monads}
+Given an endofunctor $D$ and a type $A$ the free monad is defined as the least
+solution to the following domain equation
 \[
-  \ana{c} = \hylo{\In}{c}
+  D^{*}A = A + DD^{*}A
 \]
+where $\eta_{A} : A \to D^{*}A$ is the left injection and
+$\call_{A} : DD^{*}A \to D^{*}A$ is the right injection. Given an algebra
+$a : DA \to A$ there is a unique solution to the following recursive equation
+\[
+  x \comp \call_{A} = a \comp D(x)
+\]
+that is $\catafree{a} = \cata{[id_{A}; a]}$.
+
+\paragraph{Cofree Comonads}
+Given an endofunctor $D$ and a type $A$ the cofree comonad is defined as the
+greatest solution to the following domain equation
+\[
+  D_{\infty}A = A + DD_{\infty}A
+\]
+where $\epsilon_{A} : D_{\infty}A \to A$ is the first projection and
+$\tail_{A} : D_{\infty}A \to DD_{\infty}A$ is the second projection.
+
+Given an algebra $c : A \to DA$ there is a unique solution to the following
+recursive equation
+\[
+  \tail_{A} \comp x = D(x) \comp c
+\]
+that is $\anacofree{c} = \ana{\pair{id_{A}}{c}}$.
 
 \subsection{Accumulators}
-For an algebra $a : D(A^{P}) \to A$:
+For an algebra $a : D(A^{P})\times P \to A$:
 \begin{align*}
-  & x : (\mu F, A) \to B\\
-  & x (d, p) = a (\fmap{(\curry f)} \comp \Inop(d), p)
+  & g : \mu D \times P \to B\\
+  & g (d, p) = a (\fmap{(\curry g)} \comp \InOp(d), p)
 \end{align*}
+
+\paragraph{Hylo Implementation}
+Given an algebra $a : D(A^{P}) \to A^{P}$ the accumorphism corresponds to the unique
+solution to the following equation
+\begin{align*}
+  & f : \mu D \to A^{P}\\
+  & f = a \comp \fmap (f) \comp \InOp
+\end{align*}
+thus $f = \hylo{\InOp}{a}$.
+
+The complex recursion scheme is then
+$g = \uncurry\hylo{\InOp}{a} : \mu D \times P \to B$.
 
 \subsection{Mutu-Hylo}
 For an algebra $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and an algebra
 $a_{2} : D(A_{1} \times A_{2}) \to A_{2}$:
 \begin{align*}
-  & (f,g) : (\mu F, \mu F) \to (B_{1}, B_{2})\\
-  & (f,g) = (a_{1}, a_{2}) \comp (\fmap{\pair{f}{g}},\fmap{\pair{f}{g}}) \comp (\Inop, \Inop)
+  & (g_{1}, g_{2}) : (\mu D, \mu D) \to (A_{1}, A_{2})\\
+  & (g_{1}, g_{2}) = (a_{1}, a_{2}) \comp (\fmap{\pair{g_{1}}{g_{2}}},\fmap{\pair{g_{1}}{g_{2}}}) \comp (\InOp, \InOp)
 \end{align*}
 
+\paragraph{Hylo Implementation}
+Given an algebra $a : D(A_{1} \times A_{2}) \to A_{1} \times A_{2}$
+\begin{align*}
+  & f : \mu D \to A_{1} \times A_{2}\\
+  & f = a \comp \fmap{f} \comp \InOp
+\end{align*}
+for which the solution is an hylo $f = \hylo{\InOp}{a}$.
 
-\section{Background on Adjoint Folds}
+The mutumorphism can be implemented as
+$(g_{1}, g_{2}) = (\pi_{1} \comp f, \pi_{2} \comp f)$.
+
+\subsubsection{Example}
 Say that we want to prove that the two functions below are well-defined
 
 \begin{tabular}{LL}
@@ -309,6 +362,48 @@ numbers.
 
 This is an instance of a more general phenonema whose argumet uses category
 theory.
+
+
+\subsection{Course-of-Value Recursion}
+First we have to assume a distributive law $\lambda : DG \to GD$.
+For an algebra $a : D(D_{\infty} A) \to A$,
+\begin{align*}
+  & g : \mu F \to A\\
+  & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
+\end{align*}
+where $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX  $ is a $D$-algebra on $GX$. The catamorphism of this algebra has the following type
+\[
+  \cata{G^{\lambda}(\InIso)} : \mu D \to G\mu D
+\]
+which is the type of a $G$-algebra used to initialise the memory table.
+
+\paragraph{Hylo Implementation}
+Given an algebra $a : DG_{\infty} A \to G_{\infty} A$ we can equivalently ask
+what is the unique solution of the following equation
+\begin{align*}
+  & f : \mu F \to G_{\infty} A\\
+  & f = a \comp \fmap{f} \comp \InOp
+\end{align*}
+The solution to this equation can be found again using an hylo
+$f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.
+The course-of-value recursion can be recovered from this by setting
+$g = \head \comp f$
+
+
+\subsection{Course-of-Value Recursion with Finite Memory Table}
+It can be proven that if $c$ is a recursive coalgebra, then the hylomorphism for
+any algebra $a$ generates a finite output.  In other words, as far as the
+hylomorphism is concerned $G_{\infty}$ can be regarded as its finite version
+\[
+  G_{*} A = \mu X. A \times G X
+\]
+We now rewrite course-of-value recursion using the finite memory table
+For an algebra $a : D(D_{*} A) \to A$,
+\begin{align*}
+  & g : \mu F \to A
+  & g = a \comp D(G_{*}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
+\end{align*}
+
 
 \section{Adjoint Folds}
 In order to transform $\operator{even-odd}$ into two functions $\operator{even}$
