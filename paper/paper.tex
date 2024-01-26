@@ -62,6 +62,7 @@
 \newcommand{\Bool}{\mathbb{B}}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\Nat}{\N}
+\newcommand{\R}{\mathbb{R}}
 \newcommand{\Sets}{\mathbf{Set}}
 \newcommand{\blacklater}{\blacktriangleright}
 \newcommand{\tot}{\mathcal{S}}
@@ -327,6 +328,15 @@ for which the solution is an hylo $f = \hylo{\InOp}{a}$.
 The mutumorphism can be implemented as
 $(g_{1}, g_{2}) = (\pi_{1} \comp f, \pi_{2} \comp f)$.
 
+\paragraph{Coq Implementation}
+Given the two algebras  $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and
+$a_{2} : D(A_{1} \times A_{2}) \to A_{2}$.
+We define the two recursive functions  $f_{1}$ and $f_{2}$ as
+
+\[
+  f_{1} = \pi_{1} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}} \qquad f_{2} = \pi_{2} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}}
+\]
+
 \subsubsection{Example}
 Say that we want to prove that the two functions below are well-defined
 
@@ -363,12 +373,11 @@ numbers.
 This is an instance of a more general phenonema whose argumet uses category
 theory.
 
-
 \subsection{Course-of-Value Recursion}
 First we have to assume a distributive law $\lambda : DG \to GD$.
 For an algebra $a : D(D_{\infty} A) \to A$,
 \begin{align*}
-  & g : \mu F \to A\\
+  & g : \mu D \to A\\
   & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
 \end{align*}
 where $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX  $ is a $D$-algebra on $GX$. The catamorphism of this algebra has the following type
@@ -385,10 +394,8 @@ what is the unique solution of the following equation
   & f = a \comp \fmap{f} \comp \InOp
 \end{align*}
 The solution to this equation can be found again using an hylo
-$f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.
-The course-of-value recursion can be recovered from this by setting
-$g = \head \comp f$
-
+$f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.  The course-of-value recursion
+can be recovered from this by setting $g = \head \comp f$
 
 \subsection{Course-of-Value Recursion with Finite Memory Table}
 It can be proven that if $c$ is a recursive coalgebra, then the hylomorphism for
@@ -403,6 +410,31 @@ For an algebra $a : D(D_{*} A) \to A$,
   & g : \mu F \to A
   & g = a \comp D(G_{*}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
 \end{align*}
+
+\subsubsection{Histomorphism}
+The knapsack algorithm
+\begin{align*}
+  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
+  & \operator{knapsack}\; c = \operator{maximum}_{0} [v + \operator{knapsack}\;wvs\; (c - w) \mid (w,v) \leftarrow wvs, w \le c]
+\end{align*}
+
+Optimisation of the knapsack with Dynamic Programming.
+\begin{align*}
+  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
+  & \operator{knapsack}\;wvs\;c= table !! c \\
+  & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
+  & \qquad ks\; i = maximum_{0} [v + table!! (i-w) \mid (w,v) \leftarrow wvs, w \le i]
+\end{align*}
+
+\paragraph{Histomorphism}
+
+\begin{align*}
+  & \operator{dyna} : [(\Nat, \R)] \to \Nat \to \R\\
+  & \operator{knapsack}\;wvs\;c= table !! c\\
+  & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
+  & \qquad ks\; i = maximum_{0} [v + table!! (i-w) \mid (w,v) \leftarrow wvs, w \le i]
+\end{align*}
+
 
 
 \section{Adjoint Folds}
