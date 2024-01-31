@@ -83,10 +83,16 @@
 \newcommand{\comp}{\cdot}
 \newcommand{\operator}[1]{\textsf{#1}}
 \newcommand{\head}{\operator{head}}
+\newcommand{\inl}{\operator{inl}}
+\newcommand{\inr}{\operator{inr}}
 \newcommand{\tail}{\operator{tail}}
 \newcommand{\Alg}{\text{-Alg}}
 \newcommand{\Free}{\text{Free\xspace}}
 \newcommand{\fmap}[1]{\text{fmap}\;#1}
+
+\newcommand{\zero}{\operator{zero}}
+\newcommand{\Nil}{\operator{nil}}
+\newcommand{\Succ}{\operator{succ}}
 
 \newcommand{\InOp}{\operator{in}^{\circ}}
 \newcommand{\InIso}{\operator{in}}
@@ -272,7 +278,9 @@ $a : DA \to A$ there is a unique solution to the following recursive equation
 \[
   x \comp \call_{A} = a \comp D(x)
 \]
-that is $\catafree{a} = \cata{[id_{A}; a]}$.
+that is $\catafree{a} = \cata{[id_{A}; a]}$. With this operation we can extend
+the free algebra $\call$ to the multiplication $\mu : D^{*}D^{*}A \to D^{*}A$
+defined as $\mu = \catafree{\call}$.
 
 \paragraph{Cofree Comonads}
 Given an endofunctor $D$ and a type $A$ the cofree comonad is defined as the
@@ -280,15 +288,18 @@ greatest solution to the following domain equation
 \[
   D_{\infty}A = A + DD_{\infty}A
 \]
-where $\epsilon_{A} : D_{\infty}A \to A$ is the first projection and
+where $\head : D_{\infty}A \to A$ is the first projection and
 $\tail_{A} : D_{\infty}A \to DD_{\infty}A$ is the second projection.
-
 Given an algebra $c : A \to DA$ there is a unique solution to the following
 recursive equation
 \[
   \tail_{A} \comp x = D(x) \comp c
 \]
-that is $\anacofree{c} = \ana{\pair{id_{A}}{c}}$.
+that is $\anacofree{c} = \ana{\pair{id_{A}}{c}}$. With the latter operation we
+can extend $\tail$ to the comultiplication for the comonad
+$\delta : D_{\infty}A \to D_{\infty} D_{\infty}A$ defined by
+$\delta = \anacofree{\tail}$.
+
 
 \subsection{Accumulators}
 For an algebra $a : D(A^{P})\times P \to A$:
@@ -358,7 +369,7 @@ This function is clearly a catarmorphism:
   & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
   & \operator{even-odd} = \cata{a} \operator{ where }\\
   & \qquad \qquad a : 1 + (\Bool \times \Bool)\\
-  & \qquad \qquad a (\operator{nil}) = (\top, \bot)\\
+  & \qquad \qquad a (\Nil) = (\top, \bot)\\
   & \qquad \qquad a (\operator{x,y}) = (\neg x, \neg y)
 \end{align*}
 where $\cata{\cdot}$ takes a $(1+-)$ algebra on $\Bool \times \Bool$ and returns
@@ -374,28 +385,118 @@ This is an instance of a more general phenonema whose argumet uses category
 theory.
 
 \subsection{Course-of-Value Recursion}
-First we have to assume a distributive law $\lambda : DG \to GD$.
-For an algebra $a : D(D_{\infty} A) \to A$,
+The knapsack algorithm is defined as following in pseudo-Haskell code:
 \begin{align*}
-  & g : \mu D \to A\\
-  & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
+  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
+  & \operator{knapsack}\;wvs\; c = \operator{maximum}_{0}
+    [v + \operator{knapsack}\;wvs\; (c - w) \mid (w,v) \leftarrow wvs, w \le c]
 \end{align*}
-where $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX  $ is a $D$-algebra on $GX$. The catamorphism of this algebra has the following type
-\[
-  \cata{G^{\lambda}(\InIso)} : \mu D \to G\mu D
-\]
-which is the type of a $G$-algebra used to initialise the memory table.
+%
+with dynamic programming knapsack can be rephrased like this
+\begin{align*}
+  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
+  & \operator{knapsack}\;wvs\;c= table !! c \\
+  & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
+  & \qquad ks\; i = maximum_{0} [v + table!! (i - w) \mid (w,v) \leftarrow wvs, w \le i]
+\end{align*}
 
-\paragraph{Hylo Implementation}
-Given an algebra $a : DG_{\infty} A \to G_{\infty} A$ we can equivalently ask
-what is the unique solution of the following equation
+The recursion scheme is justified by solving a recursive equation.  First we
+define an operation to create a memory table representing the list of capacities
+$[0..c]$. We first define a functor $D X = 1 + X$ representing the base functor
+for constructing the naturals $\Nat = \mu D$ the we define the generating
+function by induction on the naturals
 \begin{align*}
-  & f : \mu F \to G_{\infty} A\\
-  & f = a \comp \fmap{f} \comp \InOp
+  & \operator{fan} : \Nat \to D_{\infty}\Nat\\
+  & \operator{fan} (0)    = \pair{0}{\inl}\\
+  & \operator{fan} (n+1)  = \pair{n+1}{\inr (\operator{fan}(n))}
 \end{align*}
-The solution to this equation can be found again using an hylo
-$f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.  The course-of-value recursion
-can be recovered from this by setting $g = \head \comp f$
+The recursion scheme from a comonad is then defined as follows
+\begin{align*}
+  & \operator{rsfc} : \Nat \to A\\
+  & \operator{rsfc} = alg \comp DD_{\infty}(\operator{rsfc}) \comp D(\operator{fan}) \comp \InOp
+\end{align*}
+At his point we can given the definition of the algebra $alg$ which effectively implements knapsack.
+Firs we define the $\operator{lookup}$ function which returns (if present) the element indexed in the memory table
+\begin{align*}
+  & \operator{lookup} : \Nat \to D_{\infty} \R \to \R_{\bot}\\
+  & \operator{lookup} (0,   \pair{r}{\textunderscore})  = r\\
+  & \operator{lookup} (n+1, \pair{r}{\inl})         = \bot\\
+  & \operator{lookup} (n+1, \pair{r}{\inr(table)})  = \operator{lookup} (n, table)
+\end{align*}
+and now we can define the algebra over the reals
+\begin{align*}
+  & \operator{alg} : DD_{\infty} \R \to \R\\
+  & \operator{alg}\; (\inl)  = 0\\
+  & \operator{alg}\; (\inr(table))  = \operator{maximun}_{0} [ v + \operator{lookup}\; table\; (i - w) \mid (w,v) \leftarrow wvs, w \le i]
+\end{align*}
+
+It remains to show how an $\operator{rsfc}$ is implemented in terms of hylomorhisms.
+
+% A recursion scheme from a comonad $D_{\infty}$ for a data functor $F$
+
+% For example, for the functor $(1 + -)$ an algebra over this functor is a
+% function $1 + X \to X$ is a pair of functions $\Nil : 1 \to X$ and
+% $\Succ : X \to X$. The cofree comonad over $D$ is defined as follows
+% \[
+%   D_{\infty} A \iso A \times (1 + D_{\infty})
+% \]
+% which is the the type of non-empty possibly infinite lists with elements in $A$
+
+
+% First we have to assume a distributive law
+% $\lambda : DD_{\infty} \to D_{\infty}D$.  For an algebra
+% $a : D(D_{\infty} A) \to A$,
+% \begin{align*}
+%   & g : \mu D \to A\\
+%   & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
+% \end{align*}
+% where
+% $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX$
+% is a $D$-algebra on $GX$. The catamorphism of this algebra has the following
+% type
+% \[
+%   \cata{G^{\lambda}(\InIso)} : \mu D \to G\mu D
+% \]
+% which is the type of a $G$-algebra used to initialise the memory table.
+
+% Given an algebra $a : DG_{\infty} A \to G_{\infty} A$ we can equivalently ask
+% what is the unique solution of the following equation
+% \begin{align*}
+%   & f : \mu F \to G_{\infty} A\\
+%   & f = a \comp \fmap{f} \comp \InOp
+% \end{align*}
+% The solution to this equation can be found again using an hylo
+% $f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.  The course-of-value recursion
+% can be recovered from this by setting $g = \head \comp f$
+
+% \subsubsection{Histomorphism}
+
+% The definition of $\lambda$ is:
+% \begin{align*}
+%   & \lambda : GG_{\infty} A \to G_{\infty} GA\\
+%   & \lambda = \fmap{(\fmap{\head})}\comp \anacofree{\fmap{\tail}}
+% \end{align*}
+% For example, for $GX = 1 + X$ we have to define
+% \begin{align*}
+%   & \lambda : 1 + G_{\infty} A \to G_{\infty} (1 + A)\\
+%   & \lambda(\inl) = \pair{\inl}{\lambda(\inl)}\\
+%   & \lambda(\inr(table)) = \pair{\inr (\head(table))}{\lambda (\tail (table))}
+% \end{align*}
+
+
+% % \begin{align*}
+% %   & \operator{lookup} :: \Nat \to G_{\infty} \R \to \operator{Maybe}\;\R\\
+% %   & \operator{lookup}\; \Zero       (\Cons{a}{\text{\textunderscore}})     = \Just{a}\\
+% %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Zero})                      = \Nothing\\
+% %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Succ table})                = \operator{lookup}\; n  table
+% % \end{align*}
+
+% % Defining the algebra
+% % \begin{align*}
+% %   & \operator{alg} :: D (G_{\infty} \R) \to \R\\
+% %   & \operator{alg}\; Zero           = 0\\
+% %   & \operator{alg}\; (Succ{table}) = maximum_{0} [v + \operator{lookup}\; table (i - w) | (w,v) \leftarrow wvs, w \le i]
+% % \end{align*}
 
 \subsection{Course-of-Value Recursion with Finite Memory Table}
 It can be proven that if $c$ is a recursive coalgebra, then the hylomorphism for
@@ -410,31 +511,6 @@ For an algebra $a : D(D_{*} A) \to A$,
   & g : \mu F \to A
   & g = a \comp D(G_{*}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
 \end{align*}
-
-\subsubsection{Histomorphism}
-The knapsack algorithm
-\begin{align*}
-  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
-  & \operator{knapsack}\; c = \operator{maximum}_{0} [v + \operator{knapsack}\;wvs\; (c - w) \mid (w,v) \leftarrow wvs, w \le c]
-\end{align*}
-
-Optimisation of the knapsack with Dynamic Programming.
-\begin{align*}
-  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
-  & \operator{knapsack}\;wvs\;c= table !! c \\
-  & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
-  & \qquad ks\; i = maximum_{0} [v + table!! (i-w) \mid (w,v) \leftarrow wvs, w \le i]
-\end{align*}
-
-\paragraph{Histomorphism}
-
-\begin{align*}
-  & \operator{dyna} : [(\Nat, \R)] \to \Nat \to \R\\
-  & \operator{knapsack}\;wvs\;c= table !! c\\
-  & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
-  & \qquad ks\; i = maximum_{0} [v + table!! (i-w) \mid (w,v) \leftarrow wvs, w \le i]
-\end{align*}
-
 
 
 \section{Adjoint Folds}
