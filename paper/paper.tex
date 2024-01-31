@@ -671,6 +671,43 @@ wrapped up in $L$. The transformation is done by just applying the isomorphism
 In the following section we instantiate the adjoint fold with some instances
 taken from the literature.
 
+\section{Mechanising Extractable Containers}
+
+\dcas{Subsections are tentative topics to remember what I need to fill in here,
+but these are not final}
+
+Our goals are: (1) that the mechanisation of hylomorphisms and their laws are
+axiom-free; and (2) Coq hylomorphisms can be extracted to recursive OCaml
+functions that use no instances of \mintinline{OCaml}{Obj.magic}. Note that
+although the use of \mintinline{OCaml}{Obj.magic} is safe in the code extracted
+by Coq, its presence may prevent some optimisations by the OCaml
+compiler\footnote{\dcas{I read this somewhere, search \& add reference/link}}.
+
+\subsection{Functors and Containers}
+
+\dcas{A first approach (problems with extraction, lots of Obj.magic, etc)}
+\begin{minted}{Coq}
+  Record Container (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
+    { shape : Shape; contents : Pos shape -> X }.
+\end{minted}
+
+\subsection{A Type for Morphisms}
+
+\section{Extracting Certified Hylomorphisms}
+
+\dcas{TODO: Hylo mechanisation, Hylo laws}
+
+\subsection{Algebras}
+
+\subsection{(Recursive) Coalgebras}
+
+\section{Examples}
+
+\paragraph{Quicksort \& Mergesort}
+
+\dcas{What else?}
+
+
 \section{Related Work}
 
 \begin{itemize}
