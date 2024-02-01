@@ -434,23 +434,22 @@ It remains to show how an $\operator{rsfc}$ is implemented in terms of
 hylomorhisms.
 
 \paragraph{Implementation into hylomorphisms}
-In order to implement rsfcs as hylos we need a
-parametric distributive law
+In order to implement rsfcs as hylos we need a parametric distributive law
 \[
   \lambda_{X} : GG_{\infty}X \to G_{\infty}GX
 \]
-This can be defined as $\lambda = G_{\infty}G(\head) \comp \anacofree{G(\tail)}$.
-The distributive law is instrumental to be able to lift coalgebras in the
-following sense. Give a $G$-coalgebra on $X$, a lifting $H$ is a functor which
-lifts this coalgebra to a $G$-coalgebra on $HX$.  In particular, the lifting
-$G_{\lambda}$ takes $G_{\infty}$-coalgebras on $X$ and transforms them into
-$G_{\infty}$-coalgebras on $GX$
+This can be defined as
+$\lambda = G_{\infty}G(\head) \comp \anacofree{G(\tail)}$.  The distributive law
+is instrumental to be able to lift coalgebras in the following sense. Give a
+$G$-coalgebra on $X$, a lifting $H$ is a functor which lifts this coalgebra to a
+$G$-coalgebra on $HX$.  In particular, the lifting $G_{\lambda}$ takes
+$G_{\infty}$-coalgebras on $X$ and transforms them into $G_{\infty}$-coalgebras
+on $GX$
 \begin{align*}
   & G_{\lambda}(c) : GA \to G_{\infty} GA\\
   & G_{\lambda}(c) = \lambda \comp G (c)
 \end{align*}
 where $c : C \to GC$.
-
 
 Now, given an algebra $a : GG_{\infty} A \to A$ on the carrier $A$ we can
 convert it into an algebra for the carrier $G_{\infty} A$ by
@@ -467,7 +466,6 @@ $\hylo{\InOp}{a} : \mu F \to G_{\infty}A$  and the rsfc is derived as follows
   & \operator{rsfc} : \mu G \to A \\
   & \operator{rsfc} = \head \comp \hylo{\InOp}{a}
 \end{align*}
-
 
 % A recursion scheme from a comonad $D_{\infty}$ for a data functor $F$
 
