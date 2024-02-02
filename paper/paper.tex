@@ -711,22 +711,81 @@ taken from the literature.
 \dcas{Subsections are tentative topics to remember what I need to fill in here,
 but these are not final}
 
-Our goals are: (1) that the mechanisation of hylomorphisms and their laws are
-axiom-free; and (2) Coq hylomorphisms can be extracted to recursive OCaml
+Our goals are: (1) the mechanisation of hylomorphisms and their laws should be
+axiom-free; and (2) Coq hylomorphisms should be extracted to recursive OCaml
 functions that use no instances of \mintinline{OCaml}{Obj.magic}. Note that
 although the use of \mintinline{OCaml}{Obj.magic} is safe in the code extracted
-by Coq, its presence may prevent some optimisations by the OCaml
-compiler\footnote{\dcas{I read this somewhere, search \& add reference/link}}.
+by Coq, it increases the Trusted Code Base, makes code less legible for
+programmers, and its presence will likely inhibit optimisations by the OCaml
+compiler\footnote{\dcas{I read this somewhere, search \& add reference/link?}}.
 
 \subsection{Functors and Containers}
 
+Mechanising functors in Coq is straightforward. But taking least/greatest
+fixpoints of the said functors may fail, due to not being strictly positive. A
+common approach to construct strictly positive functors in Coq is to use
+\emph{containers}. In essence, a container 
 \dcas{A first approach (problems with extraction, lots of Obj.magic, etc)}
 \begin{minted}{Coq}
   Record Container (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
     { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
 
-\subsection{A Type for Morphisms}
+\dcas{A better approach for extraction. Unfortunately, to remain axiom-free and
+heterogeneous equality we need to have a decidable ``Valid''}
+\begin{minted}{Coq}
+  Record Container (Shape : Set) (Pos : Set) 
+                   (Valid : Shape -> Pos -> Prop) (X : Set) :=
+    { shape : Shape; contents : {p | Valid shape pos} -> X }.
+\end{minted}
+
+\dcas{Solution to the previous problem}
+\begin{minted}{Coq}
+  Record Container (Shape : Set) (Pos : Set) 
+                   (valid : Shape -> Pos -> bool) (X : Set) :=
+    { shape : Shape; contents : {p | valid shape pos = true} -> X }.
+\end{minted}
+
+\dcas{A shape, a position, and a decidable predicate on the validity of a
+position in a shape define a functor}
+
+\begin{minted}{Coq}
+  Coercion is_true (b : bool) : Prop := b = true.
+  Class functor (Shape Pos : Set) := { valid : Shape -> Pos -> bool }.
+  Record Container `{functor Shape Pos} (X : Set) :=
+    { shape : Shape; contents : {p | valid shape pos} -> X }.
+\end{minted}
+
+\subsection{Types and Morphisms}
+
+Reasoning about the equality of containers requires reasoning about the
+equality of the contained elements. But the contained elements are given by a
+function. This means that container equality needs to be extensional, if we
+want to avoid the functional extensionality axiom. Furthermore, the equality of
+functions also needs to be extensional. We capture this fact by associating
+each type with an equivalence relation:
+
+\begin{minted}{Coq}
+  Class Equiv (T : Type) := 
+  { equiv : T -> T -> Prop;
+    e_refl : forall x, equiv x x;
+    e_sym : forall x y, equiv x y -> equiv y x;
+    e_trans : forall x y z, equiv x y -> equiv y z -> equiv x z;
+  }.
+\end{minted}
+
+\dcas{Morphisms must respect equivalences}:
+
+\begin{minted}{Coq}
+  Record Morph `{Equiv A} `{Equiv B} := 
+  { app : A -> B;
+    app_ext : forall x y, equiv x y -> equiv (app x) (app y);
+  }.
+
+\dcas{We provide common morphisms for polynomials: sums, products, const,
+  exponential}
+
+\end{minted}
 
 \section{Extracting Certified Hylomorphisms}
 
