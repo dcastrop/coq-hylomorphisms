@@ -46,6 +46,7 @@
 }
 \newcommand{\mpav}[1]{\textcolor{red}{\textsc{Marco}: #1}}
 \newcommand{\dcas}[1]{\textcolor{red}{\textsc{David}: #1}}
+\newcommand{\mvol}[1]{\textcolor{red}{\textsc{Michael}: #1}}
 \newcommand{\proofcomment}[1]{\text{\{ #1 \}}}
 \newenvironment{proofof}[1] {\begin{proof}[Proof of {#1}]}{\end{proof}}
 \newcommand{\eqdef}{\stackrel{\mathrm{\Delta}}{=}}
@@ -830,8 +831,8 @@ recursive function monad~\cite{McBride15, BoveC01}
 Another approach to certifying termination of nonstructurally recursive
 functions is the use of \emph{sized types}. Sized types were introduced in
 \textcite{HughesPS96} as a way to track/verify various properties of recursive
-programs, including productivity termination. The core idea of sized types is
-that types express bounds on the sizes of recursive data structures. This
+programs, including productivity and termination. The core idea of sized types
+is that types express bounds on the sizes of recursive data structures. This
 approach has been used to express nonstructurally recursive algorithms in Agda:
 \textcite{CopelloTB14} used sized types in a straightforward formulation of
 mergesort. Such an approach has also been used in MiniAgda~\cite{abs-1202-3496}.
