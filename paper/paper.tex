@@ -810,7 +810,8 @@ recursive function monad~\cite{McBride15, BoveC01}
   \item Guarded recursion for productive definitions and general recursion
 ~\cite{AtkeyM13, PaviottiMB15}
   \item PACO library~\cite{HurNDV13}
-  \item Sized Types \cite{AbelPTS13, AbelP16, HughesPS96}
+  \item Sized Types \cite{HughesPS96, abs-1202-3496}
+  \item Copatterns \cite{AbelPTS13, AbelP16}
   \item IMPORTANT!!!!! Coq extraction from recursion
     schemes~\cite{larchey2022braga} \dcas{Check bibtex}
   \item Not that related: extraction for mutable arrays~\cite{SAKAGUCHI2020102372}
@@ -823,6 +824,18 @@ recursive function monad~\cite{McBride15, BoveC01}
     representation of Functors leads me to think that they will produce loads
     of "Obj.magic", but we'd need to check this. 
 \end{itemize}
+
+\subsection{Sized Types}
+
+Another approach to certifying termination of nonstructurally recursive
+functions is the use of \emph{sized types}. Sized types were introduced in
+\textcite{HughesPS96} as a way to track/verify various properties of recursive
+programs, including productivity termination. The core idea of sized types is
+that types express bounds on the sizes of recursive data structures. This
+approach has been used to express nonstructurally recursive algorithms in Agda:
+\textcite{CopelloTB14} used sized types in a straightforward formulation of
+mergesort. Such an approach has also been used in MiniAgda~\cite{abs-1202-3496}.
+
 
 \printbibliography[heading=bibintoc]
 
