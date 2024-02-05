@@ -823,7 +823,7 @@ recursive function monad~\cite{McBride15, BoveC01}
     extraction. They focus mostly on erasing termination proofs, but they do
     not discuss "what does their extracted code look like". Their
     representation of Functors leads me to think that they will produce loads
-    of "Obj.magic", but we'd need to check this. 
+    of "Obj.magic", but we'd need to check this. \mvol{We have a story for this now: obj.magic harms interaction with other ocaml code, the resulting ocaml code is not natural to read, and in general more complex/strange extracted code is likely to be less efficient and harder to optimise.}
 \end{itemize}
 
 \subsection{Sized Types}
