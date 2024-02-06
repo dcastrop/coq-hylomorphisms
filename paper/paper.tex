@@ -707,30 +707,49 @@ wrapped up in $L$. The transformation is done by just applying the isomorphism
 In the following section we instantiate the adjoint fold with some instances
 taken from the literature.
 
-\section{Mechanising Extractable Containers}
+\section{Mechanising Extractable Container Functors}
 
 \dcas{Subsections are tentative topics to remember what I need to fill in here,
 but these are not final}
 
-Our goals are: (1) the mechanisation of hylomorphisms and their laws should be
-axiom-free; and (2) Coq hylomorphisms should be extracted to recursive OCaml
-functions that use no instances of \mintinline{OCaml}{Obj.magic}. Note that
-although the use of \mintinline{OCaml}{Obj.magic} is safe in the code extracted
-by Coq, it increases the Trusted Code Base, makes code less legible for
-programmers, and its presence will likely inhibit optimisations by the OCaml
-compiler\footnote{\dcas{I read this somewhere, search \& add reference/link?}}.
+Our mechanisation works in the category of Coq types, and our goals are: (1)
+the mechanisation of hylomorphisms and their laws should be axiom-free; and (2)
+Coq hylomorphisms should be extracted to recursive OCaml functions that use no
+instances of \mintinline{OCaml}{Obj.magic}.  Although the use of
+\mintinline{OCaml}{Obj.magic} is safe in the code extracted by Coq, it has been
+proven that, for higher-order programs, simple interoperations can lead to
+incorrect behaviour or even segfaults~\cite{forster:hal-04329663}.  Therefore,
+the avoidance of axioms and  \mintinline{OCaml}{Obj.magic} means that the
+extracted code will have stronger safety guarantees, and will allow the safe
+interoperation with other OCaml code.
 
 \subsection{Functors and Containers}
 
-Mechanising functors in Coq is straightforward. But taking least/greatest
-fixpoints of the said functors may fail, due to not being strictly positive. A
-common approach to construct strictly positive functors in Coq is to use
-\emph{containers}. In essence, a container 
-\dcas{A first approach (problems with extraction, lots of Obj.magic, etc)}
+In Coq, to construct least/greatest fixpoints of functors, these need to build
+\emph{strictly positive types}. A common approach to construct such strictly
+positive endofunctors is to use \emph{container functors}~\cite{Whatever}.
+However, reasoning about container and container functor equality requires to
+consider: (a) functional extensionality; (b) heterogeneous equality. This is
+problematic, due to our goals to remain axiom-free. Furthermore, standard
+representations of containers in Coq will lead to OCaml code that contains
+\mintinline{OCaml}{Obj.magic}.
+
+A containers is defined by a type of \emph{shapes} (\mintinline{Coq}{Shape }),
+and a \emph{family of position types} indexed by shapes
+(\mintinline{Coq}{Pos}).  An \emph{extension} of this container is a functor,
+whose action on objects is given by the following definition:
 \begin{minted}{Coq}
   Record Container (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
     { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
+Note that, in our mechanisation, we call container extensions
+\mintinline{Coq}{Container}. Generally, any functor that is isomorphic to a
+container extension is called a \emph{container functor}. However, in our work
+we will call \emph{container functor} to the functors defined by a specific
+container extension.
+
+The first problem in extracting Coq code from such container extensions is
+the use of families of types. Since OCaml's 
 
 \dcas{A better approach for extraction. Unfortunately, to remain axiom-free and
 heterogeneous equality we need to have a decidable ``Valid''}
