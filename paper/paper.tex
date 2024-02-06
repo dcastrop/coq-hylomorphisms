@@ -732,9 +732,10 @@ However, reasoning about container and container functor equality requires to
 consider: (a) functional extensionality; (b) heterogeneous equality. This is
 problematic, due to our goals to remain axiom-free. Furthermore, standard
 representations of containers in Coq will lead to OCaml code that contains
-\mintinline{OCaml}{Obj.magic}.
+\mintinline{OCaml}{Obj.magic}. We will explain why, and our mechanisation of
+containers in the remainder of this section.
 
-A containers is defined by a type of \emph{shapes} (\mintinline{Coq}{Shape }),
+A container is defined by a type of \emph{shapes} (\mintinline{Coq}{Shape }),
 and a \emph{family of position types} indexed by shapes
 (\mintinline{Coq}{Pos}).  An \emph{extension} of this container is a functor,
 whose action on objects is given by the following definition:
@@ -742,22 +743,34 @@ whose action on objects is given by the following definition:
   Record Container (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
     { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
-Note that, in our mechanisation, we call container extensions
-\mintinline{Coq}{Container}. Generally, any functor that is isomorphic to a
-container extension is called a \emph{container functor}. However, in our work
-we will call \emph{container functor} to the functors defined by a specific
-container extension.
+In our mechanisation, we use \mintinline{Coq}{Container} to represent container
+extensions.  Generally, any functor that is isomorphic to a container extension
+is called a \emph{container functor}. However, in our work we will call
+\emph{container functor} to the functors defined by a specific container
+extension.
 
-The first problem in extracting Coq code from such container extensions is
-the use of families of types. Since OCaml's 
-
-\dcas{A better approach for extraction. Unfortunately, to remain axiom-free and
-heterogeneous equality we need to have a decidable ``Valid''}
+The first problem in extracting Coq code from such container extensions is the
+use of families of types. Since OCaml's type system cannot accurately capture
+such families of types, Coq's code extraction mechanism will insert unsafe
+casts. To avoid unsafe casts, we can consider representing the positions of a
+container as a type that captures \emph{all} the potential positions in all
+possible shapes, together with a predicate \mintinline{Coq}{Valid} that
+determines whether a position is valid in a shape. The family of positions is
+then equivalent to the type \mintinline{Coq}{fun shape => {p | Valid shape p}}.
 \begin{minted}{Coq}
   Record Container (Shape : Set) (Pos : Set) 
                    (Valid : Shape -> Pos -> Prop) (X : Set) :=
-    { shape : Shape; contents : {p | Valid shape pos} -> X }.
+    { shape : Shape; contents : {p | Valid shape p} -> X }.
 \end{minted}
+This approach solves the the problem of the unsafe casts, since the code
+extracted for \mintinine{Coq}{{p | Valid shape pos}} will be an OCaml
+singleton type defined as the OCaml equivalent to \mintinline{Coq}{Pos}. 
+
+However, there still remains the issue of reasoning about the equality of
+container extensions. The contents of the container extensions need to be
+accessed via a function \mintinline{Coq}{contents}. The domain of this function
+depends on the shape of the container. This means that, for a given type of shapes
+and positions.,
 
 \dcas{Solution to the previous problem}
 \begin{minted}{Coq}
