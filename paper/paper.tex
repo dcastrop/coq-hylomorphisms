@@ -740,10 +740,10 @@ and a \emph{family of position types} indexed by shapes
 (\mintinline{Coq}{Pos}).  An \emph{extension} of this container is a functor,
 whose action on objects is given by the following definition:
 \begin{minted}{Coq}
-  Record Container (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
+  Record App (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
     { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
-In our mechanisation, we use \mintinline{Coq}{Container} to represent container
+In our mechanisation, we use \mintinline{Coq}{App} to represent container
 extensions.  Generally, any functor that is isomorphic to a container extension
 is called a \emph{container functor}. However, in our work we will call
 \emph{container functor} to the functors defined by a specific container
@@ -758,75 +758,268 @@ possible shapes, together with a predicate \mintinline{Coq}{Valid} that
 determines whether a position is valid in a shape. The family of positions is
 then equivalent to the type \mintinline{Coq}{fun shape => {p | Valid shape p}}.
 \begin{minted}{Coq}
-  Record Container (Shape : Set) (Pos : Set) 
+  Record App (Shape : Set) (Pos : Set) 
                    (Valid : Shape -> Pos -> Prop) (X : Set) :=
     { shape : Shape; contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
-extracted for \mintinine{Coq}{{p | Valid shape pos}} will be an OCaml
+extracted for \mintinline{Coq}{{p | Valid shape pos}} will be an OCaml
 singleton type defined as the OCaml equivalent to \mintinline{Coq}{Pos}. 
 
 However, there still remains the issue of reasoning about the equality of
 container extensions. The contents of the container extensions need to be
 accessed via a function \mintinline{Coq}{contents}. The domain of this function
-depends on the shape of the container. This means that, for a given type of shapes
-and positions.,
-
-\dcas{Solution to the previous problem}
+depends on the shape of the container. This means that, for a given type of
+shapes and positions, the equality of two objects of a container extension will
+need to deal with heterogeneous equality. Since we want to remain axiom-free,
+one way to deal with this is to rely on a \emph{decidable} validity predicate.
+This way, we reach our final definition for container extensions. First,
+containers are defined as pairs of shape and position types that have a
+\emph{decidable} validity predicate. We represent decidable predicates as
+functions that return a boolean, and lift booleans to propositions similarly to
+SSReflect.
 \begin{minted}{Coq}
-  Record Container (Shape : Set) (Pos : Set) 
-                   (valid : Shape -> Pos -> bool) (X : Set) :=
-    { shape : Shape; contents : {p | valid shape pos = true} -> X }.
+Class Container (Shape : Set) (Pos : Set) := {
+   valid : Shape -> Pos -> bool
+}.
+Coercion is_true (b : bool) : Prop := b = true.
 \end{minted}
-
-\dcas{A shape, a position, and a decidable predicate on the validity of a
-position in a shape define a functor}
-
+Then, we define \emph{container extensions} as
 \begin{minted}{Coq}
-  Coercion is_true (b : bool) : Prop := b = true.
-  Class functor (Shape Pos : Set) := { valid : Shape -> Pos -> bool }.
-  Record Container `{functor Shape Pos} (X : Set) :=
+  Record App `{container Shape Pos} (X : Set) :=
     { shape : Shape; contents : {p | valid shape pos} -> X }.
 \end{minted}
+
+\dcas{Examples of polynomials as container extensions?}
 
 \subsection{Types and Morphisms}
 
 Reasoning about the equality of containers requires reasoning about the
-equality of the contained elements. But the contained elements are given by a
-function. This means that container equality needs to be extensional, if we
-want to avoid the functional extensionality axiom. Furthermore, the equality of
-functions also needs to be extensional. We capture this fact by associating
-each type with an equivalence relation:
+equality of the contained elements. But the contained elements are given by
+function \mintinline{Coq}{contents}. This means that container equality needs
+to be extensional, if we want to avoid the functional extensionality axiom.
+Furthermore, the equality of functions also needs to be extensional. To deal
+with the fact that different types will use different notions of equality, we
+restrict to types with an associated equivalence relation, and \emph{proper
+morphisms}, i.e. morphisms that respect the necessary equivalence relations.
 
 \begin{minted}{Coq}
-  Class Equiv (T : Type) := 
-  { equiv : T -> T -> Prop;
-    e_refl : forall x, equiv x x;
-    e_sym : forall x y, equiv x y -> equiv y x;
-    e_trans : forall x y z, equiv x y -> equiv y z -> equiv x z;
-  }.
+Reserved Notation "f =e g" (at level 70, no associativity).
+Class equiv A : Type :=
+  MkEquiv
+    { eqRel : A -> A -> Prop;
+      e_refl : forall x, eqRel x x;
+      e_sym : forall x y, eqRel x y -> eqRel y x;
+      e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
+    }.
+Notation "f =e g" := (eqRel f g).
+
+Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
+Context `{eA : equiv A} `{eB : equiv B}.
+
+ Structure morph :=
+   MkMorph
+     { app :> A -> B;
+       app_eq : forall x y, x =e y -> app x =e app y
+     }.
+Arguments morph A {eA} B {eB}.
+Notation "x ~> y" := (morph x y).
 \end{minted}
-
-\dcas{Morphisms must respect equivalences}:
-
-\begin{minted}{Coq}
-  Record Morph `{Equiv A} `{Equiv B} := 
-  { app : A -> B;
-    app_ext : forall x y, equiv x y -> equiv (app x) (app y);
-  }.
+\dcas{Simplify the above}
 
 \dcas{We provide common morphisms for polynomials: sums, products, const,
-  exponential}
+exponential (Add examples?)}
 
+By default, we associate every type with Coq's propositional equality, but allow
+the use of other forms of equality. In most cases, we will use either propositional equality, extensional
+equality, or a mixture of both, e.g. for container extensions, we use an arbitrary equality for shapes,
+extensional equality for the contained elements, but Coq's propositional equality for positions:
+
+\begin{minted}{Coq}
+  Inductive AppR `{F : Container Sh P} (X : Type) {e : equiv X}
+           (x y : App F X) : Prop :=
+  | AppR_ext
+      (Es : shape x =e shape y)
+      (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
+\end{minted}
+The reason for this is to avoid a circularity in the definitions: arbitrary
+equivalences for positions would force us to define the contents as morphisms
+from positions to the contained elements, but that would as well force us to
+redefine container extensions so that they are only applicable to types with
+arbitrary equalities and morphisms.  We will see in the following section why
+this is problematic for defining initial algebras of container extensions.
+\dcas{I am actually not sure of what I wrote above, and it may be something I
+simply overlooked. I will look into the Coq code and try to generalise it if I
+have the time}
+
+We associate some types with their standard equivalences:
+\begin{minted}{Coq}
+Instance ext_eq (A : Type) `{eq_B : equiv B} : equiv (A -> B).
+Instance pair_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A * B).
+Instance sum_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A + B).
+Instance prop_eq : equiv Prop.
+Instance pred_sub `{eA : equiv A} {P : A -> Prop} : equiv {a : A | P a}.
 \end{minted}
 
 \section{Extracting Certified Hylomorphisms}
 
-\dcas{TODO: Hylo mechanisation, Hylo laws}
-
 \subsection{Algebras}
 
+Algebras on container extensions are defined as expected. The carrier of the
+algebra is \mintinline{Coq}{A}, and the operations of the algebra are
+morphisms of the following type:
+\begin{minted}{Coq}
+Notation Alg F A := (App F A ~> A).
+\end{minted}
+
+There are \emph{two} initial algebras that are, as expected, unique up to
+isomorphism. We show one such initial algebra here, and the second in the
+following subsection, plus a proof that they are isomorphic:
+
+\begin{minted}{Coq}
+Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
+\end{minted}
+This is why we could not define equality of container extensions generically:
+the contained types may not have (yet) an associated equivalence. We could have
+overcame this circularity by defining simultaneously LFix and its associated
+equivalence relation. But that would complicate definitions unnecessarily.
+\dcas{I know ... I need to rewrite/expand on this}
+
+We provide a custom induction schema for initial algebras:
+
+\begin{minted}{Coq}
+Lemma LFix_ind [P : LFix -> Prop]
+  : (forall x : App F LFix,
+        (forall e : Pos (shape x), P (cont x e)) ->
+        P (LFix_in x))
+    -> forall l : LFix, P l.
+\end{minted}
+
+Equality of initial algebras of container extensions needs to be defined
+recursively and extensionally:
+\begin{minted}{Coq}
+Fixpoint LFixR (x y : LFix) : Prop :=
+  let f_x := LFix_out x in
+  let f_y := LFix_out y in
+  shape f_x =e shape f_y /\
+    (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
+\end{minted}
+
+The unique homomorphism from an initial algebra to other algebras, i.e. the catamorphism, is defined as a 
+regular recursive function:
+\begin{minted}{Coq}
+Definition cata_f `{eA : equiv A} (g : Alg F A) : LFix -> A
+:= fix f (x : LFix) :=
+  match x with
+  | LFix_in ax =>
+      let (sx, kx) := ax in
+      g (MkCont sx (fun e => f (kx e)))
+  end.
+\end{minted}
+
+It is easy to show that this function is a proper morphism, and that it is
+unique. We can use the fact that catamorphisms are proper morphisms to encode
+them as a higher-order morphism.
+\begin{minted}{Coq}
+Lemma cata_arr1 `{eA : equiv A} (g : Alg F A)
+  : forall x y, x =e y -> cata_f g x =e cata_f g y.
+Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A := ...
+
+Lemma cata_univ `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
+    : f =e cata g <-> f =e g \o fmap f \o l_out.
+\end{minted}
+
 \subsection{(Recursive) Coalgebras}
+
+Terminal coalgebras are defined analogously to initial algebras:
+\begin{minted}{Coq}
+CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
+\end{minted}
+
+Their equivalence relation, and anamorphisms, and universal properties are
+easy to encode: 
+\begin{minted}{Coq}
+  Definition ana `{eA : equiv A} : Coalg F A ~> A ~> GFix...
+
+  Lemma ana_univ `{eA : equiv A} (h : Coalg F A) (f : A ~> GFix)
+    : f =e ana h <-> f =e g_in \o fmap f \o h.
+\end{minted}
+
+With terminal coalgebras, we can encode another form of initial algebras. In
+particular, the initial algebras based on terminal coalgebras are the carrier
+types of terminal coalgebras, plus a proof that they are finite:
+
+\begin{minted}{Coq}
+Inductive FinF : GFix F -> Prop :=
+| FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
+\end{minted}
+
+Using this predicate, we can define the notion of \emph{recursive coalgebras}
+as those coalgebras that build finite trees. Recursive coalgebras are
+implemented in Coq recursively on the proof that they produce finite trees.
+Such proofs will be erased when extracting code to OCaml. This is standard
+practice when building general recursive functions in Coq\footnote{\dcas{This
+technique had a name in the community, but I cannot remember. Something
+predicates}}.
+\begin{minted}{Coq}
+Notation rana_f__ h :=
+  (fix f x H :=
+    let hx := h x in
+    LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e)))).
+
+Definition rana `{eA : equiv A} : RCoalg A ~> A ~> LFix F :=...
+
+Lemma rana_univ A {eA : equiv A} (h : RCoalg A) (f : A ~> LFix F)
+    : f =e rana h <-> f =e l_in \o fmap f \o h.
+\end{minted}
+
+\subsection{Recursive Hylos}
+
+Recursive hylomorphisms are built from an algebra and a recursive coalgebra:
+\begin{minted}{Coq}
+Definition hylo_def (a : Alg F B) (c : Coalg F A)
+: forall (x : A), RecF c x -> B
+:= fix f x H :=
+  match c x as h0
+        return
+        (forall e : Pos (shape h0), RecF c (cont h0 e)) ->
+        B
+  with
+  | MkCont s_x c_x => fun H => a (MkCont s_x (fun e => f (c_x e) (H e)))
+  end (RecF_inv H).
+\end{minted}
+
+\begin{minted}{Coq}
+Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
+    : f =e hylo g h <-> f =e g \o fmap f \o h.
+\end{minted}
+
+Recursive hylo universal property allows us to prove common optimisations:
+
+\begin{minted}{Coq}
+    Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
+    (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
+    : f2 \o hylo g1 h1 =e hylo g2 h1.
+  Proof.
+    rewrite hylo_univ.
+    rewrite fmap_comp.
+    rewrite compA.
+    rewrite <- E2.
+    rewrite <- compA.
+    rewrite <- compA.
+    rewrite (compA g1).
+    rewrite <- hylo_unr.
+    reflexivity.
+  Qed.
+
+  Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
+    (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
+    : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
+
+  Corollary cata_ana_hylo `(F : Container Sh P) `{equiv A} `{equiv B}
+    (g : Alg F B) (h : RCoalg F A)
+  : cata g \o rana h =e hylo g h.
+\end{minted}
 
 \section{Examples}
 
