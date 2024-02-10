@@ -1,9 +1,9 @@
-\documentclass{article}
-
+\documentclass[a4paper, UKenglish, cleveref, autoref, thm-restate]{lipics-v2021}
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
-\usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
-\addbibresource{references.bib}
+% \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
+% \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
+% \addbibresource{references.bib}
 \usepackage{amsmath, amssymb, amsfonts, amsthm, stmaryrd}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -22,11 +22,10 @@
 \usepackage{xspace}
 \usepackage{rotating}
 \usepackage{quiver}
-\usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
 \usepackage{minted}
 \usepackage{newunicodechar}
 
-\addbibresource{references.bib}
+% \addbibresource{references.bib}
 \usepackage{array}   % for \newcolumntype macro
 \newcolumntype{C}{>{$}c<{$}} % math-mode version of "l" column type
 \newcolumntype{L}{>{$}l<{$}} % math-mode version of "l" column type
@@ -114,11 +113,60 @@
 
 \title{A Mechanised Library for Generic (Co)Programming}
 
-\author{}
+\bibliographystyle{plainurl}% the mandatory bibstyle
+%\titlerunning{Dummy short title} %TODO optional, please use if title is longer than one line
+
+\author{Jane {Open Access}}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional. Use additional curly braces to indicate the correct name splitting when the last name consists of multiple name parts.
+
+\author{Joan R. Public\footnote{Optional footnote, e.g. to mark corresponding author}}{Department of Informatics, Dummy College, [optional: Address], Country}{joanrpublic@dummycollege.org}{[orcid]}{[funding]}
+
+\authorrunning{J. Open Access and J.\,R. Public} %TODO mandatory. First: Use abbreviated first/middle names. Second (only in severe cases): Use first author plus 'et al.'
+
+\Copyright{Jane Open Access and Joan R. Public} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
+
+\ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
+
+\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+
+\category{} %optional, e.g. invited paper
+
+\relatedversion{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
+%\relatedversiondetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93]{Classification (e.g. Full Version, Extended Version, Previous Version}{URL to related version} %linktext and cite are optional
+
+%\supplement{}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
+%\supplementdetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93, subcategory={Description, Subcategory}, swhid={Software Heritage Identifier}]{General Classification (e.g. Software, Dataset, Model, ...)}{URL to related version} %linktext, cite, and subcategory are optional
+
+%\funding{(Optional) general funding statement \dots}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
+
+\acknowledgements{I want to thank \dots}%optional
+
+%\nolinenumbers %uncomment to disable line numbering
+
+
+
+%Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\EventEditors{John Q. Open and Joan R. Access}
+\EventNoEds{2}
+\EventLongTitle{42nd Conference on Very Important Topics (CVIT 2016)}
+\EventShortTitle{CVIT 2016}
+\EventAcronym{CVIT}
+\EventYear{2016}
+\EventDate{December 24--27, 2016}
+\EventLocation{Little Whinging, United Kingdom}
+\EventLogo{}
+\SeriesVolume{42}
+\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
 \maketitle
+
+%TODO mandatory: add short abstract of the document
+\begin{abstract}
+
+\end{abstract}
+
 \section{Introduction}
 Recursive definitions cannot be proven well-defined automatically due to the
 halting problem. Modern proof assistants like Coq or Agda provide a sound, but
@@ -758,13 +806,13 @@ possible shapes, together with a predicate \mintinline{Coq}{Valid} that
 determines whether a position is valid in a shape. The family of positions is
 then equivalent to the type \mintinline{Coq}{fun shape => {p | Valid shape p}}.
 \begin{minted}{Coq}
-  Record App (Shape : Set) (Pos : Set) 
+  Record App (Shape : Set) (Pos : Set)
                    (Valid : Shape -> Pos -> Prop) (X : Set) :=
     { shape : Shape; contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
 extracted for \mintinline{Coq}{{p | Valid shape pos}} will be an OCaml
-singleton type defined as the OCaml equivalent to \mintinline{Coq}{Pos}. 
+singleton type defined as the OCaml equivalent to \mintinline{Coq}{Pos}.
 
 However, there still remains the issue of reasoning about the equality of
 container extensions. The contents of the container extensions need to be
@@ -831,9 +879,11 @@ Notation "x ~> y" := (morph x y).
 exponential (Add examples?)}
 
 By default, we associate every type with Coq's propositional equality, but allow
-the use of other forms of equality. In most cases, we will use either propositional equality, extensional
-equality, or a mixture of both, e.g. for container extensions, we use an arbitrary equality for shapes,
-extensional equality for the contained elements, but Coq's propositional equality for positions:
+the use of other forms of equality. In most cases, we will use either
+propositional equality, extensional equality, or a mixture of both, e.g. for
+container extensions, we use an arbitrary equality for shapes, extensional
+equality for the contained elements, but Coq's propositional equality for
+positions:
 
 \begin{minted}{Coq}
   Inductive AppR `{F : Container Sh P} (X : Type) {e : equiv X}
@@ -905,7 +955,7 @@ Fixpoint LFixR (x y : LFix) : Prop :=
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 \end{minted}
 
-The unique homomorphism from an initial algebra to other algebras, i.e. the catamorphism, is defined as a 
+The unique homomorphism from an initial algebra to other algebras, i.e. the catamorphism, is defined as a
 regular recursive function:
 \begin{minted}{Coq}
 Definition cata_f `{eA : equiv A} (g : Alg F A) : LFix -> A
@@ -937,7 +987,7 @@ CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
 \end{minted}
 
 Their equivalence relation, and anamorphisms, and universal properties are
-easy to encode: 
+easy to encode:
 \begin{minted}{Coq}
   Definition ana `{eA : equiv A} : Coalg F A ~> A ~> GFix...
 
@@ -1055,16 +1105,14 @@ recursive function monad~\cite{McBride15, BoveC01}
 
 Another approach to certifying termination of nonstructurally recursive
 functions is the use of \emph{sized types}. Sized types were introduced in
-\textcite{HughesPS96} as a way to track/verify various properties of recursive
+\cite{HughesPS96} as a way to track/verify various properties of recursive
 programs, including productivity and termination. The core idea of sized types
 is that types express bounds on the sizes of recursive data structures. This
 approach has been used to express nonstructurally recursive algorithms in Agda:
-\textcite{CopelloTB14} used sized types in a straightforward formulation of
+\cite{CopelloTB14} used sized types in a straightforward formulation of
 mergesort. Such an approach has also been used in MiniAgda~\cite{abs-1202-3496}.
 
-
-\printbibliography[heading=bibintoc]
-
+\bibliography{references.bib}
 \end{document}
 
 %%% Local Variables:
