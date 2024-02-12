@@ -2,6 +2,7 @@ _minted-paper
 *.bbl
 *.blg
 *.fdb_latexmk
+*.vtc
 *.fls
 *.log
 *.out
