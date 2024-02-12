@@ -783,13 +783,15 @@ representations of containers in Coq will lead to OCaml code that contains
 \mintinline{OCaml}{Obj.magic}. We will explain why, and our mechanisation of
 containers in the remainder of this section.
 
-A container is defined by a type of \emph{shapes} (\mintinline{Coq}{Shape }),
-and a \emph{family of position types} indexed by shapes
-(\mintinline{Coq}{Pos}).  An \emph{extension} of this container is a functor,
-whose action on objects is given by the following definition:
+A container is defined by a type of \emph{shapes}, and a \emph{family of
+position types} indexed by shapes. 
 \begin{minted}{Coq}
-  Record App (Shape : Set) (Pos : Shape -> Set) (X : Set) :=
-    { shape : Shape; contents : Pos shape -> X }.
+Context (Shape : Set) (Pos : Shape -> Set).
+\end{minted}
+An \emph{extension} of this container is a functor,
+whose action on objects is given by:
+\begin{minted}{Coq}
+Record App (X : Set) := { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
 In our mechanisation, we use \mintinline{Coq}{App} to represent container
 extensions.  Generally, any functor that is isomorphic to a container extension
@@ -803,12 +805,11 @@ such families of types, Coq's code extraction mechanism will insert unsafe
 casts. To avoid unsafe casts, we can consider representing the positions of a
 container as a type that captures \emph{all} the potential positions in all
 possible shapes, together with a predicate \mintinline{Coq}{Valid} that
-determines whether a position is valid in a shape. The family of positions is
-then equivalent to the type \mintinline{Coq}{fun shape => {p | Valid shape p}}.
+determines whether a position is valid in a shape. 
 \begin{minted}{Coq}
-  Record App (Shape : Set) (Pos : Set)
-                   (Valid : Shape -> Pos -> Prop) (X : Set) :=
-    { shape : Shape; contents : {p | Valid shape p} -> X }.
+Context (Shape : Set) (Pos : Set) (Valid : Shape -> Pos -> Prop).
+Record App (X : Set) := { shape    : Shape; 
+                          contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
 extracted for \mintinline{Coq}{{p | Valid shape pos}} will be an OCaml
@@ -827,16 +828,25 @@ containers are defined as pairs of shape and position types that have a
 functions that return a boolean, and lift booleans to propositions similarly to
 SSReflect.
 \begin{minted}{Coq}
-Class Container (Shape : Set) (Pos : Set) := {
-   valid : Shape -> Pos -> bool
-}.
+Class Cont (Shape : Set) (Pos : Set) := { valid : Shape -> Pos -> bool }.
 Coercion is_true (b : bool) : Prop := b = true.
 \end{minted}
 Then, we define \emph{container extensions} as
 \begin{minted}{Coq}
-  Record App `{container Shape Pos} (X : Set) :=
-    { shape : Shape; contents : {p | valid shape pos} -> X }.
+Record App `(C : Cont Shape Pos) (X : Set) :=
+  { shape : Shape; contents : {p | valid shape pos} -> X }.
 \end{minted}
+
+The functorial action for container extensions on morphisms boils down to
+function composition, which trivially preserves identity and composition.
+\begin{minted}{Coq}
+Definition fmap `(C : Cont Shape Pos) `(f : A -> B) (x : App C A) : App C B
+  := {| shape := shape x; contents := fun e => f (contents x e) |}
+\end{minted}
+
+\subsubsection{Polynomial Functors as Container Extensions}
+
+\subsubsection{Equality of Container Extensions}
 
 \dcas{Examples of polynomials as container extensions?}
 
