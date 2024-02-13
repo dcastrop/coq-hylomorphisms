@@ -30,8 +30,8 @@ Definition t_dom A : Ts A * Tp ~> bool.
   intros [??] [??] [E1 E2]. simpl in *.  subst. auto.
 Defined.
 #[local]
-  Instance TreeF (A : Type) : Container (Ts A) Tp :=
-  { dom := t_dom A }.
+  Instance TreeF (A : Type) : Cont (Ts A) Tp :=
+  { valid := t_dom A }.
 Definition Tree A := LFix (TreeF A).
 
 Lemma dom_leaf_false A : Pos (F:=TreeF A) (Leaf A) -> False.

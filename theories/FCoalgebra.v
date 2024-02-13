@@ -11,7 +11,7 @@ Require Import HYLO.Algebra.
 Require Import HYLO.Coalgebra.
 
 Section FCoalgDef.
-  Context `(F : Container Sh P).
+  Context `(F : Cont Sh P).
 
   Inductive RecF `{equiv A} (h : Coalg F A) : A -> Prop :=
   | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
@@ -27,7 +27,7 @@ Section FCoalgDef.
     constructor. intros e.
     assert (Exy : c0 x =e c1 y) by (rewrite H, H0; reflexivity).
     simpl in Exy. destruct Exy as [Sxy Kxy].
-    symmetry in Sxy. destruct (elem_dom_irr Sxy e) as [e' Hv].
+    symmetry in Sxy. destruct (elem_valid_irr Sxy e) as [e' Hv].
     apply (Ih e'); trivial. apply Kxy. symmetry. trivial.
   Qed.
 
@@ -196,7 +196,7 @@ Arguments rana & {Sh}%type_scope {Esh} {P}%type_scope {F} {A}%type_scope {eA}.
 Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
 
 Section CAlgDef.
-  Context `{F : Container Sh Po}.
+  Context `{F : Cont Sh Po}.
 
   Definition ccata_f_ `{eA : equiv A} (g : Alg F A)
     : forall x : GFix F, FinF x -> A
@@ -319,7 +319,7 @@ Section CAlgDef.
 End CAlgDef.
 
 Section FinRec.
-  Context `{F : Container Sh Po}.
+  Context `{F : Cont Sh Po}.
 
   Lemma cata_ccata `{equiv A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
   Proof.

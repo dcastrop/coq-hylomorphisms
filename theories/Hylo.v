@@ -10,7 +10,7 @@ Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 
 Section HyloDef.
-  Context `{F : Container Sh Po} `{eA : equiv A} `{eB : equiv B}.
+  Context `{F : Cont Sh Po} `{eA : equiv A} `{eB : equiv B}.
 
   Definition hylo_def (a : Alg F B) (c : Coalg F A)
     : forall (x : A), RecF c x -> B
@@ -96,7 +96,7 @@ Section HyloDef.
 End HyloDef.
 
 Section HyloFusion.
-  Context `{F : Container Sh Po}.
+  Context `{F : Cont Sh Po}.
   Context `{eA : equiv A} `{eB : equiv B} `{eC : equiv C}.
 
   Lemma hylo_cata (g : Alg F B) : cata g =e hylo g f_out.
@@ -159,12 +159,12 @@ Section HyloFusion.
   Qed.
 End HyloFusion.
 
-Corollary cata_ana_hylo `(F : Container Sh P) `{equiv A} `{equiv B}
+Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
   (g : Alg F B) (h : RCoalg F A)
   : cata g \o rana h =e hylo g h.
 Proof. rewrite hylo_cata,hylo_ana. apply deforest, l_out_in. Qed.
 
-Corollary cata_ana_hylo_f `(F : Container Sh P) `{equiv A} `{equiv B}
+Corollary cata_ana_hylo_f `(F : Cont Sh P) `{equiv A} `{equiv B}
   (g : Alg F B) (h : RCoalg F A)
   : cata g \o ccata l_in \o liftP (ana h) (rcoalg_fin h) =e hylo g h.
 Proof. rewrite <- compA, ana_rana, cata_ana_hylo. reflexivity. Qed.

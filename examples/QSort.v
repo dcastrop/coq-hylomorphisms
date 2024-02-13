@@ -79,7 +79,7 @@ Extraction Inline projT2.
 Extraction Inline comp.
 
 Extraction Inline val.
-Extraction Inline InDom.
+Extraction Inline Valid.
 
 Extraction Inline app.
 Extraction Inline coalg.

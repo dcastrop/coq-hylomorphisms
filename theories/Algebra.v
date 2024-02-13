@@ -11,7 +11,7 @@ Require Import HYLO.Container.
 Notation Alg F A := (App F A ~> A).
 
 Section AlgDef.
-  Context `(F : Container Sh Po).
+  Context `(F : Cont Sh Po).
 
   Unset Elimination Schemes.
 
@@ -69,7 +69,7 @@ Section AlgDef.
     intros [Sxy Exy] [Syz Eyz].
     split; [rewrite Sxy; trivial | idtac].
     intros e1 e2 V1.
-    destruct (elem_dom_irr Sxy e1) as [e3 V2].
+    destruct (elem_valid_irr Sxy e1) as [e3 V2].
     apply (Ih _ _ _ (Exy _ _ V2)), Eyz.
     rewrite <- V2. trivial.
   Qed.
@@ -118,8 +118,7 @@ Section AlgDef.
     apply (app_eq g). split; [trivial|intros e1 e2 Hv]. apply Ih. auto.
   Qed.
 
-  Notation cata_ F a
-    := (
+  Definition cata_ `{equiv A} (a : Alg F A) :=
       {| app :=
           fix f (x : LFix) :=
             match x with
@@ -128,20 +127,20 @@ Section AlgDef.
                 a (MkCont sx (fun e => f (kx e)))
             end;
         app_eq := cata_arr1 a
-      |}
-    ).
+      |}.
 
   Lemma cata_arr  `{eA : equiv A}
-    : forall f g : Alg F A, f =e g -> cata_ F f =e cata_ F g.
+    : forall f g : Alg F A, f =e g -> cata_ f =e cata_ g.
   Proof.
-    intros x y E t. induction t as [sx Ih].
-    destruct sx as [sx kx]. simpl in *.
+    intros x y E t. induction t as [sx Ih]. unfold cata_.
+    destruct sx as [sx kx].  simpl in *.
     rewrite E. apply app_eq. simpl.
     apply cont_ext_eq. intros.
     apply Ih.
   Qed.
 
-  Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A := MkMorph cata_arr.
+  Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A :=
+    Eval unfold cata_ in MkMorph cata_arr.
 
   Lemma cata_univ_r `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
     : f =e g \o fmap f \o l_out -> f =e cata g.

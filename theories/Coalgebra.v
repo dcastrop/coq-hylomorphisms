@@ -14,7 +14,7 @@ Require Import HYLO.Container.
 Notation Coalg F A := (A ~> App F A) (only parsing).
 
 Section CoalgDef.
-  Context `(F : Container Sh P).
+  Context `(F : Cont Sh P).
 
   Set Primitive Projections.
   CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
@@ -61,7 +61,7 @@ Section CoalgDef.
     intro x. coind CH. intros x.
     apply paco2_fold. constructor.
     - reflexivity.
-    - intros e1 e2 Ev. right. rewrite (cont_dom_irrelevant Ev). apply CH.
+    - intros e1 e2 Ev. right. rewrite (cont_valid_irrelevant Ev). apply CH.
   Qed.
 
   Lemma GFixR_sym : forall x y, GFixR x y -> GFixR y x.
@@ -84,7 +84,7 @@ Section CoalgDef.
     apply paco2_fold.
     assert (HxzS : gshape x =e gshape z) by (rewrite HxyS; trivial).
     apply (GFixR_in_ HxzS). intros ex ez Veq. right.
-    destruct (elem_dom_irr HxyS ex) as [ey Veq2].
+    destruct (elem_valid_irr HxyS ex) as [ey Veq2].
     assert (Veq3 : val ey = val ez) by (rewrite <- Veq2; trivial).
     apply (CH (gcont x ex) (gcont z  ez) (gcont y ey)).
     - destruct (HxyK ex ey Veq2) as [Gf|[]]. trivial.
