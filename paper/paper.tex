@@ -836,7 +836,6 @@ Then, we define \emph{container extensions} as
 Record App `(C : Cont Shape Pos) (X : Set) :=
   { shape : Shape; contents : {p | valid shape pos} -> X }.
 \end{minted}
-
 The functorial action for container extensions on morphisms boils down to
 function composition, which trivially preserves identity and composition.
 \begin{minted}{Coq}
@@ -846,9 +845,145 @@ Definition fmap `(C : Cont Shape Pos) `(f : A -> B) (x : App C A) : App C B
 
 \subsubsection{Polynomial Functors as Container Extensions}
 
-\subsubsection{Equality of Container Extensions}
+Polynomial functors can be defined as container extensions~\ref{fig:poly}. We
+omit here the proofs that these container extensions are isomorphic to
+polynomials, but this proof is straightforward. To illustrate how the identity,
+constant, sum and product container extensions work, consider the
+tree-generating functor (i.e. the functor whose fixpoint is a binary tree):
+$F\; X = \mathbb{N} + X \times X$.
 
-\dcas{Examples of polynomials as container extensions?}
+This functor is built as the sum of two functors: $X \mapsto \mathbb{N}$ and $X \mapsto
+X \times X$. Consider first $X \mapsto \mathbb{N}$. This is a constant functor
+that maps $X$ to the type $\mathbb{N}$. More generally, a functor that, given a
+type $A$, maps everything to it, $X \mapsto A$, only needs one shape ($A$, L9
+of Fig~\ref{fig:poly}), and zero positions (In Coq, \mintinline{Coq}{False},
+L10 of Fig~\ref{fig:poly}). The reason why there are zero valid positions in
+a constant container extension is because, given something of type 
+\mintinline{Coq}{App (Const (Ks A) Kp) X}, it should be impossible to get
+something of type \mintinline{Coq}{X}. But from the container shape, we will
+always be able to get the element of type $A$\footnote{%
+  Our decision to use \mintinline{Coq}{False} is arbitrary. In general, we
+  could have chosen any time, with a validity predicate that always returns
+  \mintinline{Coq}{false}. It would make no difference for code extraction.
+}. This functor is, therefore \mintinline{Coq}{Const nat}.
+
+Consider now $X \mapsto X \times X$. This is the product of two
+identity functors $X \mapsto X$. The identity functor only has one shape, and
+we can use the unit type to represent such shapes. From this shape we should be
+able to get an element of type $X$, and we can capture this by using the unit
+type for positions. To build an element of the container extension type, we
+will need to provide a function of type \mintinline{Coq}{unit -> X}, which is
+isomorphic to \mintinline{Coq}{X}. 
+
+The shape of the product of two container extensions is the product of their
+shapes. The product of such container extensions should allow us to get either
+the left, or the right element in the product. Therefore, the positions of this
+container extension is the sum of the positions of the two container
+extensions. What is a valid position in a given shape? If the position is
+\mintinline{Coq}{inl p} (or \mintinline{Coq}{inr p}), then it is only valid if
+\mintinline{Coq}{p} is valid in the first (resp. second) component of the
+shape. The product of our two container extensions is
+\mintinline{Coq}{Prod Id Id}. 
+
+Finally, the shape the sum of two container extensions is the sum of their
+shapes. The positions are, like for products, the sum of their shapes. But to
+check the validity of shapes in positions, their constructor must match, e.g.
+shape \mintinline{Coq}{inl s} and shape \mintinline{Coq}{inl p}, with
+\mintinline{Coq}{valid s p}. 
+
+Our final container extension is the following: 
+\mintinline{Coq}{Sum (Const nat) (Prod Id Id)}.
+The shape of this functor is: 
+\mintinline{Coq}{nat + unit * unit}. The positions of this functor
+are \mintinline[breaklines]{Coq}{False + (unit + unit)}, which is isomorphic
+to \mintinline{Coq}{unit + unit}, which will only be valid in the RHS.
+
+The Coq value \mintinline{Coq}{inl n} of type
+\mintinline{Coq}{nat + bool * bool} would look as follows as a container
+extension 
+\mintinline{Coq}{App (Sum (Const nat) (Prod Id Id)) bool}:
+\begin{minted}{Coq}
+{| shape := inl n; cont := fun e => uninhabited e|}
+\end{minted}
+We omit the definition of \mintinline{Coq}{uninhabited}, which exploits the
+fact that \mintinline{Coq}{e} for \mintinline{Coq}{inl n} implies
+\mintinline{Coq}{False} to build an element of type \mintinline{Coq}{bool}.
+
+Similarly, the Coq value \mintinline{Coq}{inr (true, false)} as a container
+extension is as follows:
+\begin{minted}{Coq}
+  {| shape := inr (tt,tt);
+     cont := fun e : {p | valid (inr (tt, tt)) p} =>
+        match proj1_sig e with
+        | inl f => match f with end
+        | inr (inl tt) => fun _ => true
+        | inr (inr tt) => fun _ => false
+        end
+  |}
+\end{minted}
+Here, the position \mintinline{Coq}{inl f} is impossible, as
+\mintinline{Coq}{f} would need to be a proof of \mintinline{Coq}{False}.
+Of the two remaining positions, the left one will return 
+\mintinline{Coq}{true}, and the right position \mintinline{Coq}{false}.
+\begin{figure}
+\begin{minipage}{.52\textwidth}
+  \begin{minted}[linenos, fontsize=\small]{Coq}
+Context `(C1 : Cont S1 P1) 
+        `(C2 : Cont S2 P2).
+
+Definition Is := unit.
+Definition Ip := unit.
+Instance Id : Cont Is Ip := {
+  valid := fun _ _ => true }.
+
+Definition Ks (A : Set) := A.
+Definition Kp := False.
+Instance Const A : Cont (Ks A) Kp := {
+  valid := fun _ p =>
+    match p with end }.
+
+Definition Ps : Type := S1 * S2.
+Definition Pp : Type := P1 + P2.
+Instance Prod : Cont Ps Pp := {
+  valid := fun s p => 
+    match p with
+    | inl p' => valid (fst s) p'
+    | inr p' => valid (snd s) p'
+    end }.
+\end{minted}
+\end{minipage}
+\begin{minipage}{.47\textwidth}
+  \begin{minted}[linenos, firstnumber=23, fontsize=\small]{Coq}
+Definition Ss : Type := S1 + S2.
+Definition Sp : Type := P1 + P2.
+Instance Sum : Cont Ss Sp := {
+  valid := fun s p => 
+    match s, p with
+    | inl s', inl p' => valid s' p'
+    | inr s', inr p' => valid s' p'
+    | _, _ => false
+    end }.
+
+Definition Cs : Type := App F S2.
+Definition Cp : Type := P1 * P2.
+Instance Comp : Cont Cs Cp := 
+{ valid :=  
+    fun (s : App F S2) (p : P1 * P2) =>
+        match valid (shape s) (fst p) 
+        with
+        | true  => fun H =>
+            valid (cont s {fst p | H}) 
+                  (snd p)
+        | false => fun _ => false
+        end eq_refl }.
+  \end{minted}
+\end{minipage}
+  \caption{Polynomials as Container Extensions. In order: identity (L4-7),
+  constant (L9-13), product (L15-22), sum (L23-31), composition (L33-44).}
+  \label{fig:poly}
+\end{figure}
+
+\subsubsection{Equality of Container Extensions}
 
 \subsection{Types and Morphisms}
 
@@ -896,7 +1031,7 @@ equality for the contained elements, but Coq's propositional equality for
 positions:
 
 \begin{minted}{Coq}
-  Inductive AppR `{F : Container Sh P} (X : Type) {e : equiv X}
+  Inductive AppR `{F : Cont Sh P} (X : Type) {e : equiv X}
            (x y : App F X) : Prop :=
   | AppR_ext
       (Es : shape x =e shape y)
@@ -1076,7 +1211,7 @@ Recursive hylo universal property allows us to prove common optimisations:
     (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
     : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 
-  Corollary cata_ana_hylo `(F : Container Sh P) `{equiv A} `{equiv B}
+  Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
     (g : Alg F B) (h : RCoalg F A)
   : cata g \o rana h =e hylo g h.
 \end{minted}
