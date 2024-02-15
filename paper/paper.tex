@@ -907,7 +907,9 @@ extension
 \end{minted}
 We omit the definition of \mintinline{Coq}{uninhabited}, which exploits the
 fact that \mintinline{Coq}{e} for \mintinline{Coq}{inl n} implies
-\mintinline{Coq}{False} to build an element of type \mintinline{Coq}{bool}.
+\mintinline{Coq}{False} to build an element of type \mintinline{Coq}{bool}%
+\footnote{Note that, since \mintinline{Coq}{e} is uninhabited we could return
+any arbitrary value instead of \mintinline{Coq}{uninhabited e}.}.
 
 Similarly, the Coq value \mintinline{Coq}{inr (true, false)} as a container
 extension is as follows:
@@ -984,6 +986,14 @@ Instance Comp : Cont Cs Cp :=
 \end{figure}
 
 \subsubsection{Equality of Container Extensions}
+
+The equality of container extensions needs to be extensional, since the
+contents are obtained by applying a function. We want to equate container
+extensions that have the same shape, and that, for equal shape and position,
+they return the same element. 
+\begin{minted}{Coq}
+  { shape : Shape; contents : {p | valid shape pos} -> X }.
+\end{minted}
 
 \subsection{Types and Morphisms}
 
