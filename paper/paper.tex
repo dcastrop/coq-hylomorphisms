@@ -597,164 +597,6 @@ For an algebra $a : D(D_{*} A) \to A$,
 \end{align*}
 
 
-\section{Adjoint Folds}
-In order to transform $\operator{even-odd}$ into two functions $\operator{even}$
-and $\operator{odd}$ we are going to use something called an ``adjunction''.  In
-particular, we have two functors. The diagonal functor
-$\Delta : \CatC \to \CatC \times \CatC$ defined as $\Delta X = (X,X)$ and the
-product functor $\times : \CatC \times \CatC$. These two functors form an
-adjunction:
-\[\begin{tikzcd}
-	{\CatC \times \CatC} & \CatC
-	\arrow[""{name=0, anchor=center, inner sep=0}, "\Delta"', shift right=2, from=1-2, to=1-1]
-	\arrow[""{name=1, anchor=center, inner sep=0}, "\times"', shift right=2, from=1-1, to=1-2]
-	\arrow["\dashv"{anchor=center, rotate=-90}, draw=none, from=0, to=1]
-    \arrow["D"', loop, distance=2em, in=35, out=325, from=1-2, to=1-2]
-    \arrow["\Delta\circ D\circ \times "', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
-\end{tikzcd}
-\]
-More formally, this means there is a one-to-one correspondence of maps, i.e.
-every map $(A,A) \to (B_{1}, B_{2})$ corresponds univocally to a map of type
-$A \to B_{1} \times B_{2}$. In the isomorphism below we use $\ceiling{\cdot}$
-and $\floor{\cdot}$ to denote the maps witnessing the isomorphism called
-respectively the right and left transpose of the adjunction:
-\[
-  \floor{\cdot} : \CatC \times \CatC ((A, A) , (B_{1}, B_{2}) \iso \CatC (A , B_{1} \times B_{2}): \ceiling{\cdot}
-\]
-the right transponse $\ceiling{\cdot}$ of the adjunction can be
-defined using the projections:
-\[
-  \ceiling{g} = (\pi_{1} \cdot g,\pi_{2}\cdot g)
-\]
-and the floor can be defined as using the pair into the product:
-\[
-  \floor{f}(a) = \pair{f(a)}{f(a)}
-\]
-
-We can instantiate further the iso by setting $A = \Nat$, $B_{1} = \Bool$ and
-$B_{2} = \Bool$.
-\[
-  \floor{\cdot}: \CatC \times \CatC ((\Nat, \Nat) , (\Bool, \Bool) \iso \CatC (\Nat , \Bool \times \Bool) : \ceiling{\cdot}
-\]
-% At this point we are pretty much done as we can instantiate the diagrams
-% (\ref{eq:canonical-adjoint-fold}) where $D X = 1 + X$
-% \[
-%   \begin{tikzcd}
-% 	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool \times \Bool, 1 + \Bool \times \Bool) & { 1 + \Nat} & 1 + (\Bool \times \Bool) \\
-% 	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool \times \Bool
-% 	\arrow["{\cata{a}}"', from=2-4, to=2-5]
-% 	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
-% 	\arrow["{1 + \cata{a}}", from=1-4, to=1-5]
-% 	\arrow["a", from=1-5, to=2-5]
-% 	\arrow["{\ceiling{\cata{a}}}"', from=2-1, to=2-3]
-% 	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
-% 	\arrow["{(1 + \cata{a}, 1 + \cata{a})}", from=1-1, to=1-3]
-% 	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
-% 	\arrow[shorten <=35pt, shorten >=35pt, Rightarrow, 2tail reversed, from=1, to=0]
-%   \end{tikzcd}
-% \]
-% Now we define $a$ to be the following $D$ algebra:
-% \begin{align*}
-%   & a : 1 + \Bool \times \Bool \to \Bool\\
-%   & a (\operator{nil}) = (\top, \bot)\\
-%   & a (b_{1}, b_{2}) = (\neg b_{1}, \neg b_{2})
-% \end{align*}
-
-We already seen that the catamorphism over the algebra $a$ equals
-$\operator{even-odd}$. By using the right transpose we can derive the pair of
-original functions $(\operator{even}, \operator{odd})$:
-\[
-  \ceiling{\operator{even-odd}} = (\pi_{1}\cdot \operator{even-odd}, \pi_{2}\cdot \operator{even-odd})
-\]
-To show this pair of functions are the same as the original ones we appeal to
-uniqueness of catamorphisms. Recall that catamorphisms for a generic $F$ algebra
-$a$ are the unique maps such that
-\[
-  \cata{a} = a \comp F(\cata{a})\comp \InIso^{\circ}
-\]
-This is represented on the right hand side of the following diagrams:
-\[
-  \begin{tikzcd}
-	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool^{2}, 1 + \Bool^{2}) & {1 + \Nat} & 1 + \Bool^{2} \\
-	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool^{2}
-	\arrow["{\operator{eo}}"', dotted,  from=2-4, to=2-5]
-	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
-	\arrow["{1 + \operator{eo}}", dotted, from=1-4, to=1-5]
-	\arrow["a", from=1-5, to=2-5]
-	\arrow["{\ceiling{\operator{eo}}}"', from=2-1, to=2-3]
-	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
-	\arrow["{(1 + \operator{eo}, 1 + \operator{eo})}", from=1-1, to=1-3]
-	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
-	\arrow[shorten <=20pt, shorten >=20pt, Rightarrow, 2tail reversed, from=1, to=0]
-  \end{tikzcd}
-\]
-The double implication in the middle of these two diagrams states that the
-catamorphism on the right is in one-to-one correspondences with the right
-transpose of $\operator{eo}$ satisfying the right-hand side diagram. Notice the
-right-hand side is exactly the definition of the pair of functions
-$\operator{even}$ and $\operator{odd}$ and the diagram states these correspond
-to $\operator{even-odd}$ given by a catamorphism on the left. Since this latter
-is the unique catamorphism the one on the right is also unique such that it
-makes the right-hand side diagram commute.
-
-\subsection{The General Case}
-
-\[\begin{tikzcd}
-	{\CatC} & \CatD
-	\arrow[""{name=0, anchor=center, inner sep=0}, "L"', shift right=2, from=1-2, to=1-1]
-	\arrow[""{name=1, anchor=center, inner sep=0}, "R"', shift right=2, from=1-1, to=1-2]
-	\arrow["\dashv"{anchor=center, rotate=-90}, draw=none, from=0, to=1]
-    \arrow["D"', loop, distance=2em, in=35, out=325, from=1-2, to=1-2]
-    \arrow["LDR"', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
-\end{tikzcd}
-\]
-
-The following is a natural isomorphism arising from the adjunction $L \dashv R$.
-\begin{equation}
-  \label{eq:adjoint-iso}
-  \floor{\cdot} : \CatC(LA, B) \iso \CatD (A, RB) : \ceiling{\cdot}
-\end{equation}
-Some properties of adjunctions are worth recalling.  The unit and counit of the
-adjunction can be defined from the above isomorphism as follows:
-\[
-  \eta_{A} = \floor{id_{LA}} \qquad \epsilon_{B}  = \ceiling{id_{RB}}
-\]
-Conversely, the isomorphism can be defined in terms of the two functors $L$ and
-$R$ and the units of the adjunction:
-\begin{align*}
-  & \floor{f : LA \to B} = A \xrightarrow{\eta_{A}} RLA \xrightarrow{R(f)} RB\\
-  & \ceiling{g : A \to RB} = LA \xrightarrow{L(g)} LRB \xrightarrow{\epsilon_{B}} B
-\end{align*}
-These definitions are going to be useful later to understand the definitions of
-the recursion schemes we are going to prove correct.
-
-As a result, the following two diagrams (recursion schemes) are equivalent. The
-on the right hand side is a \emph{catamorphism} taking a $D$ algebra on $RB$ and
-construting an inductive function over the data type $\mu D$. The one on the
-left hand side is the derived recursion scheme where the data type has been
-wrapped up in $L$. The transformation is done by just applying the isomorphism
-(\ref{eq:adjoint-iso}) given by the adjunction.
-
-\begin{equation}
-  \label{eq:canonical-adjoint-fold}
-  \begin{tikzcd}
-	{LD\mu D} & LDRB && {D\mu D} & DRB \\
-	{L\mu D} & B & {} & {\mu D} & RB
-	\arrow["{\cata{a}}"', from=2-4, to=2-5]
-	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
-	\arrow["{D(\cata{a})}", from=1-4, to=1-5]
-	\arrow["{\floor{a}}", from=1-5, to=2-5]
-	\arrow["{\ceiling{\cata{a}}}"', from=2-1, to=2-2]
-	\arrow["{L(\InIso)}"', from=1-1, to=2-1]
-	\arrow["{LD(\cata{a})}", from=1-1, to=1-2]
-	\arrow[""{name=1, anchor=center, inner sep=0}, "a", from=1-2, to=2-2]
-	\arrow[shorten <=28pt, shorten >=28pt, Rightarrow, 2tail reversed, from=1, to=0]
-  \end{tikzcd}
-\end{equation}
-
-In the following section we instantiate the adjoint fold with some instances
-taken from the literature.
-
 \section{Mechanising Extractable Container Functors}
 
 \dcas{Subsections are tentative topics to remember what I need to fill in here,
@@ -1289,6 +1131,167 @@ approach has been used to express nonstructurally recursive algorithms in Agda:
 mergesort. Such an approach has also been used in MiniAgda~\cite{abs-1202-3496}.
 
 \bibliography{references.bib}
+\appendix
+
+\section{Adjoint Folds}
+In order to transform $\operator{even-odd}$ into two functions $\operator{even}$
+and $\operator{odd}$ we are going to use something called an ``adjunction''.  In
+particular, we have two functors. The diagonal functor
+$\Delta : \CatC \to \CatC \times \CatC$ defined as $\Delta X = (X,X)$ and the
+product functor $\times : \CatC \times \CatC$. These two functors form an
+adjunction:
+\[\begin{tikzcd}
+	{\CatC \times \CatC} & \CatC
+	\arrow[""{name=0, anchor=center, inner sep=0}, "\Delta"', shift right=2, from=1-2, to=1-1]
+	\arrow[""{name=1, anchor=center, inner sep=0}, "\times"', shift right=2, from=1-1, to=1-2]
+	\arrow["\dashv"{anchor=center, rotate=-90}, draw=none, from=0, to=1]
+    \arrow["D"', loop, distance=2em, in=35, out=325, from=1-2, to=1-2]
+    \arrow["\Delta\circ D\circ \times "', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
+\end{tikzcd}
+\]
+More formally, this means there is a one-to-one correspondence of maps, i.e.
+every map $(A,A) \to (B_{1}, B_{2})$ corresponds univocally to a map of type
+$A \to B_{1} \times B_{2}$. In the isomorphism below we use $\ceiling{\cdot}$
+and $\floor{\cdot}$ to denote the maps witnessing the isomorphism called
+respectively the right and left transpose of the adjunction:
+\[
+  \floor{\cdot} : \CatC \times \CatC ((A, A) , (B_{1}, B_{2}) \iso \CatC (A , B_{1} \times B_{2}): \ceiling{\cdot}
+\]
+the right transponse $\ceiling{\cdot}$ of the adjunction can be
+defined using the projections:
+\[
+  \ceiling{g} = (\pi_{1} \cdot g,\pi_{2}\cdot g)
+\]
+and the floor can be defined as using the pair into the product:
+\[
+  \floor{f}(a) = \pair{f(a)}{f(a)}
+\]
+
+We can instantiate further the iso by setting $A = \Nat$, $B_{1} = \Bool$ and
+$B_{2} = \Bool$.
+\[
+  \floor{\cdot}: \CatC \times \CatC ((\Nat, \Nat) , (\Bool, \Bool) \iso \CatC (\Nat , \Bool \times \Bool) : \ceiling{\cdot}
+\]
+% At this point we are pretty much done as we can instantiate the diagrams
+% (\ref{eq:canonical-adjoint-fold}) where $D X = 1 + X$
+% \[
+%   \begin{tikzcd}
+% 	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool \times \Bool, 1 + \Bool \times \Bool) & { 1 + \Nat} & 1 + (\Bool \times \Bool) \\
+% 	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool \times \Bool
+% 	\arrow["{\cata{a}}"', from=2-4, to=2-5]
+% 	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
+% 	\arrow["{1 + \cata{a}}", from=1-4, to=1-5]
+% 	\arrow["a", from=1-5, to=2-5]
+% 	\arrow["{\ceiling{\cata{a}}}"', from=2-1, to=2-3]
+% 	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
+% 	\arrow["{(1 + \cata{a}, 1 + \cata{a})}", from=1-1, to=1-3]
+% 	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
+% 	\arrow[shorten <=35pt, shorten >=35pt, Rightarrow, 2tail reversed, from=1, to=0]
+%   \end{tikzcd}
+% \]
+% Now we define $a$ to be the following $D$ algebra:
+% \begin{align*}
+%   & a : 1 + \Bool \times \Bool \to \Bool\\
+%   & a (\operator{nil}) = (\top, \bot)\\
+%   & a (b_{1}, b_{2}) = (\neg b_{1}, \neg b_{2})
+% \end{align*}
+
+We already seen that the catamorphism over the algebra $a$ equals
+$\operator{even-odd}$. By using the right transpose we can derive the pair of
+original functions $(\operator{even}, \operator{odd})$:
+\[
+  \ceiling{\operator{even-odd}} = (\pi_{1}\cdot \operator{even-odd}, \pi_{2}\cdot \operator{even-odd})
+\]
+To show this pair of functions are the same as the original ones we appeal to
+uniqueness of catamorphisms. Recall that catamorphisms for a generic $F$ algebra
+$a$ are the unique maps such that
+\[
+  \cata{a} = a \comp F(\cata{a})\comp \InIso^{\circ}
+\]
+This is represented on the right hand side of the following diagrams:
+\[
+  \begin{tikzcd}
+	{(1 + \Nat, 1 + \Nat)} && (1 + \Bool^{2}, 1 + \Bool^{2}) & {1 + \Nat} & 1 + \Bool^{2} \\
+	{(\Nat, \Nat)} && (\Bool, \Bool) & {\Nat} & \Bool^{2}
+	\arrow["{\operator{eo}}"', dotted,  from=2-4, to=2-5]
+	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
+	\arrow["{1 + \operator{eo}}", dotted, from=1-4, to=1-5]
+	\arrow["a", from=1-5, to=2-5]
+	\arrow["{\ceiling{\operator{eo}}}"', from=2-1, to=2-3]
+	\arrow["{(1 +  \InIso,1 +  \InIso)}"', from=1-1, to=2-1]
+	\arrow["{(1 + \operator{eo}, 1 + \operator{eo})}", from=1-1, to=1-3]
+	\arrow[""{name=1, anchor=center, inner sep=0}, "\ceiling{a}", from=1-3, to=2-3]
+	\arrow[shorten <=20pt, shorten >=20pt, Rightarrow, 2tail reversed, from=1, to=0]
+  \end{tikzcd}
+\]
+The double implication in the middle of these two diagrams states that the
+catamorphism on the right is in one-to-one correspondences with the right
+transpose of $\operator{eo}$ satisfying the right-hand side diagram. Notice the
+right-hand side is exactly the definition of the pair of functions
+$\operator{even}$ and $\operator{odd}$ and the diagram states these correspond
+to $\operator{even-odd}$ given by a catamorphism on the left. Since this latter
+is the unique catamorphism the one on the right is also unique such that it
+makes the right-hand side diagram commute.
+
+\subsection{The General Case}
+
+\[\begin{tikzcd}
+	{\CatC} & \CatD
+	\arrow[""{name=0, anchor=center, inner sep=0}, "L"', shift right=2, from=1-2, to=1-1]
+	\arrow[""{name=1, anchor=center, inner sep=0}, "R"', shift right=2, from=1-1, to=1-2]
+	\arrow["\dashv"{anchor=center, rotate=-90}, draw=none, from=0, to=1]
+    \arrow["D"', loop, distance=2em, in=35, out=325, from=1-2, to=1-2]
+    \arrow["LDR"', loop, distance=2em, in=215, out=145, from=1-1, to=1-1]
+\end{tikzcd}
+\]
+
+The following is a natural isomorphism arising from the adjunction $L \dashv R$.
+\begin{equation}
+  \label{eq:adjoint-iso}
+  \floor{\cdot} : \CatC(LA, B) \iso \CatD (A, RB) : \ceiling{\cdot}
+\end{equation}
+Some properties of adjunctions are worth recalling.  The unit and counit of the
+adjunction can be defined from the above isomorphism as follows:
+\[
+  \eta_{A} = \floor{id_{LA}} \qquad \epsilon_{B}  = \ceiling{id_{RB}}
+\]
+Conversely, the isomorphism can be defined in terms of the two functors $L$ and
+$R$ and the units of the adjunction:
+\begin{align*}
+  & \floor{f : LA \to B} = A \xrightarrow{\eta_{A}} RLA \xrightarrow{R(f)} RB\\
+  & \ceiling{g : A \to RB} = LA \xrightarrow{L(g)} LRB \xrightarrow{\epsilon_{B}} B
+\end{align*}
+These definitions are going to be useful later to understand the definitions of
+the recursion schemes we are going to prove correct.
+
+As a result, the following two diagrams (recursion schemes) are equivalent. The
+on the right hand side is a \emph{catamorphism} taking a $D$ algebra on $RB$ and
+construting an inductive function over the data type $\mu D$. The one on the
+left hand side is the derived recursion scheme where the data type has been
+wrapped up in $L$. The transformation is done by just applying the isomorphism
+(\ref{eq:adjoint-iso}) given by the adjunction.
+
+\begin{equation}
+  \label{eq:canonical-adjoint-fold}
+  \begin{tikzcd}
+	{LD\mu D} & LDRB && {D\mu D} & DRB \\
+	{L\mu D} & B & {} & {\mu D} & RB
+	\arrow["{\cata{a}}"', from=2-4, to=2-5]
+	\arrow[""{name=0, anchor=center, inner sep=0}, "{\InIso}"', from=1-4, to=2-4]
+	\arrow["{D(\cata{a})}", from=1-4, to=1-5]
+	\arrow["{\floor{a}}", from=1-5, to=2-5]
+	\arrow["{\ceiling{\cata{a}}}"', from=2-1, to=2-2]
+	\arrow["{L(\InIso)}"', from=1-1, to=2-1]
+	\arrow["{LD(\cata{a})}", from=1-1, to=1-2]
+	\arrow[""{name=1, anchor=center, inner sep=0}, "a", from=1-2, to=2-2]
+	\arrow[shorten <=28pt, shorten >=28pt, Rightarrow, 2tail reversed, from=1, to=0]
+  \end{tikzcd}
+\end{equation}
+
+In the following section we instantiate the adjoint fold with some instances
+taken from the literature.
+
+
 \end{document}
 
 %%% Local Variables:
