@@ -826,15 +826,19 @@ This way, we reach our final definition for container extensions. First,
 containers are defined as pairs of shape and position types that have a
 \emph{decidable} validity predicate. We represent decidable predicates as
 functions that return a boolean, and lift booleans to propositions similarly to
-SSReflect.
+SSReflect. For simplicity, we define the dependent pair of valid positions as a
+record, which will be extracted to a singleton type with the validity proof
+erased by Coq's code extraction mechanism.
 \begin{minted}{Coq}
 Class Cont (Shape : Set) (Pos : Set) := { valid : Shape -> Pos -> bool }.
 Coercion is_true (b : bool) : Prop := b = true.
+Record PosOf `(C : Cont Shape Pos) (shape : Shape) := 
+  ValidPos { val : Pos; IsValid : valid shape pos }.
 \end{minted}
 Then, we define \emph{container extensions} as
 \begin{minted}{Coq}
 Record App `(C : Cont Shape Pos) (X : Set) :=
-  { shape : Shape; contents : {p | valid shape pos} -> X }.
+  { shape : Shape; contents : PosOf C shape -> X }.
 \end{minted}
 The functorial action for container extensions on morphisms boils down to
 function composition, which trivially preserves identity and composition.
@@ -849,7 +853,7 @@ Polynomial functors can be defined as container extensions~\ref{fig:poly}. We
 omit here the proofs that these container extensions are isomorphic to
 polynomials, but this proof is straightforward. To illustrate how the identity,
 constant, sum and product container extensions work, consider the
-tree-generating functor (i.e. the functor whose fixpoint is a binary tree):
+tree-generating functor (i.e.\ the functor whose fixpoint is a binary tree):
 $F\; X = \mathbb{N} + X \times X$.
 
 This functor is built as the sum of two functors: $X \mapsto \mathbb{N}$ and $X \mapsto
@@ -980,8 +984,9 @@ Instance Comp : Cont Cs Cp :=
         end eq_refl }.
   \end{minted}
 \end{minipage}
-  \caption{Polynomials as Container Extensions. In order: identity (L4-7),
-  constant (L9-13), product (L15-22), sum (L23-31), composition (L33-44).}
+  \caption{Polynomials as Container Extensions (simplified). In order: identity
+  (L4-7), constant (L9-13), product (L15-22), sum (L23-31), composition
+  (L33-44).}
   \label{fig:poly}
 \end{figure}
 
@@ -990,21 +995,35 @@ Instance Comp : Cont Cs Cp :=
 The equality of container extensions needs to be extensional, since the
 contents are obtained by applying a function. We want to equate container
 extensions that have the same shape, and that, for equal shape and position,
-they return the same element. 
+they return the same element. To avoid the use of functional extensionality
+axioms, we capture this relation with the following inductive proposition in
+Coq:
 \begin{minted}{Coq}
-  { shape : Shape; contents : {p | valid shape pos} -> X }.
+Inductive AppR `{F : Cont Sh P} {X} (x y : App F X) : Prop :=
+| AppR_ext (Es : shape x = shape y)
+           (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 = cont y e2).
 \end{minted}
+Note that  we do not care about the validity proof of the positions, only their
+value. This is to simplify (slightly) our proofs. This relation is
+trivially \emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
+
+However, the use of a different equality for container extensions now forces us
+to deal with the fact that some types have different definitions of equality.
+In particular, we want to reason about the equality of functions of types such
+as \mintinline{Coq}{App F A -> B} (or \mintinline{Coq}{B -> App F A}). 
+We want the following kind of properties to hold: 
+\begin{minted}{Coq}
+forall (x y : App C A) (f : App C A -> B), AppR x y -> f x = f y
+\end{minted}
+Moreover, we want this to be true for any \mintinline{Coq}{B}, and equality.
+We address this in the following section.
 
 \subsection{Types and Morphisms}
 
-Reasoning about the equality of containers requires reasoning about the
-equality of the contained elements. But the contained elements are given by
-function \mintinline{Coq}{contents}. This means that container equality needs
-to be extensional, if we want to avoid the functional extensionality axiom.
-Furthermore, the equality of functions also needs to be extensional. To deal
-with the fact that different types will use different notions of equality, we
-restrict to types with an associated equivalence relation, and \emph{proper
-morphisms}, i.e. morphisms that respect the necessary equivalence relations.
+The need to reason about different forms of equality forces us to couple every
+type with an associated equivalence relation. Furthermore, we will only allow
+to reason about the equality of \emph{proper morphisms}, i.e. morphisms that
+respect the necessary equivalence relations.
 
 \begin{minted}{Coq}
 Reserved Notation "f =e g" (at level 70, no associativity).
@@ -1028,7 +1047,6 @@ Context `{eA : equiv A} `{eB : equiv B}.
 Arguments morph A {eA} B {eB}.
 Notation "x ~> y" := (morph x y).
 \end{minted}
-\dcas{Simplify the above}
 
 \dcas{We provide common morphisms for polynomials: sums, products, const,
 exponential (Add examples?)}
@@ -1039,24 +1057,25 @@ propositional equality, extensional equality, or a mixture of both, e.g. for
 container extensions, we use an arbitrary equality for shapes, extensional
 equality for the contained elements, but Coq's propositional equality for
 positions:
-
 \begin{minted}{Coq}
-  Inductive AppR `{F : Cont Sh P} (X : Type) {e : equiv X}
-           (x y : App F X) : Prop :=
-  | AppR_ext
-      (Es : shape x =e shape y)
-      (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
+  Inductive AppR `{Cont Sh P} `{equiv X} (x y : App F X) : Prop :=
+  | AppR_ext (Es : shape x =e shape y)
+             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
 \end{minted}
-The reason for this is to avoid a circularity in the definitions: arbitrary
-equivalences for positions would force us to define the contents as morphisms
-from positions to the contained elements, but that would as well force us to
-redefine container extensions so that they are only applicable to types with
-arbitrary equalities and morphisms.  We will see in the following section why
-this is problematic for defining initial algebras of container extensions.
+Notice the use of \mintinline{Coq}{=e} for both shapes, and the continuations
+of container extensions. 
+The reason to use Coq's propositional equality for positions is to avoid a
+circularity in the definitions: arbitrary equivalences for positions would
+force us to define the contents as morphisms from positions to the contained
+elements, but that would as well force us to redefine container extensions so
+that they are only applicable to types with arbitrary equalities and morphisms.
+We will see in the following section why this is problematic for defining
+initial algebras of container extensions.
 \dcas{I am actually not sure of what I wrote above, and it may be something I
 simply overlooked. I will look into the Coq code and try to generalise it if I
 have the time}
 
+\subsubsection{Polynomial Types, Equivalences, and Morphisms}
 We associate some types with their standard equivalences:
 \begin{minted}{Coq}
 Instance ext_eq (A : Type) `{eq_B : equiv B} : equiv (A -> B).
@@ -1065,6 +1084,8 @@ Instance sum_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A + B).
 Instance prop_eq : equiv Prop.
 Instance pred_sub `{eA : equiv A} {P : A -> Prop} : equiv {a : A | P a}.
 \end{minted}
+
+\subsubsection{Isomorphisms with Container Extensions}
 
 \section{Extracting Certified Hylomorphisms}
 
