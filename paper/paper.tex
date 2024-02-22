@@ -1032,27 +1032,33 @@ polynomial types are isomorphic to polynomial functors as container extensions.
 \subsection{Algebras}
 
 Algebras on container extensions are defined as expected. The carrier of the
-algebra is \mintinline{Coq}{A}, and the operations of the algebra are
-morphisms of the following type:
+algebra is \mintinline{Coq}{A}, and the operations of the algebra are morphisms
+of the following type:
 \begin{minted}{Coq}
 Notation Alg F A := (App F A ~> A).
 \end{minted}
-
-There are \emph{two} initial algebras that are, as expected, unique up to
-isomorphism. We show one such initial algebra here, and the second in the
-following subsection, plus a proof that they are isomorphic:
-
+Given a container extension \mintinline{Coq}{F}, we define \emph{two}
+(isomorphic) initial algebras. We will show the need for the second initial
+algebra in the following section. Our fist initial algebra is defined as the
+straightforward least fixpoint of the container extension \mintinline{Coq}{F}:
 \begin{minted}{Coq}
 Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
 \end{minted}
-This is why we could not define equality of container extensions generically:
-the contained types may not have (yet) an associated equivalence. We could have
-overcame this circularity by defining simultaneously LFix and its associated
-equivalence relation. But that would complicate definitions unnecessarily.
-\dcas{I know ... I need to rewrite/expand on this}
+This definition highlights why we cannot define equality of the positions and
+the contained elements generically (recall Section~\ref{sec:TODO}): the
+contained types may not have (yet) an associated equivalence. In other words,
+we would need to provide an equivalence for \mintinline{Coq}{LFix}, but the
+only way to do this is to define such equivalence simultaneously to the
+definition for  \mintinline{Coq}{LFix}.  We could have overcame this
+circularity by defining  \mintinline{Coq}{LFix} independently of container
+extensions, and define later the necessary
+\mintinline{Coq}{in}/\mintinline{Coq}{out} functions to convert between
+\mintinline{Coq}{LFix} and \mintinline{Coq}{App}. However, this extra layer
+interferes with code extraction, in that it requires destructing/constructing
+subsequent \mintinline{Coq}{LFix} and  \mintinline{Coq}{App}, which Coq is not
+always able to inline.
 
-We provide a custom induction schema for initial algebras:
-
+We provide a custom induction scheme for initial algebras:
 \begin{minted}{Coq}
 Lemma LFix_ind [P : LFix -> Prop]
   : (forall x : App F LFix,
@@ -1060,9 +1066,10 @@ Lemma LFix_ind [P : LFix -> Prop]
         P (LFix_in x))
     -> forall l : LFix, P l.
 \end{minted}
-
-Equality of initial algebras of container extensions needs to be defined
-recursively and extensionally:
+We define the equality of initial algebras of container extensions recursively,
+by traversing the structure and equating the shapes and positions. This
+definition is equivalent to taking the fixpoint of \mintinline{Coq}{AppR} in
+Section~\ref{sec:TODO}.
 \begin{minted}{Coq}
 Fixpoint LFixR (x y : LFix) : Prop :=
   let f_x := LFix_out x in
@@ -1070,11 +1077,12 @@ Fixpoint LFixR (x y : LFix) : Prop :=
   shape f_x =e shape f_y /\
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 \end{minted}
-
-The unique homomorphism from an initial algebra to other algebras, i.e. the catamorphism, is defined as a
-regular recursive function:
+From such initial algebras, we define \emph{catamorphisms} by recursively
+traversing their structure. As usual, catamorphisms take an
+\mintinline{Coq}{F}-algebra with carrier \mintinline{Coq}{A}, and produces a
+function from \mintinline{Coq}{LFix F} to \mintinline{Coq}{A}.
 \begin{minted}{Coq}
-Definition cata_f `{eA : equiv A} (g : Alg F A) : LFix -> A
+Definition cata_f `{equiv A} (g : Alg F A) : LFix -> A
 := fix f (x : LFix) :=
   match x with
   | LFix_in ax =>

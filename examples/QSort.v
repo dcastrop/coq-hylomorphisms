@@ -14,22 +14,22 @@ Require Import Examples.BTree.
 
 Require List.
 
-Definition merge : Alg (TreeF nat) (list nat).
+Definition merge : App (TreeF unit nat) (list nat) ~> list nat.
   refine {|
-      app := fun (x : App (TreeF nat) (list nat)) =>
+      app := fun x =>
                match a_out x with
-               | None => nil
-               | Some (h, l, r) => Datatypes.app l (h :: r)
+               | leaf _ => nil
+               | node h l r => Datatypes.app l (h :: r)
                end
     |}.
   intros x y ->. auto with ffix.
 Defined.
 
-Definition c_split : Coalg (TreeF nat) (list nat).
+Definition c_split : Coalg (TreeF unit nat) (list nat).
   refine {|
       app := fun x =>
                match x with
-               | nil => a_leaf
+               | nil => a_leaf tt
                | cons h t =>
                    let l := List.filter (fun x => Nat.leb x h) t in
                    let r := List.filter (fun x => negb (Nat.leb x h)) t in
@@ -52,7 +52,7 @@ Proof.
   destruct se; simpl in *; apply Ih, length_filter, H.
 Qed.
 
-Definition tsplit : RCoalg (TreeF nat) (list nat) := Rec split_fin.
+Definition tsplit : RCoalg (TreeF unit nat) (list nat) := Rec split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)

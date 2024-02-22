@@ -13,62 +13,82 @@ Require Import HYLO.Hylo.
 Require List.
 
 (* Defining a tree *)
-
 Unset Auto Template Polymorphism.
 
+Inductive ITreeF L N X := leaf (ELEM : L) | node (ELEM : N) (LB RB : X).
+Arguments leaf & {L N X} ELEM.
+Arguments node & {L N X} ELEM LB RB.
+
 (* shapes *)
-Inductive Ts A := | Leaf | Node (ELEM : A).
+Inductive Ts L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tp := | Lbranch | Rbranch. (* positions *)
 (* position valid in shape? *)
-Definition t_dom A : Ts A * Tp ~> bool.
+Definition t_dom {L A} : Ts L A * Tp ~> bool.
   refine {| app := fun x =>
                      match x with
-                     | (Node _, _)  => true
+                     | (Node _ _, _)  => true
                      | _            => false
                      end
          |}.
   intros [??] [??] [E1 E2]. simpl in *.  subst. auto.
 Defined.
 #[local]
-  Instance TreeF (A : Type) : Cont (Ts A) Tp :=
-  { valid := t_dom A }.
-Definition Tree A := LFix (TreeF A).
+  Instance TreeF (L A : Type) : Cont (Ts L A) Tp :=
+  { valid := @t_dom L A }.
+Definition Tree L A := LFix (TreeF L A).
 
-Lemma dom_leaf_false A : Pos (F:=TreeF A) (Leaf A) -> False.
+Lemma dom_leaf_false L A (x : L) : Pos (F:=TreeF L A) (Leaf A x) -> False.
 Proof. intros []. simpl in *. discriminate. Qed.
-Definition dom_leaf A B (x : Pos (F:=TreeF A) (Leaf A)) : B :=
+Definition dom_leaf L A B (e : L) (x : Pos (F:=TreeF L A) (Leaf A e)) : B :=
   False_rect _ (dom_leaf_false x).
 
-Definition a_leaf (A X : Type)
-  : App (TreeF A) X := MkCont (Leaf A) (@dom_leaf A X).
-Arguments a_leaf & {A X}.
-Definition a_node A X (x : A) (l r : X) : App (TreeF A) X :=
-  MkCont (Node x) (fun p => match val p with
+Definition a_leaf {L A X : Type} (x : L)
+  : App (TreeF L A) X := MkCont (Leaf A x) (@dom_leaf L A X x).
+Arguments a_leaf & {L A X}.
+Definition a_node L A X (x : A) (l r : X) : App (TreeF L A) X :=
+  MkCont (Node _ x) (fun p => match val p with
                             | Lbranch => l
                             | Rbranch => r
                             end).
-Arguments a_node & {A X}.
+Arguments a_node & {L A X} x l r.
 
-Definition e_lbranch A (x : A) : Pos (Node x) := MkElem Lbranch eq_refl.
-Definition e_rbranch A (x : A) : Pos (Node x) := MkElem Rbranch eq_refl.
+Definition lnode_valid {L A} (x : Ts L A)
+  : forall (n : A), x = Node L n -> valid (x, Lbranch) = true.
+Proof. intros n ->. reflexivity. Qed.
+Definition rnode_valid {L A} (x : Ts L A)
+  : forall (n : A), x = Node L n -> valid (x, Rbranch) = true.
+Proof. intros n ->. reflexivity. Qed.
 
-Definition a_out {A X : Type} : App (TreeF A) X ~> option (A * X * X).
-  refine
-    {| app :=
-        fun x : App (TreeF A) X =>
-          let (s, k) := x in
-          match s return (Pos s -> X) -> option (A * X * X) with
-          | Leaf _ => fun _ => None
-          | Node x =>
-              fun k : Pos (Node x) -> X =>
-                Some (x, k (e_lbranch x), k (e_rbranch x))
-          end k
-    |}.
+Definition e_lbranch {L A} (s : Ts L A) n (H : s = Node _ n)
+  : Pos s := MkElem Lbranch (lnode_valid H).
+Definition e_rbranch {L A} (s : Ts L A) n (H : s = Node _ n)
+  : Pos s := MkElem Rbranch (lnode_valid H).
+
+(* Definition a_out {L A X : Type} : App (TreeF L A) X -> ITreeF L A X. *)
+(*   refine *)
+(*     ( *)
+(*       fun x : App (TreeF L A) X => *)
+(*         let (s, k) := x in *)
+(*         match s as s' return s = s' -> ITreeF L A X with *)
+(*         | Leaf _ x => fun _ => leaf x *)
+(*         | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E)) *)
+(*         end eq_refl *)
+(*     ). *)
+
+  Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
+    refine
+      {| app :=
+          fun x : App (TreeF L A) X =>
+            let (s, k) := x in
+            match s as s' return s = s' -> ITreeF L A X with
+            | Leaf _ x => fun _ => leaf x
+            | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E))
+            end eq_refl
+      |}.
   intros [x Fx] [y Fy] [Sxy Kxy]. simpl in *. subst.
-  destruct y; trivial.
-  rewrite (Kxy (e_lbranch ELEM) (e_lbranch ELEM) eq_refl).
-  rewrite (Kxy (e_rbranch ELEM) (e_rbranch ELEM) eq_refl).
-  reflexivity.
+  destruct y; trivial; simpl.
+  rewrite (Kxy (e_lbranch _) (e_lbranch eq_refl)); trivial.
+  rewrite (Kxy (e_rbranch _) (e_rbranch eq_refl)); trivial.
 Defined.
 
 (* TODO: refactor Utilities for QSort *)
