@@ -13,6 +13,7 @@ Require Import HYLO.Hylo.
 Require Import Examples.BTree.
 
 Require List.
+Require Import Nat.
 
 Fixpoint mergeL l1 l2 {struct l1} :=
   let fix merge_aux l2 :=
@@ -20,16 +21,17 @@ Fixpoint mergeL l1 l2 {struct l1} :=
     | nil, _ => l2
     | _, nil => l1
     | cons a1 l1', cons a2 l2' =>
-      if a1 <=? a2 then cons a1 (merge l1' l2) else cons a2 (merge_aux l2')
+      if a1 <=? a2 then cons a1 (mergeL l1' l2) else cons a2 (merge_aux l2')
     end
   in merge_aux l2.
 
-Definition merge : Alg (TreeF nat) (list nat).
+About app.
+Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat.
   refine {|
-      app := fun (x : App (TreeF nat) (list nat)) =>
+      app := fun x =>
                match a_out x with
-               | None => nil
-               | Some (h, l, r) => Datatypes.app l (h :: r)
+               | node _ l r => mergeL l r
+               | leaf e => e
                end
     |}.
   intros x y ->. auto with ffix.
@@ -41,40 +43,32 @@ Fixpoint splitL (x : list nat) (acc : list nat * list nat) :=
   | cons x xs => splitL xs (snd acc, cons x (fst acc))
   end.
 
-Definition c_split : Coalg (TreeF nat) (list nat).
+Definition c_split : Coalg (TreeF (list nat) unit) (list nat).
   refine {|
       app := fun x =>
-               match x with
-               | nil => a_leaf
-               | cons h t =>
-                   let (l, r) := splitL t (nil, nil) in
-                   a_node h l r
-               end
+               if List.length x <=? 1
+               then a_leaf x
+               else let (l, r) := splitL x (nil, nil) in
+                    a_node tt l r
     |}.
-  intros x y ->. auto with ffix.
+  intros x y H. simpl in H. subst. reflexivity.
 Defined.
 
-  (* Needs to be defined, otherwise qsort does not reduce!
+  (* Needs to be defined, otherwise msort does not reduce!
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
 Lemma split_fin : forall x, RecF c_split x.
 Proof.
-  intros x. generalize (PeanoNat.Nat.leb_refl (List.length x)).
-  generalize (length x) at 2. intros n. revert x.
-  induction n as [|n Ih]; intros [|h t] H; simpl in *; try discriminate;
-    constructor; intros e; try destruct (dom_leaf_false e).
-  destruct e as [se ke].
-  destruct se; simpl in *; apply Ih, length_filter, H.
-Qed.
+Admitted.
 
-Definition tsplit : RCoalg (TreeF nat) (list nat) := Rec split_fin.
+Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat) := Rec split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
 (* UPDATE 12/09/2023 by DC: this used to be mergesort, and at some
  * point I simply changed the implementation ...
  *)
-Definition qsort : Ext (cata merge \o rana tsplit).
+Definition msort : Ext (cata merge \o rana tsplit).
   calculate.
   (* rewrite <- ana_rana. *)
   (* rewrite compA, cata_ccata. *)
@@ -127,6 +121,9 @@ Extraction Inline lg_in.
 Extraction Inline lg_out.
 Extraction Inline GFix_out.
 
+Extraction Inline fst.
+Extraction Inline snd.
+
 Extraction Inline merge.
 Extraction Inline a_leaf.
 Extraction Inline a_node.
@@ -134,4 +131,4 @@ Extraction Inline a_out.
 Extraction Inline c_split.
 Extraction Inline tsplit.
 Set Extraction Flag 2047.
-Recursive Extraction qsort.
+Recursive Extraction msort.
