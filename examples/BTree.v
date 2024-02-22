@@ -52,27 +52,43 @@ Definition a_node L A X (x : A) (l r : X) : App (TreeF L A) X :=
                             end).
 Arguments a_node & {L A X} x l r.
 
-Definition e_lbranch {L A} (x : A) : Pos (Node L x) := MkElem Lbranch eq_refl.
-Arguments e_lbranch & {L A x}.
-Definition e_rbranch {L A} (x : A) : Pos (Node L x) := MkElem Rbranch eq_refl.
-Arguments e_rbranch & {L A x}.
+Definition lnode_valid {L A} (x : Ts L A)
+  : forall (n : A), x = Node L n -> valid (x, Lbranch) = true.
+Proof. intros n ->. reflexivity. Qed.
+Definition rnode_valid {L A} (x : Ts L A)
+  : forall (n : A), x = Node L n -> valid (x, Rbranch) = true.
+Proof. intros n ->. reflexivity. Qed.
 
+Definition e_lbranch {L A} (s : Ts L A) n (H : s = Node _ n)
+  : Pos s := MkElem Lbranch (lnode_valid H).
+Definition e_rbranch {L A} (s : Ts L A) n (H : s = Node _ n)
+  : Pos s := MkElem Rbranch (lnode_valid H).
 
-Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
+(* Definition a_out {L A X : Type} : App (TreeF L A) X -> ITreeF L A X. *)
+(*   refine *)
+(*     ( *)
+(*       fun x : App (TreeF L A) X => *)
+(*         let (s, k) := x in *)
+(*         match s as s' return s = s' -> ITreeF L A X with *)
+(*         | Leaf _ x => fun _ => leaf x *)
+(*         | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E)) *)
+(*         end eq_refl *)
+(*     ). *)
+
+  Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
     refine
       {| app :=
           fun x : App (TreeF L A) X =>
-          let (s, k) := x in
-          match s return (Pos s -> X) -> ITreeF L A X with
-          | Leaf _ x => fun _ => leaf x
-          | Node _ n => fun k => node n (k e_lbranch) (k e_rbranch)
-          end k
+            let (s, k) := x in
+            match s as s' return s = s' -> ITreeF L A X with
+            | Leaf _ x => fun _ => leaf x
+            | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E))
+            end eq_refl
       |}.
   intros [x Fx] [y Fy] [Sxy Kxy]. simpl in *. subst.
-  destruct y; trivial.
-  rewrite (Kxy e_lbranch e_lbranch eq_refl).
-  rewrite (Kxy e_rbranch e_rbranch eq_refl).
-  reflexivity.
+  destruct y; trivial; simpl.
+  rewrite (Kxy (e_lbranch _) (e_lbranch eq_refl)); trivial.
+  rewrite (Kxy (e_rbranch _) (e_rbranch eq_refl)); trivial.
 Defined.
 
 (* TODO: refactor Utilities for QSort *)
