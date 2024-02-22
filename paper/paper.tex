@@ -24,7 +24,7 @@
 \usepackage{quiver}
 \usepackage{minted}
 \usepackage{newunicodechar}
-
+\usepackage{microtype}
 % \addbibresource{references.bib}
 \usepackage{array}   % for \newcolumntype macro
 \newcolumntype{C}{>{$}c<{$}} % math-mode version of "l" column type
@@ -44,7 +44,7 @@
   urlcolor=BrickRed
 }
 \newcommand{\mpav}[1]{\textcolor{red}{\textsc{Marco}: #1}}
-\newcommand{\dcas}[1]{\textcolor{green}{\textsc{David}: #1}}
+\newcommand{\dcas}[1]{\textcolor{ForestGreen}{\textsc{David}: #1}}
 \newcommand{\mvol}[1]{\textcolor{blue}{\textsc{Michael}: #1}}
 \newcommand{\proofcomment}[1]{\text{\{ #1 \}}}
 \newenvironment{proofof}[1] {\begin{proof}[Proof of {#1}]}{\end{proof}}
@@ -111,6 +111,7 @@
 \newcommand{\pair}[2]{\langle #1, #2 \rangle}
 \newcommand{\haskell}[1]{\mintinline{haskell}{#1}}
 \newcommand{\coq}[1]{\mintinline{coq}{#1}}
+
 \title{A Mechanised Library for Generic (Co)Programming}
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
@@ -293,65 +294,106 @@ Canonical recursion schemes include \emph{folds} (catamorphisms) which consume
 data and \emph{unfolds} (anamorphisms) which produce data. These are the unique
 solutions (when they exist) to the following two equations respectively
 \[
-  h \comp \InIso = a \comp F h \qquad \OutIso \comp k = F k \comp c
+  h  = a \comp F h \comp \InOp \qquad k = \OutOp \comp F k \comp c
 \]
 where $F$ is a \emph{base functor}, $Ff$ is the \emph{functorial action} which
 can be thought of the program $\operator{fmap}\; f$, $a$ is a program of type
 $F A \to A$ (an $F$-algebra),  $c$ is a program of type $C \to FC$ (a
-$F$-coalgebra), $\InIso$ is the isomoprhism on the least fixed-point of $F$,
-namely $\mu F \xrightarrow{\iso} F\mu F$, and $\OutIso$ is the isomorphism on
-the greatest fixed-point of $F$, namely $\nu F \xrightarrow{\iso} F\nu F$. When
+$F$-coalgebra), $\InOp$ is the isomoprhism on the least fixed-point of $F$,
+namely $\InOp : \mu F \to F\mu F$, and $\OutOp$ is the isomorphism on
+the greatest fixed-point of $F$, namely $F \nu F \to \nu F$. When
 the unique solutions to the above equations exist we denote them as $\cata{a}$
 and $\ana{c}$ respectively.
 
-However, catamorphisms (dually anamorphisms) do not capture every recursion
-scheme we can think of.  As an example, consider the quicksort
-algorithm:\footnote[1]{This program is written in Coq notation to be consistent,
-but it is not a program that Coq can accept.}
+\subsection{Hylomorphisms}
+Catamorphisms (dually anamorphisms) do not capture every recursion
+scheme we can think of.  As an example, consider an example of a classic
+\emph{divide-and-conquer} program such as quicksort algorithm:\footnote[1]{This
+program is written in Coq notation to be consistent, but it is not a program
+that Coq can accept.}
 
 \mpav{I need this to be written in Coq notation}
-\begin{minted}{haskell}
-partition :: [a] -> ([a], a, [a])
-partition (x:xs) = (filter (x <=) xs, x, filter (x >) xs)
-
-quicksort :: [a] -> [a]
-quicksort [] = []
-quicksort ls = let (xs, x, ys) = partition ls in
-                        (quicksort xs) ++ [x] ++ (quicksort ys)
+\begin{minted}{coq}
+qs :: [a] -> [a]
+qs [] = []
+qs (x:xs) = qs (filter (x <=) xs) ++ [x] ++ (qs (filter (x >) xs))
 \end{minted}
-This program is formed of essentially two parts. The first one is the
-$\operator{partition}$ program destructuring the input list in three parts, the
-pivot and the other two sublists, and the second part recursing over the
-sublists and composing the results back together.
+This program is formed of essentially two parts. The first one is what is
+commonly thought as the \emph{partition} function destructuring the input list
+in three parts, the pivot and the other two sublists, and the second part
+recursing over the sublists and composing the results back together.
 
 Notice that if we define the functor \coq{TreeF} $X = X \times A \times X$ with
 the obvious functorial action then \coq{partition} can be viewed as a
-\coq{TreeF}-coalgebra on lists over the type $A$. While we can define an \coq{TreeF}-algebra on lists over $A$
-as well, that is a map \coq{alg} $:$ \coq{TreeF} $[A] \to [A]$ defined
-as \coq{alg (left, x, right) = left ++ [x] ++ right}.
+\coq{TreeF}-coalgebra on lists over the type $A$
+\begin{minted}{coq}
+c : [A] -> TreeF [A]
+c (x:xs) = (filter (x <=) xs, x, filter (x >) xs)
+\end{minted}
 
-More specifically, in the context of recursive data types, such as in Haskell,
-where induction and coinduction is conflated, an hylomorphism can be implemented
-in terms of a catarmorphism (folding) and an anamorphism (unfolding)
-\[
-  \hylo{a}{c} = \cata{a} \comp \ana{c}
-\]
-They first generate a data structure using an anamorphism and then immediately
-fold or reduce it using a catamorphism.
+While we can define an \coq{TreeF}-algebra on lists
+over $A$ as well, that is a map
+\begin{minted}{coq}
+a : TreeF [A] -> [A]
+a (left, x, right) = left ++ [x] ++ right
+\end{minted}
 
-The hylomorphism pattern is particularly useful for defining recursive
-algorithms in a functional programming context, where recursion is a fundamental
-tool for solving problems. By separating the generation of data structures from
-their consumption, hylomorphisms enable clearer and more modular code, making it
-easier to reason about and maintain recursive algorithms.
+It should be easy to see that the program \coq{qs} can now be defined as the
+unique program that runs the coalgebra $c$ recurses over the sublists produced
+and then composes the results together. The structure exemplified by this
+program is a typical divide-and-conquer algorithm which can be implemented using
+an \emph{hylomorphism}. An hylomorphism is the unique solution $x : C \to A$ to
+the hylo equation
+\begin{equation}
+  \label{eq:hylo}
+  x =  a \comp Fx \comp c
+\end{equation}
+for a $F$-algebra on $A$, an $F$-coalgebra on $C$ and a functor $F$.  If for
+every $F$-algebra there exists a unique solution to (\ref{eq:hylo}) then we say
+the $F$-coalgebra $c$ is \emph{recursive}. Dually if for every $F$-coalgebra $c$
+there exists a unique solution to (\ref{eq:hylo}) we say the $F$-algebra $a$ is
+\emph{corecursive}. We denote the unique solution to the hylo equation
+(\ref{eq:hylo}) as $\hylo{a}{c}$.
 
-However, in a type theory inductive and coinductive data types are separate.
+Moreover, it shoud be easy to see that catamorphisms and anamorphism arise as a
+special case of hylomorphisms
+\begin{equation}
+  \label{eq:cata}
+  \cata{a} = \hylo{\InOp}{a} \qquad \ana{c} = \hylo{c}{\OutOp}
+\end{equation}
+since $\InOp$ is indeed a recursive coalgebra and $\OutOp$ is a corecursive
+algebra.
 
-In this section we will introduce the notion of hylomorphism. By way of examples
-we will also give high level intution as to way all recursion schemes can be
-defined in terms of a basic
+\subsection{Implementing Recursion Schemes}
+Hylomorphisms can implement all structured recursion schemes~\cite{HinzeWG15,
+HinzeW16}.  Here we show the result by means of a very basic example: mutual
+recursion. We refer the reader to Hinze et al.~\cite{HinzeWG15} for the
+theoretical result and to Yang and Wu~\cite{YangW22} for more examples of
+recursion schemes.
 
-Say that we want to prove that the two functions below are well-defined
+% More specifically, in the context of recursive data types, such as in Haskell,
+% where induction and coinduction is conflated, an hylomorphism can be implemented
+% in terms of a catarmorphism (folding) and an anamorphism (unfolding)
+% \[
+%   \hylo{a}{c} = \cata{a} \comp \ana{c}
+% \]
+% They first generate a data structure using an anamorphism and then immediately
+% fold or reduce it using a catamorphism.
+
+% The hylomorphism pattern is particularly useful for defining recursive
+% algorithms in a functional programming context, where recursion is a fundamental
+% tool for solving problems. By separating the generation of data structures from
+% their consumption, hylomorphisms enable clearer and more modular code, making it
+% easier to reason about and maintain recursive algorithms.
+
+% However, in a type theory inductive and coinductive data types are separate.
+
+% In this section we will introduce the notion of hylomorphism. By way of examples
+% we will also give high level intution as to way all recursion schemes can be
+% defined in terms of a basic
+
+Say that we want to prove that the two mutually recursive functions below are
+well-defined
 
 \begin{tabular}{LL}
   \operator{even} : \Nat \to \Bool                  &  \operator{odd} : \Nat \to \Bool\\
@@ -366,274 +408,281 @@ equivalent to the above
   & \operator{even-odd} (0) = (\top, \bot)\\
   & \operator{even-odd} (n+1) = \operator{let } (x,y) \leftarrow \operator{even-odd}(n) \operator{ in } (\neg x, \neg y)
 \end{align*}
-This function is clearly a catarmorphism:
-\begin{align*}
-  & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
-  & \operator{even-odd} = \cata{a} \operator{ where }\\
-  & \qquad \qquad a : 1 + (\Bool \times \Bool)\\
-  & \qquad \qquad a (\Nil) = (\top, \bot)\\
-  & \qquad \qquad a (\operator{x,y}) = (\neg x, \neg y)
-\end{align*}
-where $\cata{\cdot}$ takes a $(1+-)$ algebra on $\Bool \times \Bool$ and returns
-the associated recursive function.
+which is clearly a catamorphism $\cata{a}$ with $a (\Nil) = (\top, \bot)$ and
+$a(\operator{x,y}) = (\neg x, \neg y)$ and hence an hylomorphism as defined in (\ref{eq:cata}).  Now we are left to show they are
+equivalent. Well, it is easy to do so since
+$\operator{even} = \pi_{1} \comp \operator{even-odd}$
+$\operator{odd} = \pi_{2} \comp \operator{even-odd}$. The proof that these two
+pairs of functions are the same is an easy induction over the natural numbers.
 
-Now we recover the original two functions by setting
-$\operator{even}' \eqdef \pi_{1} \comp \operator{even-odd}$
-$\operator{odd}' \eqdef \pi_{2} \comp \operator{even-odd}$. The proof that these
-two pairs of functions are the same is an easy induction over the natural
-numbers.
+This is an instance of a more general phenonema whose argument uses the concept
+of an adjunction~\cite{MacLane71}.  For this particular example, the argument is
+as follows.  There is an isomorphism between pairs of maps
+$(A \to B_{1}, A \to B_{2})$ and maps $(A \to B_{1} \times B_{2})$.  This is
+given by $\Phi (f,g) = \pair{f}{g}$ and
+$\Psi(f) = (\pi_{1} \comp f, \pi_{2} \comp f)$ where the projections $\pi$ are
+part of the counit of the adjunction between the diagonal functor
+$\Delta X = (X,X)$ and the product $\times$.  Once this correspondence is
+established we can implement the map $A \to B_{1} \times B_{2}$ as an
+hylomorphism and derive the original and more complex recursion scheme.
 
-This is an instance of a more general phenonema whose argumet uses category
-theory.
-
-\subsection{Course-of-Value Recursion}
-The knapsack algorithm is defined as following in pseudo-Haskell code:
-\begin{align*}
-  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
-  & \operator{knapsack}\;wvs\; c = \operator{maximum}_{0}
-    [v + \operator{knapsack}\;wvs\; (c - w) \mid (w,v) \leftarrow wvs, w \le c]
-\end{align*}
-%
-with dynamic programming knapsack can be rephrased like this
-\begin{align*}
-  & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
-  & \operator{knapsack}\;wvs\;c= table !! c \\
-  & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
-  & \qquad ks\; i = maximum_{0} [v + table!! (i - w) \mid (w,v) \leftarrow wvs, w \le i]
-\end{align*}
-
-The recursion scheme is justified by solving a recursive equation.  First we
-define an operation to create a memory table representing the list of capacities
-$[0..c]$. We first define a functor $D X = 1 + X$ representing the base functor
-for constructing the naturals $\Nat = \mu D$ the we define the generating
-function by induction on the naturals
-\begin{align*}
-  & \operator{fan} : \Nat \to D_{\infty}\Nat\\
-  & \operator{fan} (0)    = \pair{0}{\inl}\\
-  & \operator{fan} (n+1)  = \pair{n+1}{\inr (\operator{fan}(n))}
-\end{align*}
-The recursion scheme from a comonad is then defined as follows
-\begin{align*}
-  & \operator{rsfc} : \Nat \to A\\
-  & \operator{rsfc} = alg \comp DD_{\infty}(\operator{rsfc}) \comp D(\operator{fan}) \comp \InOp
-\end{align*}
-At his point we can given the definition of the algebra $alg$ which effectively implements knapsack.
-Firs we define the $\operator{lookup}$ function which returns (if present) the element indexed in the memory table
-\begin{align*}
-  & \operator{lookup} : \Nat \to D_{\infty} \R \to \R_{\bot}\\
-  & \operator{lookup} (0,   \pair{r}{\textunderscore})  = r\\
-  & \operator{lookup} (n+1, \pair{r}{\inl})         = \bot\\
-  & \operator{lookup} (n+1, \pair{r}{\inr(table)})  = \operator{lookup} (n, table)
-\end{align*}
-and now we can define the algebra over the reals
-\begin{align*}
-  & \operator{alg} : DD_{\infty} \R \to \R\\
-  & \operator{alg}\; (\inl)  = 0\\
-  & \operator{alg}\; (\inr(table))  = \operator{maximun}_{0} [ v + \operator{lookup}\; table\; (i - w) \mid (w,v) \leftarrow wvs, w \le i]
-\end{align*}
-
-It remains to show how an $\operator{rsfc}$ is implemented in terms of
-hylomorhisms.
-
-\paragraph{Implementation into hylomorphisms}
-In order to implement rsfcs as hylos we need a parametric distributive law
-\[
-  \lambda_{X} : GG_{\infty}X \to G_{\infty}GX
-\]
-This can be defined as
-$\lambda = G_{\infty}G(\head) \comp \anacofree{G(\tail)}$.  The distributive law
-is instrumental to be able to lift coalgebras in the following sense. Give a
-$G$-coalgebra on $X$, a lifting $H$ is a functor which lifts this coalgebra to a
-$G$-coalgebra on $HX$.  In particular, the lifting $G_{\lambda}$ takes
-$G_{\infty}$-coalgebras on $X$ and transforms them into $G_{\infty}$-coalgebras
-on $GX$
-\begin{align*}
-  & G_{\lambda}(c) : GA \to G_{\infty} GA\\
-  & G_{\lambda}(c) = \lambda \comp G (c)
-\end{align*}
-where $c : C \to GC$.
-
-Now, given an algebra $a : GG_{\infty} A \to A$ on the carrier $A$ we can
-convert it into an algebra for the carrier $G_{\infty} A$ by
-\begin{align*}
-  & \floor{a} : GG_{\infty} A \to G_{\infty} A\\
-  & \floor{a} = G_{\infty}(a) \comp \anacofree{G_{\lambda}(\delta)}
-\end{align*}
-where $\eta_{A} : A \to G_{\infty} A$ is the unit of the comonad creating an
-infinite constant list.
-
-At this point the hylo is simply defined by
-$\hylo{\InOp}{a} : \mu F \to G_{\infty}A$  and the rsfc is derived as follows
-\begin{align*}
-  & \operator{rsfc} : \mu G \to A \\
-  & \operator{rsfc} = \head \comp \hylo{\InOp}{a}
-\end{align*}
-
-
-\subsection{Catamorphisms and Anamorphism}
-A catamorphism is the unique program defined as
-\[
-  x = a \comp \fmap{x} \comp \InOp
-\]
-Can be implemented:
-\[
-  \cata{a} = \hylo{\InOp}{a}
-\]
-
-An anamorphism is the unique program satisfying the equation
-\[
-  x = \OutOp \comp \fmap{x} \comp{c}
-\]
-The anamorphism is indicated by $\ana{c}$. Recursion schemes given by a
-corecursive algebra such as $\OutIso$ are also called hylomorphism but they are
-indicated with the symbol for the anamorphism, $\cohylo{c}{\OutOp}$.
-
-\paragraph{Free Monads}
-Given an endofunctor $D$ and a type $A$ the free monad is defined as the least
-solution to the following domain equation
-\[
-  D^{*}A = A + DD^{*}A
-\]
-where $\eta_{A} : A \to D^{*}A$ is the left injection and
-$\call_{A} : DD^{*}A \to D^{*}A$ is the right injection. Given an algebra
-$a : DA \to A$ there is a unique solution to the following recursive equation
-\[
-  x \comp \call_{A} = a \comp D(x)
-\]
-that is $\catafree{a} = \cata{[id_{A}; a]}$. With this operation we can extend
-the free algebra $\call$ to the multiplication $\mu : D^{*}D^{*}A \to D^{*}A$
-defined as $\mu = \catafree{\call}$.
-
-\paragraph{Cofree Comonads}
-Given an endofunctor $D$ and a type $A$ the cofree comonad is defined as the
-greatest solution to the following domain equation
-\[
-  D_{\infty}A = A + DD_{\infty}A
-\]
-where $\head : D_{\infty}A \to A$ is the first projection and
-$\tail_{A} : D_{\infty}A \to DD_{\infty}A$ is the second projection.
-Given an algebra $c : A \to DA$ there is a unique solution to the following
-recursive equation
-\[
-  \tail_{A} \comp x = D(x) \comp c
-\]
-that is $\anacofree{c} = \ana{\pair{id_{A}}{c}}$. With the latter operation we
-can extend $\tail$ to the comultiplication for the comonad
-$\delta : D_{\infty}A \to D_{\infty} D_{\infty}A$ defined by
-$\delta = \anacofree{\tail}$.
-
-
-\subsection{Accumulators}
-For an algebra $a : D(A^{P})\times P \to A$:
-\begin{align*}
-  & g : \mu D \times P \to B\\
-  & g (d, p) = a (\fmap{(\curry g)} \comp \InOp(d), p)
-\end{align*}
-
-\paragraph{Hylo Implementation}
-Given an algebra $a : D(A^{P}) \to A^{P}$ the accumorphism corresponds to the unique
-solution to the following equation
-\begin{align*}
-  & f : \mu D \to A^{P}\\
-  & f = a \comp \fmap (f) \comp \InOp
-\end{align*}
-thus $f = \hylo{\InOp}{a}$.
-
-The complex recursion scheme is then
-$g = \uncurry\hylo{\InOp}{a} : \mu D \times P \to B$.
-
-\subsection{Mutu-Hylo}
-For an algebra $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and an algebra
-$a_{2} : D(A_{1} \times A_{2}) \to A_{2}$:
-\begin{align*}
-  & (g_{1}, g_{2}) : (\mu D, \mu D) \to (A_{1}, A_{2})\\
-  & (g_{1}, g_{2}) = (a_{1}, a_{2}) \comp (\fmap{\pair{g_{1}}{g_{2}}},\fmap{\pair{g_{1}}{g_{2}}}) \comp (\InOp, \InOp)
-\end{align*}
-
-\paragraph{Hylo Implementation}
-Given an algebra $a : D(A_{1} \times A_{2}) \to A_{1} \times A_{2}$
-\begin{align*}
-  & f : \mu D \to A_{1} \times A_{2}\\
-  & f = a \comp \fmap{f} \comp \InOp
-\end{align*}
-for which the solution is an hylo $f = \hylo{\InOp}{a}$.
-
-The mutumorphism can be implemented as
-$(g_{1}, g_{2}) = (\pi_{1} \comp f, \pi_{2} \comp f)$.
-
-\paragraph{Coq Implementation}
-Given the two algebras  $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and
-$a_{2} : D(A_{1} \times A_{2}) \to A_{2}$.
-We define the two recursive functions  $f_{1}$ and $f_{2}$ as
-
-\[
-  f_{1} = \pi_{1} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}} \qquad f_{2} = \pi_{2} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}}
-\]
-% A recursion scheme from a comonad $D_{\infty}$ for a data functor $F$
-
-% For example, for the functor $(1 + -)$ an algebra over this functor is a
-% function $1 + X \to X$ is a pair of functions $\Nil : 1 \to X$ and
-% $\Succ : X \to X$. The cofree comonad over $D$ is defined as follows
+% In general an adjunction is a natural correspondence of maps
 % \[
-%   D_{\infty} A \iso A \times (1 + D_{\infty})
+%   LA \to B \iff A \to RB
 % \]
-% which is the the type of non-empty possibly infinite lists with elements in $A$
+% where $L$ and $R$ are called adjoints.
 
-
-% First we have to assume a distributive law
-% $\lambda : DD_{\infty} \to D_{\infty}D$.  For an algebra
-% $a : D(D_{\infty} A) \to A$,
+However, formalising adjunctions in Coq would require to formalise a
+non-negligible amount of category theory which goes beyond the scope of the
+present work. In this paper, we will instead derive the recursion schemes as needed and
+implement them as hylos.
+% \subsubsection{Course-of-Value Recursion}
+% The knapsack algorithm is defined as following in pseudo-Haskell code:
 % \begin{align*}
-%   & g : \mu D \to A\\
-%   & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
+%   & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
+%   & \operator{knapsack}\;wvs\; c = \operator{maximum}_{0}
+%     [v + \operator{knapsack}\;wvs\; (c - w) \mid (w,v) \leftarrow wvs, w \le c]
 % \end{align*}
-% where
-% $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX$
-% is a $D$-algebra on $GX$. The catamorphism of this algebra has the following
-% type
-% \[
-%   \cata{G^{\lambda}(\InIso)} : \mu D \to G\mu D
-% \]
-% which is the type of a $G$-algebra used to initialise the memory table.
-
-% Given an algebra $a : DG_{\infty} A \to G_{\infty} A$ we can equivalently ask
-% what is the unique solution of the following equation
+% %
+% with dynamic programming knapsack can be rephrased like this
 % \begin{align*}
-%   & f : \mu F \to G_{\infty} A\\
+%   & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
+%   & \operator{knapsack}\;wvs\;c= table !! c \\
+%   & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
+%   & \qquad ks\; i = maximum_{0} [v + table!! (i - w) \mid (w,v) \leftarrow wvs, w \le i]
+% \end{align*}
+
+% The recursion scheme is justified by solving a recursive equation.  First we
+% define an operation to create a memory table representing the list of capacities
+% $[0..c]$. We first define a functor $D X = 1 + X$ representing the base functor
+% for constructing the naturals $\Nat = \mu D$ the we define the generating
+% function by induction on the naturals
+% \begin{align*}
+%   & \operator{fan} : \Nat \to D_{\infty}\Nat\\
+%   & \operator{fan} (0)    = \pair{0}{\inl}\\
+%   & \operator{fan} (n+1)  = \pair{n+1}{\inr (\operator{fan}(n))}
+% \end{align*}
+% The recursion scheme from a comonad is then defined as follows
+% \begin{align*}
+%   & \operator{rsfc} : \Nat \to A\\
+%   & \operator{rsfc} = alg \comp DD_{\infty}(\operator{rsfc}) \comp D(\operator{fan}) \comp \InOp
+% \end{align*}
+% At his point we can given the definition of the algebra $alg$ which effectively implements knapsack.
+% Firs we define the $\operator{lookup}$ function which returns (if present) the element indexed in the memory table
+% \begin{align*}
+%   & \operator{lookup} : \Nat \to D_{\infty} \R \to \R_{\bot}\\
+%   & \operator{lookup} (0,   \pair{r}{\textunderscore})  = r\\
+%   & \operator{lookup} (n+1, \pair{r}{\inl})         = \bot\\
+%   & \operator{lookup} (n+1, \pair{r}{\inr(table)})  = \operator{lookup} (n, table)
+% \end{align*}
+% and now we can define the algebra over the reals
+% \begin{align*}
+%   & \operator{alg} : DD_{\infty} \R \to \R\\
+%   & \operator{alg}\; (\inl)  = 0\\
+%   & \operator{alg}\; (\inr(table))  = \operator{maximun}_{0} [ v + \operator{lookup}\; table\; (i - w) \mid (w,v) \leftarrow wvs, w \le i]
+% \end{align*}
+
+% It remains to show how an $\operator{rsfc}$ is implemented in terms of
+% hylomorhisms.
+
+% \paragraph{Implementation into hylomorphisms}
+% In order to implement rsfcs as hylos we need a parametric distributive law
+% \[
+%   \lambda_{X} : GG_{\infty}X \to G_{\infty}GX
+% \]
+% This can be defined as
+% $\lambda = G_{\infty}G(\head) \comp \anacofree{G(\tail)}$.  The distributive law
+% is instrumental to be able to lift coalgebras in the following sense. Give a
+% $G$-coalgebra on $X$, a lifting $H$ is a functor which lifts this coalgebra to a
+% $G$-coalgebra on $HX$.  In particular, the lifting $G_{\lambda}$ takes
+% $G_{\infty}$-coalgebras on $X$ and transforms them into $G_{\infty}$-coalgebras
+% on $GX$
+% \begin{align*}
+%   & G_{\lambda}(c) : GA \to G_{\infty} GA\\
+%   & G_{\lambda}(c) = \lambda \comp G (c)
+% \end{align*}
+% where $c : C \to GC$.
+
+% Now, given an algebra $a : GG_{\infty} A \to A$ on the carrier $A$ we can
+% convert it into an algebra for the carrier $G_{\infty} A$ by
+% \begin{align*}
+%   & \floor{a} : GG_{\infty} A \to G_{\infty} A\\
+%   & \floor{a} = G_{\infty}(a) \comp \anacofree{G_{\lambda}(\delta)}
+% \end{align*}
+% where $\eta_{A} : A \to G_{\infty} A$ is the unit of the comonad creating an
+% infinite constant list.
+
+% At this point the hylo is simply defined by
+% $\hylo{\InOp}{a} : \mu F \to G_{\infty}A$  and the rsfc is derived as follows
+% \begin{align*}
+%   & \operator{rsfc} : \mu G \to A \\
+%   & \operator{rsfc} = \head \comp \hylo{\InOp}{a}
+% \end{align*}
+
+% % \subsection{Catamorphisms and Anamorphism}
+% % A catamorphism is the unique program defined as
+% % \[
+% %   x = a \comp \fmap{x} \comp \InOp
+% % \]
+% % Can be implemented:
+% % \[
+% %   \cata{a} = \hylo{\InOp}{a}
+% % \]
+
+% % An anamorphism is the unique program satisfying the equation
+% % \[
+% %   x = \OutOp \comp \fmap{x} \comp{c}
+% % \]
+% % The anamorphism is indicated by $\ana{c}$. Recursion schemes given by a
+% % corecursive algebra such as $\OutIso$ are also called hylomorphism but they are
+% % indicated with the symbol for the anamorphism, $\cohylo{c}{\OutOp}$.
+
+% \paragraph{Free Monads}
+% Given an endofunctor $D$ and a type $A$ the free monad is defined as the least
+% solution to the following domain equation
+% \[
+%   D^{*}A = A + DD^{*}A
+% \]
+% where $\eta_{A} : A \to D^{*}A$ is the left injection and
+% $\call_{A} : DD^{*}A \to D^{*}A$ is the right injection. Given an algebra
+% $a : DA \to A$ there is a unique solution to the following recursive equation
+% \[
+%   x \comp \call_{A} = a \comp D(x)
+% \]
+% that is $\catafree{a} = \cata{[id_{A}; a]}$. With this operation we can extend
+% the free algebra $\call$ to the multiplication $\mu : D^{*}D^{*}A \to D^{*}A$
+% defined as $\mu = \catafree{\call}$.
+
+% \paragraph{Cofree Comonads}
+% Given an endofunctor $D$ and a type $A$ the cofree comonad is defined as the
+% greatest solution to the following domain equation
+% \[
+%   D_{\infty}A = A + DD_{\infty}A
+% \]
+% where $\head : D_{\infty}A \to A$ is the first projection and
+% $\tail_{A} : D_{\infty}A \to DD_{\infty}A$ is the second projection.
+% Given an algebra $c : A \to DA$ there is a unique solution to the following
+% recursive equation
+% \[
+%   \tail_{A} \comp x = D(x) \comp c
+% \]
+% that is $\anacofree{c} = \ana{\pair{id_{A}}{c}}$. With the latter operation we
+% can extend $\tail$ to the comultiplication for the comonad
+% $\delta : D_{\infty}A \to D_{\infty} D_{\infty}A$ defined by
+% $\delta = \anacofree{\tail}$.
+
+
+% \subsection{Accumulators}
+% For an algebra $a : D(A^{P})\times P \to A$:
+% \begin{align*}
+%   & g : \mu D \times P \to B\\
+%   & g (d, p) = a (\fmap{(\curry g)} \comp \InOp(d), p)
+% \end{align*}
+
+% \paragraph{Hylo Implementation}
+% Given an algebra $a : D(A^{P}) \to A^{P}$ the accumorphism corresponds to the unique
+% solution to the following equation
+% \begin{align*}
+%   & f : \mu D \to A^{P}\\
+%   & f = a \comp \fmap (f) \comp \InOp
+% \end{align*}
+% thus $f = \hylo{\InOp}{a}$.
+
+% The complex recursion scheme is then
+% $g = \uncurry\hylo{\InOp}{a} : \mu D \times P \to B$.
+
+% \subsection{Mutu-Hylo}
+% For an algebra $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and an algebra
+% $a_{2} : D(A_{1} \times A_{2}) \to A_{2}$:
+% \begin{align*}
+%   & (g_{1}, g_{2}) : (\mu D, \mu D) \to (A_{1}, A_{2})\\
+%   & (g_{1}, g_{2}) = (a_{1}, a_{2}) \comp (\fmap{\pair{g_{1}}{g_{2}}},\fmap{\pair{g_{1}}{g_{2}}}) \comp (\InOp, \InOp)
+% \end{align*}
+
+% \paragraph{Hylo Implementation}
+% Given an algebra $a : D(A_{1} \times A_{2}) \to A_{1} \times A_{2}$
+% \begin{align*}
+%   & f : \mu D \to A_{1} \times A_{2}\\
 %   & f = a \comp \fmap{f} \comp \InOp
 % \end{align*}
-% The solution to this equation can be found again using an hylo
-% $f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.  The course-of-value recursion
-% can be recovered from this by setting $g = \head \comp f$
+% for which the solution is an hylo $f = \hylo{\InOp}{a}$.
 
-% \subsubsection{Histomorphism}
+% The mutumorphism can be implemented as
+% $(g_{1}, g_{2}) = (\pi_{1} \comp f, \pi_{2} \comp f)$.
 
-% The definition of $\lambda$ is:
-% \begin{align*}
-%   & \lambda : GG_{\infty} A \to G_{\infty} GA\\
-%   & \lambda = \fmap{(\fmap{\head})}\comp \anacofree{\fmap{\tail}}
-% \end{align*}
-% For example, for $GX = 1 + X$ we have to define
-% \begin{align*}
-%   & \lambda : 1 + G_{\infty} A \to G_{\infty} (1 + A)\\
-%   & \lambda(\inl) = \pair{\inl}{\lambda(\inl)}\\
-%   & \lambda(\inr(table)) = \pair{\inr (\head(table))}{\lambda (\tail (table))}
-% \end{align*}
+% \paragraph{Coq Implementation}
+% Given the two algebras  $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and
+% $a_{2} : D(A_{1} \times A_{2}) \to A_{2}$.
+% We define the two recursive functions  $f_{1}$ and $f_{2}$ as
+
+% \[
+%   f_{1} = \pi_{1} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}} \qquad f_{2} = \pi_{2} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}}
+% \]
+% % A recursion scheme from a comonad $D_{\infty}$ for a data functor $F$
+
+% % For example, for the functor $(1 + -)$ an algebra over this functor is a
+% % function $1 + X \to X$ is a pair of functions $\Nil : 1 \to X$ and
+% % $\Succ : X \to X$. The cofree comonad over $D$ is defined as follows
+% % \[
+% %   D_{\infty} A \iso A \times (1 + D_{\infty})
+% % \]
+% % which is the the type of non-empty possibly infinite lists with elements in $A$
 
 
+% % First we have to assume a distributive law
+% % $\lambda : DD_{\infty} \to D_{\infty}D$.  For an algebra
+% % $a : D(D_{\infty} A) \to A$,
 % % \begin{align*}
-% %   & \operator{lookup} :: \Nat \to G_{\infty} \R \to \operator{Maybe}\;\R\\
-% %   & \operator{lookup}\; \Zero       (\Cons{a}{\text{\textunderscore}})     = \Just{a}\\
-% %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Zero})                      = \Nothing\\
-% %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Succ table})                = \operator{lookup}\; n  table
+% %   & g : \mu D \to A\\
+% %   & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
+% % \end{align*}
+% % where
+% % $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX$
+% % is a $D$-algebra on $GX$. The catamorphism of this algebra has the following
+% % type
+% % \[
+% %   \cata{G^{\lambda}(\InIso)} : \mu D \to G\mu D
+% % \]
+% % which is the type of a $G$-algebra used to initialise the memory table.
+
+% % Given an algebra $a : DG_{\infty} A \to G_{\infty} A$ we can equivalently ask
+% % what is the unique solution of the following equation
+% % \begin{align*}
+% %   & f : \mu F \to G_{\infty} A\\
+% %   & f = a \comp \fmap{f} \comp \InOp
+% % \end{align*}
+% % The solution to this equation can be found again using an hylo
+% % $f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.  The course-of-value recursion
+% % can be recovered from this by setting $g = \head \comp f$
+
+% % \subsubsection{Histomorphism}
+
+% % The definition of $\lambda$ is:
+% % \begin{align*}
+% %   & \lambda : GG_{\infty} A \to G_{\infty} GA\\
+% %   & \lambda = \fmap{(\fmap{\head})}\comp \anacofree{\fmap{\tail}}
+% % \end{align*}
+% % For example, for $GX = 1 + X$ we have to define
+% % \begin{align*}
+% %   & \lambda : 1 + G_{\infty} A \to G_{\infty} (1 + A)\\
+% %   & \lambda(\inl) = \pair{\inl}{\lambda(\inl)}\\
+% %   & \lambda(\inr(table)) = \pair{\inr (\head(table))}{\lambda (\tail (table))}
 % % \end{align*}
 
-% % Defining the algebra
-% % \begin{align*}
-% %   & \operator{alg} :: D (G_{\infty} \R) \to \R\\
-% %   & \operator{alg}\; Zero           = 0\\
-% %   & \operator{alg}\; (Succ{table}) = maximum_{0} [v + \operator{lookup}\; table (i - w) | (w,v) \leftarrow wvs, w \le i]
-% % \end{align*}
+
+% % % \begin{align*}
+% % %   & \operator{lookup} :: \Nat \to G_{\infty} \R \to \operator{Maybe}\;\R\\
+% % %   & \operator{lookup}\; \Zero       (\Cons{a}{\text{\textunderscore}})     = \Just{a}\\
+% % %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Zero})                      = \Nothing\\
+% % %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Succ table})                = \operator{lookup}\; n  table
+% % % \end{align*}
+
+% % % Defining the algebra
+% % % \begin{align*}
+% % %   & \operator{alg} :: D (G_{\infty} \R) \to \R\\
+% % %   & \operator{alg}\; Zero           = 0\\
+% % %   & \operator{alg}\; (Succ{table}) = maximum_{0} [v + \operator{lookup}\; table (i - w) | (w,v) \leftarrow wvs, w \le i]
+% % % \end{align*}
 
 
 \section{Mechanising Extractable Container Functors}
@@ -1138,12 +1187,6 @@ Recursive hylo universal property allows us to prove common optimisations:
   : cata g \o rana h =e hylo g h.
 \end{minted}
 
-\section{Examples}
-
-\paragraph{Quicksort \& Mergesort}
-
-\dcas{What else?}
-
 
 \section{Related Work}
 
@@ -1165,7 +1208,8 @@ recursive function monad~\cite{McBride15, BoveC01}
     extraction. They focus mostly on erasing termination proofs, but they do
     not discuss "what does their extracted code look like". Their
     representation of Functors leads me to think that they will produce loads
-    of "Obj.magic", but we'd need to check this. \mvol{We have a story for this now: obj.magic harms interaction with other ocaml code, the resulting ocaml code is not natural to read, and in general more complex/strange extracted code is likely to be less efficient and harder to optimise.}
+        of "Obj.magic", but we'd need to check this. \mvol{We have a story for this now: obj.magic harms interaction with other ocaml code, the resulting ocaml code is not natural to read, and in general more complex/strange extracted code is likely to be less efficient and harder to optimise.}
+        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 \end{itemize}
 
 \subsection{Sized Types}
