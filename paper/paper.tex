@@ -852,21 +852,26 @@ trivially \emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
 However, the use of a different equality for container extensions now forces us
 to deal with the fact that some types have different definitions of equality.
 In particular, we want to reason about the equality of functions of types such
-as \mintinline{Coq}{App F A -> B} (or \mintinline{Coq}{B -> App F A}). 
-We want the following kind of properties to hold: 
+as \mintinline{Coq}{App F A -> B} (or \mintinline{Coq}{B -> App F A}). Since 
+these types now come with their own equivalence, any function that manipulates
+them needs to be \emph{respectful}. I.e.\ given 
+\mintinline{Coq}{R : X -> X -> Prop} and \mintinline{Coq}{R' : Y -> Y -> Prop},
+we want functions (morphisms) that satisfy the following property:
 \begin{minted}{Coq}
-forall (x y : App C A) (f : App C A -> B), AppR x y -> f x = f y
+forall (x y : X), R x y -> R' (f x) (f y)
 \end{minted}
-Moreover, we want this to be true for any \mintinline{Coq}{B}, and equality.
-We address this in the following section.
 
 \subsection{Types and Morphisms}
 
-The need to reason about different forms of equality forces us to couple every
-type with an associated equivalence relation. Furthermore, we will only allow
-to reason about the equality of \emph{proper morphisms}, i.e. morphisms that
-respect the necessary equivalence relations.
-
+We address the different forms of equality by coupling every type with an
+associated equivalence relation, and every morphism with a proof that it is
+\emph{respectful} (i.e. \emph{proper} morphisms with respect to the function
+\emph{respectfulness} relation). We use \mintinline{Coq}{=e} to denote the
+equivalence relation associated with a type. Every Coq type is associated by
+default with the standard Coq propositional equality, unless a different
+equivalence is specified. We use the type-class mechanism to help Coq's code
+extraction mechanism to remove any occurence of custom equivalence relations
+in the extracted OCaml code.
 \begin{minted}{Coq}
 Reserved Notation "f =e g" (at level 70, no associativity).
 Class equiv A : Type :=
@@ -877,48 +882,30 @@ Class equiv A : Type :=
       e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
     }.
 Notation "f =e g" := (eqRel f g).
-
-Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
-Context `{eA : equiv A} `{eB : equiv B}.
-
- Structure morph :=
-   MkMorph
-     { app :> A -> B;
-       app_eq : forall x y, x =e y -> app x =e app y
-     }.
-Arguments morph A {eA} B {eB}.
-Notation "x ~> y" := (morph x y).
 \end{minted}
-
-\dcas{We provide common morphisms for polynomials: sums, products, const,
-exponential (Add examples?)}
-
-By default, we associate every type with Coq's propositional equality, but allow
-the use of other forms of equality. In most cases, we will use either
-propositional equality, extensional equality, or a mixture of both, e.g. for
-container extensions, we use an arbitrary equality for shapes, extensional
-equality for the contained elements, but Coq's propositional equality for
-positions:
+Given types \mintinline{Coq}{A} and  \mintinline{Coq}{B}, with their respective
+equivalence relations \mintinline{Coq}{eA : A -> A -> Prop} and
+\mintinline{Coq}{eB : B -> B -> Prop}, the we define the type
+\mintinline{Coq}{A ~> B} to represents \emph{proper} morphisms of the
+respectfulness relation of \mintinline{Coq}{R} to \mintinline{Coq}{R'}.
 \begin{minted}{Coq}
-  Inductive AppR `{Cont Sh P} `{equiv X} (x y : App F X) : Prop :=
-  | AppR_ext (Es : shape x =e shape y)
-             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
+Structure morph A {eA : equiv A} B {eB : equiv B} :=
+  MkMorph
+    { app :> A -> B;
+      app_eq : forall x y, x =e y -> app x =e app y
+    }.
+Notation "A ~> B" := (@morph A _ B _).
 \end{minted}
-Notice the use of \mintinline{Coq}{=e} for both shapes, and the continuations
-of container extensions. 
-The reason to use Coq's propositional equality for positions is to avoid a
-circularity in the definitions: arbitrary equivalences for positions would
-force us to define the contents as morphisms from positions to the contained
-elements, but that would as well force us to redefine container extensions so
-that they are only applicable to types with arbitrary equalities and morphisms.
-We will see in the following section why this is problematic for defining
-initial algebras of container extensions.
-\dcas{I am actually not sure of what I wrote above, and it may be something I
-simply overlooked. I will look into the Coq code and try to generalise it if I
-have the time}
+Note that we leverage on Coq's type class mechanism to fill in the necessary
+equivalence relations. Since Coq's code extraction mechanism will erase any
+occurrence of \mintinline{Coq}{Prop} in the code, so objects of type
+\mintinline{Coq}{A ~> B} will be extracted to the OCaml equivalent to
+\mintinline{Coq}{A -> B}.
 
-\subsubsection{Polynomial Types, Equivalences, and Morphisms}
-We associate some types with their standard equivalences:
+\subsubsection{Polynomial Types}
+
+We define a number of equivalences for polynomial types. These equivalences are
+be used when building proper morphisms that manipulate their respective types.
 \begin{minted}{Coq}
 Instance ext_eq (A : Type) `{eq_B : equiv B} : equiv (A -> B).
 Instance pair_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A * B).
@@ -927,7 +914,30 @@ Instance prop_eq : equiv Prop.
 Instance pred_sub `{eA : equiv A} {P : A -> Prop} : equiv {a : A | P a}.
 \end{minted}
 
-\subsubsection{Isomorphisms with Container Extensions}
+Most of the definitions that involve functions and polynomial types are
+straightworward.  Identity and composition are defined as 
+\mintinline{Coq}{fun x => x} and \mintinline{Coq}{fun f g x => f (g x)} 
+respectively, and the proofs that they are proper morphisms is straightforward,
+and automatically discharged by Coq. 
+Products are built using function \mintinline{Coq}{fun f g x => (f x, g x)},
+with the projections being the standard Coq  \mintinline{Coq}{fst} and
+\mintinline{Coq}{snd} functions. Similarly, sum injections are encoded using
+Coq's \mintinline{Coq}{inl} and \mintinline{Coq}{inr} constructors, and
+pattern matching on them uses the function 
+\mintinline{Coq}{fun f g x => match x with | inl y => f y | inr y => g y end}.
+The proofs that these morphisms are proper are straightforward.  Finally, we
+also provide functions for currying/uncurrying, and partially applying a proper
+morphism. We avoid using definitions, or unfold them, to help Coq's code
+extraction mechanism to inline as many of these small definitions as possible.
+
+These definitions are isomorphic to the equivalent container extension.
+
+We illustrate how these definitions
+\paragraph*{Isomorphisms with Container Extensions} Our definitions involving
+polynomial types are isomorphic to polynomial functors as container extensions.
+
+
+\subsubsection{Generalised Rewriting for Morphisms}
 
 \section{Extracting Certified Hylomorphisms}
 
