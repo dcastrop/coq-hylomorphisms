@@ -13,14 +13,12 @@ Section HyloDef.
   Context `{F : Cont Sh Po} `{eA : equiv A} `{eB : equiv B}.
 
   Definition hylo_def (a : Alg F B) (c : Coalg F A)
-    : forall (x : A), RecF c x -> B
-    := fix f x H :=
-      match c x as h0
-            return
-            (forall e : Pos (shape h0), RecF c (cont h0 e)) ->
-            B
+    : forall (x : A), RecF c x -> B :=
+    fix f x H :=
+      match c x as cx
+            return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B
       with
-      | MkCont s_x c_x => fun H => a (MkCont s_x (fun e => f (c_x e) (H e)))
+      | MkCont sx cx => fun H => a (MkCont sx (fun e => let ce := cx e in f ce (H e)))
       end (RecF_inv H).
   Arguments hylo_def a c x H : clear implicits.
 
@@ -34,7 +32,7 @@ Section HyloDef.
   Qed.
 
   Definition hylo_f__ (g : Alg F B) (h : RCoalg F A)
-    := fun x => hylo_def g h x (terminating h x).
+    := Eval unfold hylo_def in fun x => hylo_def g h x (terminating h x).
 
   Lemma hylo_f___arr (a0 a1 : Alg F B) (c0 c1 : RCoalg F A)
     (Ea : a0 =e a1) (Ec : c0 =e c1)
@@ -50,19 +48,22 @@ Section HyloDef.
   Qed.
 
   Definition hylo_f_ (g : Alg F B) (h : RCoalg F A)
-    : A ~> B := MkMorph (hylo_f___arr (e_refl g) (e_refl h)).
+    : A ~> B := Eval unfold hylo_f__ in
+      MkMorph (hylo_f___arr (e_refl g) (e_refl h)).
 
   Lemma hylo_f__arr (a : Alg F B)
     : forall x y, x =e y -> hylo_f_ a x =e hylo_f_ a y.
   Proof. intros x y h v. apply hylo_f___arr; auto with ffix. Qed.
 
   Definition hylo_f (g : Alg F B)
-    : RCoalg F A ~> A ~> B := MkMorph (hylo_f__arr g).
+    : RCoalg F A ~> A ~> B :=
+    Eval unfold hylo_f_ in MkMorph (hylo_f__arr g).
 
   Lemma hylo_f_arr : forall x y, x =e y -> hylo_f x =e hylo_f y.
   Proof. intros x y E h v. apply hylo_f___arr; auto with ffix. Qed.
 
-  Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := MkMorph hylo_f_arr.
+  Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B :=
+    Eval unfold hylo_f in MkMorph hylo_f_arr.
 
   Lemma hylo_univ_r (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e g \o fmap f \o h -> f =e hylo g h.
