@@ -1219,16 +1219,64 @@ recursive function monad~\cite{McBride15, BoveC01}
         \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 \end{itemize}
 
-\subsection{Sized Types}
+\subsection{Termination of Nonstructural Recursion}
+
+Termination and productivity are non-trivial properties of programs, and various
+methods have been proposed for checking that these properties hold. A common
+approach is guardedness checking~\cite{10.5555/646535.695850}, which is a
+\emph{syntactic} check that definitions avoid the introduction of
+non-normalizable terms. However, some desirable definitions will not be accepted
+by such checks.
+
+In particular, the problem of \emph{nonstructural recursion} is
+well-studied~\cite{BOVE_KRAUSS_SOZEAU_2016}.
+% A distinction between standard and
+% nonstandard recursion lies in the fact that standard recursion adheres strictly
+% to recursing on pattern variables, avoiding reliance on results from other
+% function calls. Nonstandard recursion may deviate from this convention, allowing
+% for more flexibility.
+Certain functions that are not structurally recursive can be reformulated using
+a nonstandard approach to achieve structural recursion~\cite{AbreuDHJMS23}.
+Take, for instance, division by iterated subtraction, which is inherently
+non-structurally recursive since it involves recursion based on the result of a
+subtraction. There is a nonstandard implementation of divivion found on Coq's
+standard library, which involves a four-argument function that effectively
+combines subtraction and division. Similarly, the mergesort in Coq's standard
+library uses an ``explicit stack of pending merges'' in order to avoid issues
+with nonstructural definitions. There is a major downside, however; as noted by
+Abreu et al., the result is ``barely recognizable as a form of
+mergesort''~\cite{AbreuDHJMS23}.
+
+\subsubsection{Sized Types}
 
 Another approach to certifying termination of nonstructurally recursive
-functions is the use of \emph{sized types}. Sized types were introduced in
-\cite{HughesPS96} as a way to track/verify various properties of recursive
-programs, including productivity and termination. The core idea of sized types
-is that types express bounds on the sizes of recursive data structures. This
-approach has been used to express nonstructurally recursive algorithms in Agda:
-\cite{CopelloTB14} used sized types in a straightforward formulation of
-mergesort. Such an approach has also been used in MiniAgda~\cite{abs-1202-3496}.
+functions is the use of \emph{sized types}. Sized types were introduced by
+Hughes et al.\ as a way to track/verify various properties of recursive
+programs, including productivity and termination~\cite{HughesPS96}. The core
+idea of sized types is that types express bounds on the sizes of recursive data
+structures. With this approach, algorithms are implemented in the standard
+functional way, following the divide-and-conquer pattern of splitting, recurring,
+and merging, with the addition of the data types being indexed by a static
+approximation of the relative \emph{size}. An advantage of this approach is
+that it allows for code to be written in a natural way.
+
+This approach has been used to express nonstructurally recursive
+algorithms in Agda: Copello et al.\ used sized types in a straightforward
+formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
+in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
+Coq as well~\cite{CHAN_2023}.
+
+\subsubsection{Divide and Conquer Recursion}
+
+Abreu et al.\ propose\ldots~\cite{AbreuDHJMS23}. Their approach has similarities to what is presented here.
+
+They differ in requiring the assumption of the functional extensionality axiom.
+Additionally, they are concerned with the erasure of termination proofs but have
+little discussion of what the resulting extracted code \emph{looks like} (that
+is, whether the extracted OCaml code resembles the natural formulation of the
+recursive function).
+\mvol{We should find out for sure if they use \texttt{obj.magic}.}
+
 
 \bibliography{references.bib}
 \appendix
