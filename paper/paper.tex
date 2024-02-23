@@ -1097,8 +1097,9 @@ fact to encode them as a higher-order morphism, with the following type:
 Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A := ...
 \end{minted}
 Finally, we prove that catamorphisms satisfy their expected universal law (i.e.
-they are the unique solution to the equation \mintinline{Coq}{f =e g \o fmap f
-\o l_out}). The proof is by induction on the input to \mintinline{Coq}{f} and
+they are the unique solution to the equation 
+\mintinline{Coq}{f =e g \o fmap f \o l_out}). 
+The proof is by induction on the input to \mintinline{Coq}{f} and
 \mintinline{Coq}{cata g}.
 \begin{minted}{Coq}
 Lemma cata_univ `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
