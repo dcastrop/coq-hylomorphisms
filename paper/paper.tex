@@ -409,9 +409,9 @@ equivalent to the above
   & \operator{even-odd} (n+1) = \operator{let } (x,y) \leftarrow \operator{even-odd}(n) \operator{ in } (\neg x, \neg y)
 \end{align*}
 which is clearly a catamorphism $\cata{a}$ with $a (\Nil) = (\top, \bot)$ and
-$a(\operator{x,y}) = (\neg x, \neg y)$ and hence an hylomorphism as defined in (\ref{eq:cata}).  Now we are left to show they are
-equivalent. Well, it is easy to do so since
-$\operator{even} = \pi_{1} \comp \operator{even-odd}$
+$a(\operator{x,y}) = (\neg x, \neg y)$ and hence an hylomorphism as defined in
+(\ref{eq:cata}).  Now we are left to show they are equivalent. Well, it is easy
+to do so since $\operator{even} = \pi_{1} \comp \operator{even-odd}$
 $\operator{odd} = \pi_{2} \comp \operator{even-odd}$. The proof that these two
 pairs of functions are the same is an easy induction over the natural numbers.
 
@@ -434,8 +434,8 @@ hylomorphism and derive the original and more complex recursion scheme.
 
 However, formalising adjunctions in Coq would require to formalise a
 non-negligible amount of category theory which goes beyond the scope of the
-present work. In this paper, we will instead derive the recursion schemes as needed and
-implement them as hylos.
+present work. In this paper, we will instead derive the recursion schemes as
+needed and implement them as hylos.
 % \subsubsection{Course-of-Value Recursion}
 % The knapsack algorithm is defined as following in pseudo-Haskell code:
 % \begin{align*}
