@@ -251,6 +251,7 @@ rejects all programs that do not terminate (soundness) and accepts as many
 well-defined programs as possible (completeness). Our aim is to provide an
 additional tool to the every-day programmer to be able to extend the range of
 recursive programs we can write.
+\mvol{What is the ``every-day programmer'' here? Are they working in Coq/Agda?}
 
 \dcas{Note: the below is useful to keep in the intro}
 One of the challenges here is to be able to keep the theory of recursions
@@ -277,16 +278,23 @@ recursion scheme by reducing it to a hylo. The following recursion schemes can
 all be proven by reducing them to an hylo: folds, mutual recursive functions,
 recursion schemes from comonads and their respective coinductive dual.
 \mpav{Moved this from Section 3}
-goals are: (1) the
-mechanisation of hylomorphisms and their laws should be axiom-free; and (2) Coq
+
+The primary goals of this work are:
+\begin{enumerate}
+  \item that the
+  mechanisation of hylomorphisms and their laws should be axiom-free; and
+  \item that Coq
 hylomorphisms should be extracted to recursive OCaml functions that use no
-instances of \mintinline{OCaml}{Obj.magic}.  Although the use of
-\mintinline{OCaml}{Obj.magic} is safe in the code extracted by Coq, it has been
-proven that, for higher-order programs, simple interoperations can lead to
-incorrect behaviour or even segfaults~\cite{forster:hal-04329663}.  Therefore,
-the avoidance of axioms and  \mintinline{OCaml}{Obj.magic} means that the
-extracted code will have stronger safety guarantees, and will allow the safe
-interoperation with other OCaml code.
+instances of \mintinline{OCaml}{Obj.magic}.
+\end{enumerate}
+In OCaml, \mintinline{OCaml}{Obj.magic} allows for unsafe casts between types.
+Although the use of \mintinline{OCaml}{Obj.magic} should be safe in the code
+extracted by Coq, it has been proven that, for higher-order programs, simple
+interoperations can lead to incorrect behaviour or even
+segfaults~\cite{forster:hal-04329663}. Therefore, the avoidance of axioms and
+\mintinline{OCaml}{Obj.magic} means that the extracted code will have stronger
+safety guarantees, and will allow the safe interoperation with other OCaml code.
+\mvol{This is good!}
 
 The contributions we make in this paper are as follows:
 \begin{itemize}
@@ -1269,9 +1277,11 @@ has been extensively explored over the years. Tesson et al.\ demonstrated the
 efficacy of leveraging Coq to establish an approach for implementing a robust
 system dedicated to verifying the correctness of program transformations for
 functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and
-Emoto went further and\ldots~\cite{10.1007/978-3-030-34175-6_11}
+Emoto went further and\ldots~\cite{MurataE19}
 
-\subsection{Termination of Nonstructural Recursion}
+\mvol{Need more general citations for program calculation.}
+
+\subsection{Termination Checking}
 
 Termination and productivity are non-trivial properties of programs, and various
 methods have been proposed for checking that these properties hold. A common
@@ -1301,18 +1311,18 @@ mergesort''~\cite{AbreuDHJMS23}.
 
 \subsubsection{Sized Types}
 
-Another approach to certifying termination of nonstructurally recursive
-functions is the use of \emph{sized types}. Sized types were introduced by
-Hughes et al.\ as a way to track/verify various properties of recursive
-programs, including productivity and termination~\cite{HughesPS96}. The core
-idea of sized types is that types express bounds on the sizes of recursive data
-structures. With this approach, algorithms are implemented in the standard
-functional way, following the divide-and-conquer pattern of splitting, recurring,
-and merging, with the addition of the data types being indexed by a static
-approximation of the relative \emph{size}. An advantage of this approach is
-that it allows for code to be written in a natural way. There are costs, however.
-Programs must be written in a way that accounts for the handling of size indexes,
-and support for the size types must be added to the language.
+Another approach to certifying termination of recursive functions is the use of
+\emph{sized types}. Sized types were introduced by Hughes et al.\ as a way to
+track/verify various properties of recursive programs, including productivity
+and termination~\cite{HughesPS96}. The core idea of sized types is that types
+express bounds on the sizes of recursive data structures. With this approach,
+algorithms are implemented in the standard functional way, following the
+divide-and-conquer pattern of splitting, recurring, and merging, with the
+addition of the data types being indexed by a static approximation of the
+relative \emph{size}. An advantage of this approach is that it allows for code
+to be written in a natural way. There are costs, however. Programs must be
+written in a way that accounts for the handling of size indexes, and support for
+the size types must be added to the language.
 
 This approach has been used to express nonstructurally recursive
 algorithms in Agda: Copello et al.\ used sized types in a straightforward
