@@ -276,6 +276,17 @@ for every recursive coalgebra $c$ for a polynomial $F$. Then we prove each
 recursion scheme by reducing it to a hylo. The following recursion schemes can
 all be proven by reducing them to an hylo: folds, mutual recursive functions,
 recursion schemes from comonads and their respective coinductive dual.
+\mpav{Moved this from Section 3}
+goals are: (1) the
+mechanisation of hylomorphisms and their laws should be axiom-free; and (2) Coq
+hylomorphisms should be extracted to recursive OCaml functions that use no
+instances of \mintinline{OCaml}{Obj.magic}.  Although the use of
+\mintinline{OCaml}{Obj.magic} is safe in the code extracted by Coq, it has been
+proven that, for higher-order programs, simple interoperations can lead to
+incorrect behaviour or even segfaults~\cite{forster:hal-04329663}.  Therefore,
+the avoidance of axioms and  \mintinline{OCaml}{Obj.magic} means that the
+extracted code will have stronger safety guarantees, and will allow the safe
+interoperation with other OCaml code.
 
 The contributions we make in this paper are as follows:
 \begin{itemize}
@@ -669,7 +680,6 @@ needed and implement them as hylos.
 % %   & \lambda(\inr(table)) = \pair{\inr (\head(table))}{\lambda (\tail (table))}
 % % \end{align*}
 
-
 % % % \begin{align*}
 % % %   & \operator{lookup} :: \Nat \to G_{\infty} \R \to \operator{Maybe}\;\R\\
 % % %   & \operator{lookup}\; \Zero       (\Cons{a}{\text{\textunderscore}})     = \Just{a}\\
@@ -684,42 +694,35 @@ needed and implement them as hylos.
 % % %   & \operator{alg}\; (Succ{table}) = maximum_{0} [v + \operator{lookup}\; table (i - w) | (w,v) \leftarrow wvs, w \le i]
 % % % \end{align*}
 
-
 \section{Mechanising Extractable Container Functors}
-
 \dcas{Subsections are tentative topics to remember what I need to fill in here,
 but these are not final}
 
-Our mechanisation works in the category of Coq types, and our goals are: (1)
-the mechanisation of hylomorphisms and their laws should be axiom-free; and (2)
-Coq hylomorphisms should be extracted to recursive OCaml functions that use no
-instances of \mintinline{OCaml}{Obj.magic}.  Although the use of
-\mintinline{OCaml}{Obj.magic} is safe in the code extracted by Coq, it has been
-proven that, for higher-order programs, simple interoperations can lead to
-incorrect behaviour or even segfaults~\cite{forster:hal-04329663}.  Therefore,
-the avoidance of axioms and  \mintinline{OCaml}{Obj.magic} means that the
-extracted code will have stronger safety guarantees, and will allow the safe
-interoperation with other OCaml code.
+In order to abstract recursion patters we need to be able to talk about functors
+which have the suitable fixed-point properties. Instances of these functors are
+the polynomial ones which are in one-to-one correspondence with the so called
+\emph{containers}~\cite{AbbottAG05}.
+In this section we introduce containers
 
 \subsection{Functors and Containers}
-
-In Coq, to construct least/greatest fixpoints of functors, these need to build
+\label{sec:containers}
+In order to To construct fixpoints of functors, these need to build
 \emph{strictly positive types}. A common approach to construct such strictly
 positive endofunctors is to use \emph{container functors}~\cite{AbbottAG05}.
 However, reasoning about container and container functor equality requires to
-consider: (a) functional extensionality; (b) heterogeneous equality. This is
-problematic, due to our goals to remain axiom-free. Furthermore, standard
-representations of containers in Coq will lead to OCaml code that contains
-\mintinline{OCaml}{Obj.magic}. We will explain why, and our mechanisation of
-containers in the remainder of this section.
+consider both functional extensionality and heterogeneous equality. This is
+problematic since, as stated in Section~\ref{sec:intro}, our goals to remain
+axiom-free.  Furthermore, standard representations of containers in Coq will
+lead to OCaml code that contains \mintinline{OCaml}{Obj.magic}. We will explain
+why, and our mechanisation of containers in the remainder of this section.
 
 A container is defined by a type of \emph{shapes}, and a \emph{family of
-position types} indexed by shapes. 
+position types} indexed by shapes.
 \begin{minted}{Coq}
 Context (Shape : Set) (Pos : Shape -> Set).
 \end{minted}
-An \emph{extension} of this container is a functor,
-whose action on objects is given by:
+An \emph{extension} of this container is a functor, whose action on objects is
+given by:
 \begin{minted}{Coq}
 Record App (X : Set) := { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
@@ -735,15 +738,15 @@ such families of types, Coq's code extraction mechanism will insert unsafe
 casts. To avoid unsafe casts, we can consider representing the positions of a
 container as a type that captures \emph{all} the potential positions in all
 possible shapes, together with a predicate \mintinline{Coq}{Valid} that
-determines whether a position is valid in a shape. 
+determines whether a position is valid in a shape.
 \begin{minted}{Coq}
 Context (Shape : Set) (Pos : Set) (Valid : Shape -> Pos -> Prop).
 Record App (X : Set) := { shape    : Shape; 
                           contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
-extracted for \mintinline{Coq}{{p | Valid shape pos}} will be an OCaml
-singleton type defined as the OCaml equivalent to \mintinline{Coq}{Pos}.
+extracted for \mintinline{Coq}{{p | Valid shape pos}} will be an OCaml singleton
+type defined as the OCaml equivalent to \mintinline{Coq}{Pos}.
 
 However, there still remains the issue of reasoning about the equality of
 container extensions. The contents of the container extensions need to be
@@ -778,7 +781,6 @@ Definition fmap `(C : Cont Shape Pos) `(f : A -> B) (x : App C A) : App C B
 \end{minted}
 
 \subsubsection{Polynomial Functors as Container Extensions}
-
 Polynomial functors can be defined as container extensions~\ref{fig:poly}. We
 omit here the proofs that these container extensions are isomorphic to
 polynomials, but this proof is straightforward. To illustrate how the identity,
@@ -921,7 +923,6 @@ Instance Comp : Cont Cs Cp :=
 \end{figure}
 
 \subsubsection{Equality of Container Extensions}
-
 The equality of container extensions needs to be extensional, since the
 contents are obtained by applying a function. We want to equate container
 extensions that have the same shape, and that, for equal shape and position,
@@ -950,7 +951,7 @@ forall (x y : X), R x y -> R' (f x) (f y)
 \end{minted}
 
 \subsection{Types and Morphisms}
-
+\label{sec:types-morphisms}
 We address the different forms of equality by coupling every type with an
 associated equivalence relation, and every morphism with a proof that it is
 \emph{respectful} (i.e. \emph{proper} morphisms with respect to the function
@@ -991,7 +992,6 @@ occurrence of \mintinline{Coq}{Prop} in the code, so objects of type
 \mintinline{Coq}{A -> B}.
 
 \subsubsection{Polynomial Types}
-
 We define a number of equivalences for polynomial types. These equivalences are
 be used when building proper morphisms that manipulate their respective types.
 \begin{minted}{Coq}
@@ -1097,8 +1097,8 @@ fact to encode them as a higher-order morphism, with the following type:
 Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A := ...
 \end{minted}
 Finally, we prove that catamorphisms satisfy their expected universal law (i.e.
-they are the unique solution to the equation \mintinline{Coq}{f =e g \o fmap f
-\o l_out}). The proof is by induction on the input to \mintinline{Coq}{f} and
+they are the unique solution to the equation \mintinline{Coq}{f =e g \o fmap f \o l_out}).
+The proof is by induction on the input to \mintinline{Coq}{f} and
 \mintinline{Coq}{cata g}.
 \begin{minted}{Coq}
 Lemma cata_univ `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
