@@ -1069,7 +1069,8 @@ Lemma LFix_ind [P : LFix -> Prop]
 We define the equality of initial algebras of container extensions recursively,
 by traversing the structure and equating the shapes and positions. This
 definition is equivalent to taking the fixpoint of \mintinline{Coq}{AppR} in
-Section~\ref{sec:TODO}.
+Section~\ref{sec:TODO}, where the shapes must be equivalent and, for equal
+positions, the contents must be related by \mintinline{Coq}{LFixR}.
 \begin{minted}{Coq}
 Fixpoint LFixR (x y : LFix) : Prop :=
   let f_x := LFix_out x in
@@ -1090,15 +1091,16 @@ Definition cata_f `{equiv A} (g : Alg F A) : LFix -> A
       g (MkCont sx (fun e => f (kx e)))
   end.
 \end{minted}
-
-It is easy to show that this function is a proper morphism, and that it is
-unique. We can use the fact that catamorphisms are proper morphisms to encode
-them as a higher-order morphism.
+It is easy to show that this function is a proper morphism, and we use this
+fact to encode them as a higher-order morphism, with the following type:
 \begin{minted}{Coq}
-Lemma cata_arr1 `{eA : equiv A} (g : Alg F A)
-  : forall x y, x =e y -> cata_f g x =e cata_f g y.
 Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A := ...
-
+\end{minted}
+Finally, we prove that catamorphisms satisfy their expected universal law (i.e.
+they are the unique solution to the equation \mintinline{Coq}{f =e g \o fmap f
+\o l_out}). The proof is by induction on the input to \mintinline{Coq}{f} and
+\mintinline{Coq}{cata g}.
+\begin{minted}{Coq}
 Lemma cata_univ `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
     : f =e cata g <-> f =e g \o fmap f \o l_out.
 \end{minted}
@@ -1109,7 +1111,6 @@ Terminal coalgebras are defined analogously to initial algebras:
 \begin{minted}{Coq}
 CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
 \end{minted}
-
 Their equivalence relation, and anamorphisms, and universal properties are
 easy to encode:
 \begin{minted}{Coq}
@@ -1118,23 +1119,21 @@ easy to encode:
   Lemma ana_univ `{eA : equiv A} (h : Coalg F A) (f : A ~> GFix)
     : f =e ana h <-> f =e g_in \o fmap f \o h.
 \end{minted}
-
-With terminal coalgebras, we can encode another form of initial algebras. In
-particular, the initial algebras based on terminal coalgebras are the carrier
-types of terminal coalgebras, plus a proof that they are finite:
-
+This definition, however, prevents us from composing catamorphisms and
+anamorphisms. To address this issue, we consider another alternative definition
+for initial $F$-algebras. In particular, we show that the terminal coalgebras
+for $F$, coupled with a proof that they are finite are also initial
+$F$-algebras:
 \begin{minted}{Coq}
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{minted}
-
 Using this predicate, we can define the notion of \emph{recursive coalgebras}
-as those coalgebras that build finite trees. Recursive coalgebras are
-implemented in Coq recursively on the proof that they produce finite trees.
-Such proofs will be erased when extracting code to OCaml. This is standard
-practice when building general recursive functions in Coq\footnote{\dcas{This
-technique had a name in the community, but I cannot remember. Something
-predicates}}.
+as those that build finite trees. Recursive coalgebras are implemented in Coq
+recursively on the proof that they produce finite trees.  Such proofs will be
+erased when extracting code to OCaml. This is standard practice when building
+general recursive functions in Coq\footnote{\dcas{This technique had a name in
+the community, but I cannot remember. Something predicates}}.
 \begin{minted}{Coq}
 Notation rana_f__ h :=
   (fix f x H :=

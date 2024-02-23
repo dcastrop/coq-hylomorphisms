@@ -64,6 +64,7 @@ Definition qsort : Ext (cata merge \o rana tsplit).
   (* rewrite <- ana_rana. *)
   (* rewrite compA, cata_ccata. *)
   rewrite cata_ana_hylo.
+  simpl.
   reflexivity.
 Defined.
 

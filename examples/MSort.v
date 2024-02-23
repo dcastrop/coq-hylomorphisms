@@ -37,19 +37,20 @@ Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat.
   intros x y ->. auto with ffix.
 Defined.
 
-Fixpoint splitL (x : list nat) (acc : list nat * list nat) :=
+Fixpoint splitL (x : list nat) (accL accR : list nat) :=
   match x with
-  | nil => acc
-  | cons x xs => splitL xs (snd acc, cons x (fst acc))
+  | nil => (accL, accR)
+  | cons x xs => splitL xs accR (cons x accL)
   end.
 
 Definition c_split : Coalg (TreeF (list nat) unit) (list nat).
   refine {|
       app := fun x =>
-               if List.length x <=? 1
-               then a_leaf x
-               else let (l, r) := splitL x (nil, nil) in
-                    a_node tt l r
+               match x with
+               | nil | cons _ nil => a_leaf x
+               | _ => let (l, r) := splitL x nil nil in
+                      a_node tt l r
+               end
     |}.
   intros x y H. simpl in H. subst. reflexivity.
 Defined.
@@ -73,6 +74,10 @@ Definition msort : Ext (cata merge \o rana tsplit).
   (* rewrite <- ana_rana. *)
   (* rewrite compA, cata_ccata. *)
   rewrite cata_ana_hylo.
+  simpl.
+  unfold e_lbranch, e_rbranch.
+  simpl.
+
   reflexivity.
 Defined.
 
