@@ -1260,6 +1260,17 @@ recursive function monad~\cite{McBride15, BoveC01}
         \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 \end{itemize}
 
+\subsection{Program Calculation}
+
+Within the domain of program optimization, program calculation serves as a
+well-established programming technique aimed at deriving efficient programs from
+their naive counterparts through systematic program transformation. This area
+has been extensively explored over the years. Tesson et al.\ demonstrated the
+efficacy of leveraging Coq to establish an approach for implementing a robust
+system dedicated to verifying the correctness of program transformations for
+functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and
+Emoto went further and\ldots~\cite{10.1007/978-3-030-34175-6_11}
+
 \subsection{Termination of Nonstructural Recursion}
 
 Termination and productivity are non-trivial properties of programs, and various
@@ -1299,13 +1310,15 @@ structures. With this approach, algorithms are implemented in the standard
 functional way, following the divide-and-conquer pattern of splitting, recurring,
 and merging, with the addition of the data types being indexed by a static
 approximation of the relative \emph{size}. An advantage of this approach is
-that it allows for code to be written in a natural way.
+that it allows for code to be written in a natural way. There are costs, however.
+Programs must be written in a way that accounts for the handling of size indexes,
+and support for the size types must be added to the language.
 
 This approach has been used to express nonstructurally recursive
 algorithms in Agda: Copello et al.\ used sized types in a straightforward
 formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
 in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
-Coq as well~\cite{CHAN_2023}.
+Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
 
 \subsubsection{Divide and Conquer Recursion}
 
