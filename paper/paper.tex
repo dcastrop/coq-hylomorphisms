@@ -1337,11 +1337,14 @@ Termination and productivity are non-trivial properties of programs, and various
 methods have been proposed for checking that these properties hold. A common
 approach is guardedness checking~\cite{10.5555/646535.695850}, which is a
 \emph{syntactic} check that definitions avoid the introduction of
-non-normalizable terms. However, some desirable definitions will not be accepted
-by such checks.
+non-normalizable terms. This sort of check generally looks for a
+\emph{structural decrease} of arguments in the recursive calls of a function.
+Coq uses such a check, and it works for many classic functional programming
+patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
+definitions will not be accepted by such checks.
 
-In particular, the problem of \emph{nonstructural recursion} is
-well-studied~\cite{BOVE_KRAUSS_SOZEAU_2016}.
+In particular, the problem of \emph{nonstructural recursion} (including
+divide-and-conquer algorithms) is well-studied~\cite{BOVE_KRAUSS_SOZEAU_2016}.
 % A distinction between standard and
 % nonstandard recursion lies in the fact that standard recursion adheres strictly
 % to recursing on pattern variables, avoiding reliance on results from other
