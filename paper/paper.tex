@@ -771,7 +771,7 @@ Record PosOf `(C : Cont Shape Pos) (shape : Shape) :=
 Then, we define \emph{container extensions} as
 \begin{minted}{Coq}
 Record App `(C : Cont Shape Pos) (X : Set) :=
-  { shape : Shape; contents : PosOf C shape -> X }.
+  MkApp { shape : Shape; contents : PosOf C shape -> X }.
 \end{minted}
 The functorial action for container extensions on morphisms boils down to
 function composition, which trivially preserves identity and composition.
@@ -1088,7 +1088,7 @@ Definition cata_f `{equiv A} (g : Alg F A) : LFix -> A
   match x with
   | LFix_in ax =>
       let (sx, kx) := ax in
-      g (MkCont sx (fun e => f (kx e)))
+      g (MkApp sx (fun e => f (kx e)))
   end.
 \end{minted}
 It is easy to show that this function is a proper morphism, and we use this
@@ -1166,7 +1166,7 @@ Definition rana_f__ `{equiv A} (c : Coalg F A)
   : forall x : A, RecF c x -> LFix F
   := fix f (x : A) (H : RecF c x) :=
        let hx := c x in
-       LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
+       LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
 \end{minted}
 Here, \mintinline{Coq}{RecF_inv} provides the structurally smaller element for
 the Coq recursive definition. We then couple coalgebras with a proof that they
@@ -1187,54 +1187,104 @@ Lemma rana_univ A {eA : equiv A} (h : RCoalg A) (f : A ~> LFix F)
     : f =e rana h <-> f =e l_in \o fmap f \o h.
 \end{minted}
 
-\subsection{Recursive Hylos}
+\subsection{Recursive Hylomorphisms}
 
-Recursive hylomorphisms are built from an algebra and a recursive coalgebra:
+Given an $F$-algebra and $F$-coalgebra, a solution to the equation $f = a \circ
+F\; f \circ c$ is known as a hylomorphism. Unfortunately, this definition
+cannot be accepted by Coq, since there is no structurally smaller argument to
+do recursion, and there is no corecursive definition that is guaranteed to be
+guarded, due to the use of an arbitrary algebra $a$. Furthermore, solutions to
+the hylomorphism equation are \emph{not} guaranteed to be unique, or to even
+exist. To address these issues, we mechanise \textbf{recursive hylomorphisms}
+which, as we will see, are guaranteed to have a unique solution.
+
+Hylomorphisms \emph{are} the unique solution to $f = a \circ F\; f \circ c$, if
+$c$ is a recursive coalgebra. We show this by first providing the definition
+for hylomorphisms in Coq, and then proving that any function satisfying this
+equation is a hylomorphism. We call these hylomorphisms with a recursive
+coalgebra, \textbf{recursive hylomorphisms}.
 \begin{minted}{Coq}
-Definition hylo_def (a : Alg F B) (c : Coalg F A)
-: forall (x : A), RecF c x -> B
-:= fix f x H :=
-  match c x as h0
-        return
-        (forall e : Pos (shape h0), RecF c (cont h0 e)) ->
-        B
-  with
-  | MkCont s_x c_x => fun H => a (MkCont s_x (fun e => f (c_x e) (H e)))
-  end (RecF_inv H).
+Definition hylo_def (a : Alg F B) (c : Coalg F A) 
+  : forall (x : A), RecF c x -> B := fix f x H 
+  := match c x as h0 return
+       (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
+     with
+     | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
+     end (RecF_inv H).
 \end{minted}
-
+The definition of recursive hylomorphisms is recursive on the proof that the
+anamorphism can only be applied finitely many times on any input. We again use
+\mintinline{Coq}{RecF_inv} to obtain the structurally smaller proof to use in
+the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
+we prove that \mintinline{Coq}{hylo_def} is respectful, and use this proof to
+built the corresponding higher-order proper morphism:
+\begin{minted}{Coq}
+Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
+\end{minted}
+Finally, we show that recursive hylomorphisms are the unique solution to
+the hylomorphism equation.
 \begin{minted}{Coq}
 Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
 \end{minted}
-
-Recursive hylo universal property allows us to prove common optimisations:
-
+This result can be used to prove hylomorphism laws in a way that is analogous
+to pen-and-paper program calculation techniques. We show the rule for 
+hylomorphism fusion as an example:
 \begin{minted}{Coq}
-    Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
-    (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
-    : f2 \o hylo g1 h1 =e hylo g2 h1.
-  Proof.
-    rewrite hylo_univ.
-    rewrite fmap_comp.
-    rewrite compA.
-    rewrite <- E2.
-    rewrite <- compA.
-    rewrite <- compA.
-    rewrite (compA g1).
-    rewrite <- hylo_unr.
-    reflexivity.
-  Qed.
-
-  Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
-    (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
-    : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
-
-  Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
-    (g : Alg F B) (h : RCoalg F A)
-  : cata g \o rana h =e hylo g h.
+Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) 
+  (g2 : Alg F C) (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
+  : f2 \o hylo g1 h1 =e hylo g2 h1.
+Proof.
+  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
+  rewrite hylo_univ.
+  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
+  rewrite fmap_comp.
+  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
+  rewrite compA.
+  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
+  rewrite <- E2.
+  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
+  rewrite <- compA.
+  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
+  rewrite <- compA.
+  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
+  rewrite (compA g1).
+  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
+  rewrite <- hylo_unr.
+  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
+  reflexivity.
+Qed.
 \end{minted}
+Using the hylo fusion law, we can prove the well-known \emph{deforestation
+optimisation}, where two consecutive recursive computations, one that builds a
+data structure, and another one that consumes it, can be fused together into a
+single recursive definition. This, in turn, allows us to prove that a recursive
+hylomorphism is the composition of a catamorphism and a recursive anamorphism.
+\begin{minted}{Coq}
+Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
+  (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
+  : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 
+Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
+  (g : Alg F B) (h : RCoalg F A)
+: cata g \o rana h =e hylo g h.
+\end{minted}
+This result will allow us to \emph{calculate} programs by providing small, easy
+to verify implementations, and combining them into efficient recursive
+functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
+passes}.
+
+
+\section{Extraction}
+
+\dcas{Talk About this}
+\begin{minted}{OCaml}
+  let rec msort x = match x with
+| [] -> x | _ :: l -> (match l with | [] -> x | _ :: _ ->
+     let (l0, r) = splitL x [] [] in
+     let cx = fun p -> match p with | Lbranch -> l0 | Rbranch -> r in
+     mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
+\end{minted}
 
 \section{Related Work}
 
