@@ -111,10 +111,12 @@ Section FCoalgDef.
 
   Definition f_out : RCoalg (LFix F) := Rec _ fin_out.
 
-  Notation rana_f__ h :=
-    (fix f x H :=
-      let hx := h x in
-      LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e)))).
+  Definition rana_f__ `{equiv A} (c : Coalg F A)
+    : forall x : A, RecF c x -> LFix F :=
+    fix f (x : A) (H : RecF c x) :=
+      let hx := c x in
+      LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
+  Arguments rana_f__ {A eA} c x H : rename.
 
   Lemma rana_f_irr `{eA : equiv A} (h : Coalg F A)
     : forall (x : A) (F1 F2 : RecF h x), rana_f__ h x F1 =e rana_f__ h x F2.
@@ -124,20 +126,22 @@ Section FCoalgDef.
     apply Ih. Guarded.
   Qed.
 
-  Notation rana_f_ h x := (rana_f__ h x (terminating h x)).
+  Definition rana_f_ `{eA : equiv A} (c : RCoalg A) x
+    := rana_f__ c x (terminating c x).
 
   Lemma rana_f_arr `{eA : equiv A} (h : RCoalg A)
     : forall x y, x =e y -> rana_f_ h x =e rana_f_ h y.
   Proof.
-    intros x y.
+    intros x y. unfold rana_f_.
     generalize (terminating h x) (terminating h y). revert x y.
     fix Ih 3. intros x y [x' Fx] [y' Fy] Hxy. simpl in *. split.
     - destruct (app_eq h Hxy). auto.
     - intros e d1 d2. simpl. apply Ih. Guarded.
-    destruct (app_eq h Hxy). auto.
+      destruct (app_eq h Hxy). auto.
   Qed.
 
-  Notation rana_f h := (MkMorph (rana_f_arr h)).
+  Definition rana_f `{eA : equiv A} (c : RCoalg A) : A ~> LFix F
+    := Eval unfold rana_f_, rana_f__ in MkMorph (rana_f_arr c).
 
   Lemma rana_arr `{eA : equiv A}
     : forall x y : RCoalg A, x =e y -> rana_f x =e rana_f y.
@@ -157,7 +161,7 @@ Section FCoalgDef.
   Qed.
 
   Definition rana `{eA : equiv A} : RCoalg A ~> A ~> LFix F
-    := MkMorph rana_arr.
+    := Eval unfold rana_f in MkMorph rana_arr.
 
   Lemma LFixR_fold (x y : LFix F) : LFixR x y = (x =e y).
   Proof. auto. Qed.
