@@ -1079,7 +1079,7 @@ Fixpoint LFixR (x y : LFix) : Prop :=
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 \end{minted}
 From such initial algebras, we define \emph{catamorphisms} by recursively
-traversing their structure. As usual, catamorphisms take an
+traversing their structure. As usual, a catamorphism takes an
 \mintinline{Coq}{F}-algebra with carrier \mintinline{Coq}{A}, and produces a
 function from \mintinline{Coq}{LFix F} to \mintinline{Coq}{A}.
 \begin{minted}{Coq}
@@ -1128,18 +1128,59 @@ $F$-algebras:
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{minted}
-Using this predicate, we can define the notion of \emph{recursive coalgebras}
-as those that build finite trees. Recursive coalgebras are implemented in Coq
-recursively on the proof that they produce finite trees.  Such proofs will be
-erased when extracting code to OCaml. This is standard practice when building
-general recursive functions in Coq\footnote{\dcas{This technique had a name in
-the community, but I cannot remember. Something predicates}}.
+Catamorphisms from this initial algebra are denoted by \mintinline{Coq}{ccata},
+and they can be used to define the isomorphism between 
+\mintinline{Coq}{{x : GFix F | FinF x}} and
+\mintinline{Coq}{LFix F}. In particular: 
 \begin{minted}{Coq}
-Notation rana_f__ h :=
-  (fix f x H :=
-    let hx := h x in
-    LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e)))).
+Lemma cata_ccata `{equiv A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
+Lemma ccata_cata `{equiv A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
+\end{minted}
+Using this new initial algebra, we can compose catamorphisms and anamorphisms,
+\emph{as long as the anamorphisms produce finite trees}. However, if
+anamorphisms produce finite trees, then we can also encode in Coq the notion of
+\emph{recursive anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.
+Recursive coalgebras are coalgebras whose anamorphism produces finite trees.
+The following predicate captures this fact. Note how all the predicate states
+is that \mintinline{Coq}{h} can only be applied finitely many times:
+\begin{minted}{Coq}
+Inductive RecF (h : Coalg F A) : A -> Prop :=
+| RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
+\end{minted}
+We show how this predicate is equivalent to the anamorphism of such coalgebras
+producing finite trees:
+\begin{minted}{Coq}
+Lemma ana_rec_term `{equiv A} (h : Coalg F A)
+  : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
+\end{minted}
+Recursive anamorphisms are implemented in Coq recursively on the proof that
+they can only be applied finitely many times (\mintinline{Coq}{RecF}).  Note
+that such proofs will be erased when extracting code to OCaml. This is standard
+practice when building general recursive functions in Coq\footnote{\dcas{This
+technique had a name in the community, but I cannot remember. Something
+predicates}}. The core definitions are the following:
+\begin{minted}{Coq}
+Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
 
+Definition rana_f__ `{equiv A} (c : Coalg F A)
+  : forall x : A, RecF c x -> LFix F
+  := fix f (x : A) (H : RecF c x) :=
+       let hx := c x in
+       LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
+\end{minted}
+Here, \mintinline{Coq}{RecF_inv} provides the structurally smaller element for
+the Coq recursive definition. We then couple coalgebras with a proof that they
+are recursive, and add a coercion from recursive coalgebras to coalgebras.
+\begin{minted}{Coq}
+Definition RCoalg F A = {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
+\end{minted}
+Similarly to the rest of the definitions, we prove that recursive anamorphisms
+are respectful, and use this fact to build them as higher order proper
+morphisms, and prove its universal law, i.e.\ that recursive anamorphisms are
+the unique solution to the equation 
+\mintinline{Coq}{f =e l_in \o fmap f \o h},
+where \mintinline{Coq}{h} is a recursive coalgebra.
+\begin{minted}{Coq}
 Definition rana `{eA : equiv A} : RCoalg A ~> A ~> LFix F :=...
 
 Lemma rana_univ A {eA : equiv A} (h : RCoalg A) (f : A ~> LFix F)
