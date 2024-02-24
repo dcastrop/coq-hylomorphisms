@@ -25,7 +25,6 @@ Fixpoint mergeL l1 l2 {struct l1} :=
     end
   in merge_aux l2.
 
-About app.
 Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat.
   refine {|
       app := fun x =>
@@ -43,6 +42,38 @@ Fixpoint splitL (x : list nat) (accL accR : list nat) :=
   | cons x xs => splitL xs accR (cons x accL)
   end.
 
+Definition len_pair (p : list nat * list nat)
+  := max (length (fst p)) (length (snd p)).
+
+Lemma splitL_len : forall x a1 a2,
+    len_pair (splitL x a1 a2) <= max (length a1) (length a2) + length x.
+Proof.
+  induction x as [|h t Ih]; intros a1 a2; unfold len_pair; simpl in *.
+  - rewrite <- plus_n_O. apply le_n.
+  - specialize (Ih a2 (cons h a1)). simpl in *.
+    apply (PeanoNat.Nat.le_trans _ _ _ Ih). clear Ih.
+    rewrite <- plus_n_Sm, <- plus_Sn_m, PeanoNat.Nat.succ_max_distr.
+    rewrite <- PeanoNat.Nat.add_le_mono_r.
+    rewrite PeanoNat.Nat.max_comm.
+    apply PeanoNat.Nat.max_le_compat; [|apply le_S]; apply le_n.
+Qed.
+Lemma splitL_len1 : forall x a1 a2,
+    length (fst (splitL x a1 a2)) <=  max (length a1) (length a2) + length x.
+Proof.
+  intros x a1 a2.
+  set (He := splitL_len x a1 a2).
+  unfold len_pair in He. rewrite PeanoNat.Nat.max_lub_iff in He.
+  destruct He; trivial.
+Qed.
+Lemma splitL_len2 : forall x a1 a2,
+    length (snd (splitL x a1 a2)) <=  max (length a1) (length a2) + length x.
+Proof.
+  intros x a1 a2.
+  set (He := splitL_len x a1 a2).
+  unfold len_pair in He. rewrite PeanoNat.Nat.max_lub_iff in He.
+  destruct He; trivial.
+Qed.
+
 Definition c_split : Coalg (TreeF (list nat) unit) (list nat).
   refine {|
       app := fun x =>
@@ -58,9 +89,21 @@ Defined.
   (* Needs to be defined, otherwise msort does not reduce!
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
-Lemma split_fin : forall x, RecF c_split x.
+
+Lemma split_fin : RecP c_split.
 Proof.
-Admitted.
+  apply (wf_coalg (term_relation (@length nat) PeanoNat.Nat.lt_wf_0)).
+  intros [|h t] p; simpl in *.
+  - apply (dom_leaf _ p).
+  - destruct t; simpl in *.
+    + apply (dom_leaf _ p).
+    + unfold transport. simpl in *. set (lr := splitL _ _ _) in *.
+      assert (He : lr = (fst lr, snd lr)) by (destruct lr; reflexivity).
+      revert p. rewrite He. simpl. intros p.
+      destruct (val p); rewrite He; unfold lr; rewrite PeanoNat.Nat.lt_succ_r.
+      * apply splitL_len1.
+      * apply splitL_len2.
+Qed.
 
 Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat) := Rec split_fin.
 
@@ -71,8 +114,6 @@ Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat) := Rec split_fin.
  *)
 Definition msort : Ext (cata merge \o rana tsplit).
   calculate.
-  (* rewrite <- ana_rana. *)
-  (* rewrite compA, cata_ccata. *)
   rewrite cata_ana_hylo.
   simpl.
   reflexivity.

@@ -78,16 +78,11 @@ Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
 Defined.
 
 (* TODO: refactor Utilities for QSort *)
-Lemma length_filter A (p : A -> bool) (l : list A) n :
-  Nat.leb (length l) n = true ->
-  Nat.leb (length (List.filter p l)) n = true.
-Proof with (simpl in *; try discriminate; auto).
-  revert n.
-  induction l as [|h t Ih]...
-  intros [|n]...
-  destruct (p h)...
-    intros H. specialize (Ih n H). clear H.
-    generalize dependent (length (List.filter p t)). intros m. revert n.
-    induction m as [|m Ih]; intros n; auto.
-    destruct n as [|n]; simpl in *; try discriminate. apply Ih.
+Lemma length_filter A (p : A -> bool) (l : list A) :
+  length (List.filter p l) <= length l.
+Proof.
+  induction l as [|h t Ih]; try apply le_n.
+  simpl. destruct (p h); simpl.
+  -  apply le_n_S, Ih.
+  -  apply le_S, Ih.
 Qed.

@@ -73,6 +73,26 @@ Section FCoalgDef.
   Lemma terminating `{equiv A} : forall (h : RCoalg A) x, RecF h x.
   Proof. destruct h. trivial. Qed.
 
+  Definition transport {A B} (m : A -> B) (R : B -> B -> Prop) :
+    A -> A -> Prop := fun x y => R (m x) (m y).
+
+  Definition term_relation `{equiv A} {B} (m : A -> B) (R : B -> B -> Prop)
+    (wf : well_founded R) : well_founded (transport m R).
+    intros x. specialize (wf (m x)). revert wf.
+    generalize (eq_refl (m x)). generalize (m x) at -2. intros mx E AC.
+    revert x E. induction AC as [mx _ Ih]. intros x E. subst.
+    constructor. intros y Ryx. apply (Ih (m y) Ryx). reflexivity.
+  Qed.
+
+  Definition respects_relation `{equiv A} (c : Coalg F A) (R : A -> A -> Prop)
+    := forall x (p : Pos (shape (c x))), R (cont (c x) p) x.
+
+  Lemma wf_coalg `{equiv A} (R : A -> A -> Prop) (WF : well_founded R)
+    (c : Coalg F A) (RR : respects_relation c R) : RecP c.
+  Proof.
+    intros x. specialize (WF x). induction WF as [x ACC IH].
+    constructor. intros e. apply IH, RR.
+  Qed.
 
   (* Finite Trees *)
   Inductive FinF : GFix F -> Prop :=

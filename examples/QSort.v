@@ -44,12 +44,10 @@ Defined.
    *)
 Lemma split_fin : forall x, RecF c_split x.
 Proof.
-  intros x. generalize (PeanoNat.Nat.leb_refl (List.length x)).
-  generalize (length x) at 2. intros n. revert x.
-  induction n as [|n Ih]; intros [|h t] H; simpl in *; try discriminate;
-    constructor; intros e; try destruct (dom_leaf_false e).
-  destruct e as [se ke].
-  destruct se; simpl in *; apply Ih, length_filter, H.
+  apply (wf_coalg (term_relation (@length nat) PeanoNat.Nat.lt_wf_0)).
+  intros [|h t] p; simpl in *; try (apply (dom_leaf _ p)).
+  unfold transport. simpl. rewrite PeanoNat.Nat.lt_succ_r.
+  destruct (val p); apply length_filter.
 Qed.
 
 Definition tsplit : RCoalg (TreeF unit nat) (list nat) := Rec split_fin.
