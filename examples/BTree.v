@@ -77,7 +77,7 @@ Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
   rewrite (Kxy rightB rightB); trivial.
 Defined.
 
-(* TODO: refactor Utilities for QSort *)
+(* TODO: refactor into Utilities *)
 Lemma length_filter A (p : A -> bool) (l : list A) :
   length (List.filter p l) <= length l.
 Proof.
@@ -86,3 +86,6 @@ Proof.
   -  apply le_n_S, Ih.
   -  apply le_S, Ih.
 Qed.
+
+Lemma eta_pair A B (p : A * B) : p = (fst p, snd p).
+Proof. destruct p; trivial. Qed.

@@ -92,12 +92,9 @@ Defined.
 
 Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
-  intros [|h t] p; simpl in *; try apply (dom_leaf _ p).
-  destruct t; simpl in *; try apply (dom_leaf _ p).
-  set (lr := splitL _ _ _) in *.
-  assert (He : lr = (fst lr, snd lr)) by (destruct lr; reflexivity).
-  revert p. rewrite He. simpl. intros p.
-  destruct (val p); rewrite He; unfold lr; rewrite PeanoNat.Nat.lt_succ_r.
+  intros [|h [|h' t]] p; simpl in *; try apply (dom_leaf _ p).
+  revert p; rewrite (eta_pair (splitL _ _ _)). simpl; intros p.
+  destruct p as [[|] V]; simpl; rewrite PeanoNat.Nat.lt_succ_r.
   * apply splitL_len1.
   * apply splitL_len2.
 Qed.
