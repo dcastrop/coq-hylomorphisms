@@ -73,26 +73,36 @@ Section FCoalgDef.
   Lemma terminating `{equiv A} : forall (h : RCoalg A) x, RecF h x.
   Proof. destruct h. trivial. Qed.
 
-  Definition transport {A B} (m : A -> B) (R : B -> B -> Prop) :
-    A -> A -> Prop := fun x y => R (m x) (m y).
-
-  Definition term_relation `{equiv A} {B} (m : A -> B) (R : B -> B -> Prop)
-    (wf : well_founded R) : well_founded (transport m R).
+  Definition transport_rel `{equiv A} {B} (m : A -> B) (R : B -> B -> Prop)
+    (wf : well_founded R) : well_founded (fun x y => R (m x) (m y)).
     intros x. specialize (wf (m x)). revert wf.
     generalize (eq_refl (m x)). generalize (m x) at -2. intros mx E AC.
     revert x E. induction AC as [mx _ Ih]. intros x E. subst.
     constructor. intros y Ryx. apply (Ih (m y) Ryx). reflexivity.
   Qed.
 
-  Definition respects_relation `{equiv A} (c : Coalg F A) (R : A -> A -> Prop)
-    := forall x (p : Pos (shape (c x))), R (cont (c x) p) x.
+  Definition respects_relation `{equiv A} (c : Coalg F A)
+    {B} (m : A -> B) (R : B -> B -> Prop)
+    := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
 
-  Lemma wf_coalg `{equiv A} (R : A -> A -> Prop) (WF : well_founded R)
-    (c : Coalg F A) (RR : respects_relation c R) : RecP c.
+  Lemma wf_coalg_rec `{equiv A} (R : A -> A -> Prop) (WF : well_founded R)
+    (c : Coalg F A) (RR : respects_relation c id R) : RecP c.
   Proof.
     intros x. specialize (WF x). induction WF as [x ACC IH].
     constructor. intros e. apply IH, RR.
   Qed.
+
+  Corollary wf_rel_coalg_rec `{eA : equiv A}
+    {B} (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
+    (c : Coalg F A) (RR : respects_relation c m R) : RecP c.
+  Proof. apply (wf_coalg_rec (transport_rel m WF)); trivial. Qed.
+  Arguments wf_rel_coalg_rec {A eA B} m {R} WF {c} RR.
+
+  Definition mk_wf_coalg `{eA : equiv A}
+    {B} (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
+    (c : Coalg F A) (RR : respects_relation c m R) : RCoalg A :=
+    Rec c (wf_rel_coalg_rec m WF RR).
+  Arguments mk_wf_coalg {A}%type_scope {eA} {B}%type_scope m [R] WF [c] RR.
 
   (* Finite Trees *)
   Inductive FinF : GFix F -> Prop :=

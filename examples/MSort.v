@@ -90,22 +90,20 @@ Defined.
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
 
-Lemma split_fin : RecP c_split.
+Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
-  apply (wf_coalg (term_relation (@length nat) PeanoNat.Nat.lt_wf_0)).
-  intros [|h t] p; simpl in *.
-  - apply (dom_leaf _ p).
-  - destruct t; simpl in *.
-    + apply (dom_leaf _ p).
-    + unfold transport. simpl in *. set (lr := splitL _ _ _) in *.
-      assert (He : lr = (fst lr, snd lr)) by (destruct lr; reflexivity).
-      revert p. rewrite He. simpl. intros p.
-      destruct (val p); rewrite He; unfold lr; rewrite PeanoNat.Nat.lt_succ_r.
-      * apply splitL_len1.
-      * apply splitL_len2.
+  intros [|h t] p; simpl in *; try apply (dom_leaf _ p).
+  destruct t; simpl in *; try apply (dom_leaf _ p).
+  set (lr := splitL _ _ _) in *.
+  assert (He : lr = (fst lr, snd lr)) by (destruct lr; reflexivity).
+  revert p. rewrite He. simpl. intros p.
+  destruct (val p); rewrite He; unfold lr; rewrite PeanoNat.Nat.lt_succ_r.
+  * apply splitL_len1.
+  * apply splitL_len2.
 Qed.
 
-Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat) := Rec split_fin.
+Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat)
+  := mk_wf_coalg PeanoNat.Nat.lt_wf_0 split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)

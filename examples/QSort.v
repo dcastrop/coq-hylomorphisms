@@ -42,15 +42,14 @@ Defined.
   (* Needs to be defined, otherwise qsort does not reduce!
    * UPDATE 12/09/2023 by DC: what's the nonsense above???
    *)
-Lemma split_fin : forall x, RecF c_split x.
+Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
-  apply (wf_coalg (term_relation (@length nat) PeanoNat.Nat.lt_wf_0)).
   intros [|h t] p; simpl in *; try (apply (dom_leaf _ p)).
-  unfold transport. simpl. rewrite PeanoNat.Nat.lt_succ_r.
-  destruct (val p); apply length_filter.
+  rewrite PeanoNat.Nat.lt_succ_r. destruct (val p); apply length_filter.
 Qed.
 
-Definition tsplit : RCoalg (TreeF unit nat) (list nat) := Rec split_fin.
+Definition tsplit : RCoalg (TreeF unit nat) (list nat)
+  := mk_wf_coalg PeanoNat.Nat.lt_wf_0 split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
