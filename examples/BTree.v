@@ -42,15 +42,12 @@ Proof. intros []. simpl in *. discriminate. Qed.
 Definition dom_leaf L A B (e : L) (x : Pos (F:=TreeF L A) (Leaf A e)) : B :=
   False_rect _ (dom_leaf_false x).
 
-Definition a_leaf {L A X : Type} (x : L)
-  : App (TreeF L A) X := MkCont (Leaf A x) (@dom_leaf L A X x).
-Arguments a_leaf & {L A X}.
-Definition a_node L A X (x : A) (l r : X) : App (TreeF L A) X :=
-  MkCont (Node _ x) (fun p => match val p with
-                            | Lbranch => l
-                            | Rbranch => r
-                            end).
-Arguments a_node & {L A X} x l r.
+Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
+Notation a_node x l r :=
+  (MkCont (Node _ x) (fun p => match val p with
+                              | Lbranch => l
+                              | Rbranch => r
+                              end)).
 
 Definition lnode_valid {L A} (x : Ts L A)
   : forall (n : A), x = Node L n -> valid (x, Lbranch) = true.
@@ -59,23 +56,12 @@ Definition rnode_valid {L A} (x : Ts L A)
   : forall (n : A), x = Node L n -> valid (x, Rbranch) = true.
 Proof. intros n ->. reflexivity. Qed.
 
-Definition e_lbranch {L A} (s : Ts L A) n (H : s = Node _ n)
-  : Pos s := MkElem Lbranch (lnode_valid H).
-Definition e_rbranch {L A} (s : Ts L A) n (H : s = Node _ n)
-  : Pos s := MkElem Rbranch (lnode_valid H).
+Notation e_lbranch H := (MkElem Lbranch (lnode_valid H)).
+Notation e_rbranch H := (MkElem Rbranch (rnode_valid H)).
+Notation leftB  := (e_lbranch eq_refl).
+Notation rightB := (e_rbranch eq_refl).
 
-(* Definition a_out {L A X : Type} : App (TreeF L A) X -> ITreeF L A X. *)
-(*   refine *)
-(*     ( *)
-(*       fun x : App (TreeF L A) X => *)
-(*         let (s, k) := x in *)
-(*         match s as s' return s = s' -> ITreeF L A X with *)
-(*         | Leaf _ x => fun _ => leaf x *)
-(*         | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E)) *)
-(*         end eq_refl *)
-(*     ). *)
-
-  Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
+Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
     refine
       {| app :=
           fun x : App (TreeF L A) X =>
@@ -87,8 +73,8 @@ Definition e_rbranch {L A} (s : Ts L A) n (H : s = Node _ n)
       |}.
   intros [x Fx] [y Fy] [Sxy Kxy]. simpl in *. subst.
   destruct y; trivial; simpl.
-  rewrite (Kxy (e_lbranch _) (e_lbranch eq_refl)); trivial.
-  rewrite (Kxy (e_rbranch _) (e_rbranch eq_refl)); trivial.
+  rewrite (Kxy leftB leftB); trivial.
+  rewrite (Kxy rightB rightB); trivial.
 Defined.
 
 (* TODO: refactor Utilities for QSort *)

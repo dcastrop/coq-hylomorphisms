@@ -75,65 +75,12 @@ Definition msort : Ext (cata merge \o rana tsplit).
   (* rewrite compA, cata_ccata. *)
   rewrite cata_ana_hylo.
   simpl.
-  unfold e_lbranch, e_rbranch.
-  simpl.
-
   reflexivity.
 Defined.
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
-(* Set Extraction Conservative Types. *)
-Extraction Inline e_lbranch.
-Extraction Inline e_rbranch.
-Extraction Inline dom_leaf.
-Extraction Inline projT1.
-Extraction Inline projT2.
-Extraction Inline comp.
-
 Extraction Inline val.
-Extraction Inline Valid.
-
-Extraction Inline app.
-Extraction Inline coalg.
-Extraction Inline val.
-Extraction Inline shape.
-Extraction Inline cont.
-Extraction Inline hylo.
-Extraction Inline hylo_f__.
-Extraction Inline hylo_def.
-Extraction Inline cata.
-Extraction Inline ccata.
-Extraction Inline ccata_.
-Extraction Inline ccata_f.
-Extraction Inline ccata_f_.
-Extraction Inline liftP.
-Extraction Inline liftP_f_.
-Extraction Inline ana.
-Extraction Inline ana_f.
-Extraction Inline ana_f_.
-Extraction Inline ana_f_u.
-Extraction Inline rana.
-Extraction Inline hylo_f.
-Extraction Inline hylo_f_.
-Extraction Inline LFix_out.
-Extraction Inline l_in.
-Extraction Inline l_out.
-Extraction Inline g_in.
-Extraction Inline g_out.
-Extraction Inline lg_in.
-Extraction Inline lg_out.
-Extraction Inline GFix_out.
-
-Extraction Inline fst.
-Extraction Inline snd.
-
-Extraction Inline merge.
-Extraction Inline a_leaf.
-Extraction Inline a_node.
-Extraction Inline a_out.
-Extraction Inline c_split.
-Extraction Inline tsplit.
 Set Extraction Flag 2047.
 Recursive Extraction msort.
