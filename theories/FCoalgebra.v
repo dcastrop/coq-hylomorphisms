@@ -71,10 +71,11 @@ Section FCoalgDef.
   Defined.
 
   Lemma terminating `{equiv A} : forall (h : RCoalg A) x, RecF h x.
-  Proof. destruct h. trivial. Qed.
+  Proof. destruct h. trivial. Defined.
 
   Definition transport_rel `{equiv A} {B} (m : A -> B) (R : B -> B -> Prop)
     (wf : well_founded R) : well_founded (fun x y => R (m x) (m y)).
+  Proof.
     intros x. specialize (wf (m x)). revert wf.
     generalize (eq_refl (m x)). generalize (m x) at -2. intros mx E AC.
     revert x E. induction AC as [mx _ Ih]. intros x E. subst.
@@ -85,23 +86,20 @@ Section FCoalgDef.
     {B} (m : A -> B) (R : B -> B -> Prop)
     := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
 
-  Lemma wf_coalg_rec `{equiv A} (R : A -> A -> Prop) (WF : well_founded R)
-    (c : Coalg F A) (RR : respects_relation c id R) : RecP c.
-  Proof.
-    intros x. specialize (WF x). induction WF as [x ACC IH].
-    constructor. intros e. apply IH, RR.
-  Qed.
-
-  Corollary wf_rel_coalg_rec `{eA : equiv A}
-    {B} (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
+  Lemma wf_coalg_rec `{equiv A} {B}
+    (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
     (c : Coalg F A) (RR : respects_relation c m R) : RecP c.
-  Proof. apply (wf_coalg_rec (transport_rel m WF)); trivial. Qed.
-  Arguments wf_rel_coalg_rec {A eA B} m {R} WF {c} RR.
+  Proof.
+    intros x. specialize (WF (m x)). revert x WF.
+    fix Ih 2. intros x [Fx]. constructor. intros e.
+    apply Ih, Fx, RR.
+  Defined.
+  Arguments wf_coalg_rec {A eA B m R} WF {c} RR : rename.
 
   Definition mk_wf_coalg `{eA : equiv A}
     {B} (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
     (c : Coalg F A) (RR : respects_relation c m R) : RCoalg A :=
-    Rec c (wf_rel_coalg_rec m WF RR).
+    Rec c (wf_coalg_rec WF RR).
   Arguments mk_wf_coalg {A}%type_scope {eA} {B}%type_scope m [R] WF [c] RR.
 
   (* Finite Trees *)

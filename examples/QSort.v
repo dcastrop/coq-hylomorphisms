@@ -39,9 +39,12 @@ Definition c_split : Coalg (TreeF unit nat) (list nat).
   intros x y ->. auto with ffix.
 Defined.
 
-  (* Needs to be defined, otherwise qsort does not reduce!
-   * UPDATE 12/09/2023 by DC: what's the nonsense above???
-   *)
+(* Needs to be defined, otherwise qsort does not reduce!
+ * UPDATE 12/09/2023: what's the nonsense above???
+ * UPDATE 25/02/2024: AAH! nope, the *termination* proof needs to be defined
+ * if we want to do Eval compute and the like (otherwise the fixpoint will
+  * never reduce)
+ *)
 Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
   intros [|h t] p; simpl in *; try (apply (dom_leaf _ p)).
@@ -49,7 +52,7 @@ Proof.
 Qed.
 
 Definition tsplit : RCoalg (TreeF unit nat) (list nat)
-  := mk_wf_coalg PeanoNat.Nat.lt_wf_0 split_fin.
+  := mk_wf_coalg wf_lt split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
@@ -64,6 +67,16 @@ Definition qsort : Ext (cata merge \o rana tsplit).
   simpl.
   reflexivity.
 Defined.
+
+Import List.
+Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
+Fixpoint cycle n :=
+  match n with
+  | 0 => test
+  | S n => test ++ cycle n
+  end.
+Definition largeTest := Eval compute in cycle 100.
+Eval compute in qsort largeTest.
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
