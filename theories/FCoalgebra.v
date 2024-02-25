@@ -73,15 +73,6 @@ Section FCoalgDef.
   Lemma terminating `{equiv A} : forall (h : RCoalg A) x, RecF h x.
   Proof. destruct h. trivial. Defined.
 
-  Definition transport_rel `{equiv A} {B} (m : A -> B) (R : B -> B -> Prop)
-    (wf : well_founded R) : well_founded (fun x y => R (m x) (m y)).
-  Proof.
-    intros x. specialize (wf (m x)). revert wf.
-    generalize (eq_refl (m x)). generalize (m x) at -2. intros mx E AC.
-    revert x E. induction AC as [mx _ Ih]. intros x E. subst.
-    constructor. intros y Ryx. apply (Ih (m y) Ryx). reflexivity.
-  Qed.
-
   Definition respects_relation `{equiv A} (c : Coalg F A)
     {B} (m : A -> B) (R : B -> B -> Prop)
     := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).

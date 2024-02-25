@@ -64,19 +64,21 @@ Definition qsort : Ext (cata merge \o rana tsplit).
   (* rewrite <- ana_rana. *)
   (* rewrite compA, cata_ccata. *)
   rewrite cata_ana_hylo.
-  simpl.
+  Opaque wf_lt. simpl. Transparent wf_lt.
   reflexivity.
 Defined.
 
-Import List.
-Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
-Fixpoint cycle n :=
-  match n with
-  | 0 => test
-  | S n => test ++ cycle n
-  end.
-Definition largeTest := Eval compute in cycle 100.
-Eval compute in qsort largeTest.
+Module Tests.
+  Import List.
+  Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
+  Fixpoint cycle n :=
+    match n with
+    | 0 => test
+    | S n => test ++ cycle n
+    end.
+  Definition largeTest := Eval compute in cycle 10.
+  Eval compute in qsort largeTest.
+End Tests.
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".

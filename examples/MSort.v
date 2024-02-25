@@ -100,7 +100,7 @@ Proof.
 Qed.
 
 Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat)
-  := mk_wf_coalg PeanoNat.Nat.lt_wf_0 split_fin.
+  := mk_wf_coalg wf_lt split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
@@ -110,9 +110,24 @@ Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat)
 Definition msort : Ext (cata merge \o rana tsplit).
   calculate.
   rewrite cata_ana_hylo.
+  Opaque wf_lt.
   simpl.
+  Transparent wf_lt.
   reflexivity.
 Defined.
+
+Module Tests.
+  Import List.
+  Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
+  Fixpoint cycle n :=
+    match n with
+    | 0 => test
+    | S n => test ++ cycle n
+    end.
+  Definition largeTest := Eval compute in cycle 10.
+  Eval compute in msort largeTest.
+End Tests.
+
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
