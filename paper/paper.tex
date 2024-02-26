@@ -728,12 +728,12 @@ why, and our mechanisation of containers in the remainder of this section.
 A container is defined by a type of \emph{shapes}, and a \emph{family of
 position types} indexed by shapes.
 \begin{minted}{Coq}
-Context (Shape : Set) (Pos : Shape -> Set).
+Context (Shape : Type) (Pos : Shape -> Type).
 \end{minted}
 An \emph{extension} of this container is a functor, whose action on objects is
 given by:
 \begin{minted}{Coq}
-Record App (X : Set) := { shape : Shape; contents : Pos shape -> X }.
+Record App (X : Type) := { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
 In our mechanisation, we use \mintinline{Coq}{App} to represent container
 extensions.  Generally, any functor that is isomorphic to a container extension
@@ -749,8 +749,8 @@ container as a type that captures \emph{all} the potential positions in all
 possible shapes, together with a predicate \mintinline{Coq}{Valid} that
 determines whether a position is valid in a shape.
 \begin{minted}{Coq}
-Context (Shape : Set) (Pos : Set) (Valid : Shape -> Pos -> Prop).
-Record App (X : Set) := { shape    : Shape; 
+Context (Shape : Type) (Pos : Type) (Valid : Shape -> Pos -> Prop).
+Record App (X : Type) := { shape    : Shape; 
                           contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
@@ -772,14 +772,14 @@ SSReflect. For simplicity, we define the dependent pair of valid positions as a
 record, which will be extracted to a singleton type with the validity proof
 erased by Coq's code extraction mechanism.
 \begin{minted}{Coq}
-Class Cont (Shape : Set) (Pos : Set) := { valid : Shape -> Pos -> bool }.
+Class Cont (Shape : Type) (Pos : Type) := { valid : Shape -> Pos -> bool }.
 Coercion is_true (b : bool) : Prop := b = true.
 Record PosOf `(C : Cont Shape Pos) (shape : Shape) := 
   ValidPos { val : Pos; IsValid : valid shape pos }.
 \end{minted}
 Then, we define \emph{container extensions} as
 \begin{minted}{Coq}
-Record App `(C : Cont Shape Pos) (X : Set) :=
+Record App `(C : Cont Shape Pos) (X : Type) :=
   MkApp { shape : Shape; contents : PosOf C shape -> X }.
 \end{minted}
 The functorial action for container extensions on morphisms boils down to
@@ -883,7 +883,7 @@ Definition Ip := unit.
 Instance Id : Cont Is Ip := {
   valid := fun _ _ => true }.
 
-Definition Ks (A : Set) := A.
+Definition Ks (A : Type) := A.
 Definition Kp := False.
 Instance Const A : Cont (Ks A) Kp := {
   valid := fun _ p =>
@@ -1027,14 +1027,68 @@ also provide functions for currying/uncurrying, and partially applying a proper
 morphism. We avoid using definitions, or unfold them, to help Coq's code
 extraction mechanism to inline as many of these small definitions as possible.
 
-These definitions are isomorphic to the equivalent container extension.
+\subsubsection{Isomorphisms of Coq Types and Container Extensions}
 
-We illustrate how these definitions
-\paragraph*{Isomorphisms with Container Extensions} Our definitions involving
-polynomial types are isomorphic to polynomial functors as container extensions.
+Using custom equivalences and proper morphisms, we redefine the definitions of
+container extensions and container equality. In particular, container
+extensions require a proper morphism to check the validity of positions in
+shapes, and container equality now uses equivalences of shapes and contained
+elements: 
+\begin{minted}{Coq}
+Class Cont (Shape : Type) (Pos : Type) := { valid : Shape ~> Pos ~> bool }.
+Inductive AppR `{e : equiv X} (x y : App F X) : Prop :=
+  | AppR_ext (Es : shape x =e shape y)
+             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
+\end{minted}
+Note the use of \mintinline{Coq}{=e} instead of Coq's standard equality.  For
+positions, however, we chose to use Coq's propositional equality, since these
+would leads to simpler code. We explain why in Section~\ref{sec:cata}, and the
+mechanisation of initial algebras of container extensions. The definitions in
+Figure~\ref{fig:poly} are redefined to account for these changes in a
+straightforward way.
 
+We prove the isomorphisms of polynomial types and the equivalent (redefined)
+container extensions. As an example, we discuss (informally) the isomorphisms
+of pairs with their equivalent container extensions. Suppose that we
+know that \mintinline{Coq}{App F X} is isomorphic to \mintinline{Coq}{A}, and
+\mintinline{Coq}{App G X} is isomorphic to \mintinline{Coq}{B}. Then we can
+show that \mintinline{Coq}{App (Prod F G) X} is isomorphic to
+\mintinline{Coq}{A * B}.  If we have an element of type 
+\mintinline{Coq}{App (Prod F G) X},
+using the \mintinline{Coq}{inl} position, we can obtain
+\mintinline{Coq}{App F X}.  Similarly, using \mintinline{Coq}{inr}, we can
+obtain \mintinline{Coq}{App G X}. Since these are the only two valid positions
+in the shape of pairs, we have finished. It is now sufficient to use the
+isomorphisms of \mintinline{Coq}{App F X} and \mintinline{Coq}{App G X} to
+obtain \mintinline{Coq}{A * B}. Similarly if we have \mintinline{Coq}{A * B},
+we can first use the isomorphisms of 
+\mintinline{Coq}{A} and
+\mintinline{Coq}{B} to obtain
+\mintinline{Coq}{App F X * App G X}, and then construct the necessary container
+extension. Given \mintinline{Coq}{p_inl}/\mintinline{Coq}{p_inr} that act as
+\mintinline{Coq}{inl/inr} but on valid product positions, the relevant
+functions that define the isomorphism are:
+\begin{minted}{Coq}
+Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
+  ({| shape := shape (fst x); cont := fun e => cont x (e_inl e) |}, 
+   {| shape := shape (snd x); cont := fun e => cont x (e_inr e) |}).
+Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
+{| shape := (shape (fst x), shape (snd x));
+   cont := fun e => match val e with 
+                    | inl p => fun H => cont (fst x) (ValidPos p H)
+                    | inr p => fun H => cont (snd x) (ValidPos p H)
+                    end (IsValid e)
+|}.
+\end{minted}
+Proving that these functions indeed form an isomorphism is straightforward,
+using the fact that Product containers only have two valid positions.
 
 \subsubsection{Generalised Rewriting for Morphisms}
+
+Since our framework only allows types with equivalences, and proper morphisms,
+we can leverage Coq's \emph{setoid rewrite}
+
+\dcas{Blabla: examples, no need to explain setoid rewrite in detail here}
 
 \section{Extracting Certified Hylomorphisms}
 
