@@ -39,7 +39,7 @@ Require Import HYLO.Morphism.
   * generated OCaml code, and a priority of this experiment was extracting
   * "somewhat reasonable/clean" OCaml code.
   *)
-Class Cont `{Esh : equiv Sh} (P : Type) :=
+Class Cont `{Esh : setoid Sh} (P : Type) :=
   { valid : Sh * P ~> bool
   }.
 Arguments Cont Sh {Esh} P.
@@ -89,7 +89,7 @@ Proof.
   reflexivity.
 Qed.
 
-Inductive AppR `{F : Cont Sh P} (X : Type) {e : equiv X}
+Inductive AppR `{F : Cont Sh P} (X : Type) {e : setoid X}
            (x y : App F X) : Prop :=
   | AppR_ext
       (Es : shape x =e shape y)
@@ -98,9 +98,9 @@ Inductive AppR `{F : Cont Sh P} (X : Type) {e : equiv X}
   Hint Constructors AppR : ffix.
 
 #[export]
-  Instance App_equiv `{F : Cont Sh P} `{e : equiv X} : equiv (App F X).
+  Instance App_setoid `{F : Cont Sh P} `{e : setoid X} : setoid (App F X).
 Proof with eauto with ffix.
-  apply (@MkEquiv _ (@AppR Sh _ P F X e)).
+  apply (@MkSetoid _ (@AppR Sh _ P F X e)).
   - intros [shx kx]. constructor...
     simpl.  intros [x1 d1] [x2 d2] Eq. simpl in *. subst.
     rewrite (bool_irrelevance d1 d2).
@@ -117,7 +117,7 @@ Defined.
 Lemma fold_eq A (x y : A) : x =e y -> x = y.
 Proof. trivial. Qed.
 
-Lemma cont_ext_eq `{F : Cont Sh P} (s : Sh) `{equiv X}
+Lemma cont_ext_eq `{F : Cont Sh P} (s : Sh) `{setoid X}
   (k k' : Pos s -> X)
   : (forall x, k x =e k' x) -> AppR (MkCont s k) (MkCont s k').
 Proof with simpl in *; auto with ffix.
@@ -125,11 +125,11 @@ Proof with simpl in *; auto with ffix.
   intros e1 e2 Hv. rewrite (elem_val_eq Hv)...
 Qed.
 
-Definition fmapA `{F : Cont Sh P} `{equiv A} `{equiv B}
+Definition fmapA `{F : Cont Sh P} `{setoid A} `{setoid B}
   (f : A -> B) (x : App F A) : App F B
   := MkCont (shape x) (fun e => f (cont x e)).
 
-Lemma fmapA_eqF `{F : Cont Sh P} `{equiv A} `{equiv B} (f : A ~> B)
+Lemma fmapA_eqF `{F : Cont Sh P} `{setoid A} `{setoid B} (f : A ~> B)
   : forall (x y : App F A), x =e y -> fmapA (F:= F) f x =e fmapA f y.
 Proof with eauto with ffix.
   intros [sx kx] [sy ky] [Es Ek]. split; auto. intros.  apply app_eq. auto.
@@ -140,7 +140,7 @@ Notation fmapU f :=
      app_eq := fmapA_eqF f
    |}).
 
-Lemma fmapU_eq `{F : Cont Sh P} `{eA : equiv A} `{eB : equiv B} :
+Lemma fmapU_eq `{F : Cont Sh P} `{eA : setoid A} `{eB : setoid B} :
   forall f g : A ~> B, f =e g -> fmapU f =e fmapU g.
 Proof.
   intros f g Hfg [sh p]. simpl.
@@ -148,13 +148,13 @@ Proof.
   intros. apply Hfg.
 Qed.
 
-Definition fmap `{F : Cont Sh P} `{eA : equiv A} `{eB : equiv B} :
+Definition fmap `{F : Cont Sh P} `{eA : setoid A} `{eB : setoid B} :
   (A ~> B) ~> App F A ~> App F B := MkMorph fmapU_eq.
 
-Lemma fmap_id `{F : Cont Sh P} `{equiv A} : fmap (F:=F) (id (A:=A)) =e id.
+Lemma fmap_id `{F : Cont Sh P} `{setoid A} : fmap (F:=F) (id (A:=A)) =e id.
 Proof. intros []; reflexivity. Qed.
 
-Lemma fmap_comp `{F : Cont Sh P} `{equiv A} `{equiv B} `{equiv C}
+Lemma fmap_comp `{F : Cont Sh P} `{setoid A} `{setoid B} `{setoid C}
   (f : B ~> C) (g : A ~> B) : fmap (F:=F) (f \o g) =e fmap f \o fmap g.
 Proof. intros []. reflexivity. Qed.
 
@@ -175,7 +175,7 @@ Defined.
 
 (* Product container *)
 Section Product.
-  Context `{equiv S1} `{equiv S2} (P1 P2 : Type).
+  Context `{setoid S1} `{setoid S2} (P1 P2 : Type).
   Context (C1 : Cont S1 P1) (C2 : Cont S2 P2).
   Notation Ps := ((S1 * S2)%type).
   Notation Pp := ((P1 + P2)%type).
@@ -194,7 +194,7 @@ End Product.
 
 (* Sum container *)
 Section Sum.
-  Context `{equiv S1} `{equiv S2} (P1 P2 : Type).
+  Context `{setoid S1} `{setoid S2} (P1 P2 : Type).
   Context (C1 : Cont S1 P1) (C2 : Cont S2 P2).
   Notation Ps := ((S1 + S2)%type).
   Notation Pp := ((P1 + P2)%type).

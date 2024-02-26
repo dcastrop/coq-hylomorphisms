@@ -25,17 +25,13 @@ Fixpoint mergeL l1 l2 {struct l1} :=
     end
   in merge_aux l2.
 
-About app.
-Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat.
-  refine {|
-      app := fun x =>
-               match a_out x with
-               | node _ l r => mergeL l r
-               | leaf e => e
-               end
-    |}.
-  intros x y ->. auto with ffix.
-Defined.
+Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat :=
+  ltac:(|{ x ~>
+             match a_out x with
+             | node _ l r => mergeL l r
+             | leaf e => e
+             end
+    }|).
 
 Fixpoint splitL (x : list nat) (accL accR : list nat) :=
   match x with
@@ -43,26 +39,61 @@ Fixpoint splitL (x : list nat) (accL accR : list nat) :=
   | cons x xs => splitL xs accR (cons x accL)
   end.
 
-Definition c_split : Coalg (TreeF (list nat) unit) (list nat).
-  refine {|
-      app := fun x =>
-               match x with
-               | nil | cons _ nil => a_leaf x
-               | _ => let (l, r) := splitL x nil nil in
-                      a_node tt l r
-               end
-    |}.
-  intros x y H. simpl in H. subst. reflexivity.
-Defined.
+Definition len_pair (p : list nat * list nat)
+  := max (length (fst p)) (length (snd p)).
 
-  (* Needs to be defined, otherwise msort does not reduce!
-   * UPDATE 12/09/2023 by DC: what's the nonsense above???
-   *)
-Lemma split_fin : forall x, RecF c_split x.
+Lemma splitL_len : forall x a1 a2,
+    len_pair (splitL x a1 a2) <= max (length a1) (length a2) + length x.
 Proof.
-Admitted.
+  induction x as [|h t Ih]; intros a1 a2; unfold len_pair; simpl in *.
+  - rewrite <- plus_n_O. apply le_n.
+  - specialize (Ih a2 (cons h a1)). simpl in *.
+    apply (PeanoNat.Nat.le_trans _ _ _ Ih). clear Ih.
+    rewrite <- plus_n_Sm, <- plus_Sn_m, PeanoNat.Nat.succ_max_distr.
+    rewrite <- PeanoNat.Nat.add_le_mono_r.
+    rewrite PeanoNat.Nat.max_comm.
+    apply PeanoNat.Nat.max_le_compat; [|apply le_S]; apply le_n.
+Qed.
+Lemma splitL_len1 : forall x a1 a2,
+    length (fst (splitL x a1 a2)) <=  max (length a1) (length a2) + length x.
+Proof.
+  intros x a1 a2.
+  set (He := splitL_len x a1 a2).
+  unfold len_pair in He. rewrite PeanoNat.Nat.max_lub_iff in He.
+  destruct He; trivial.
+Qed.
+Lemma splitL_len2 : forall x a1 a2,
+    length (snd (splitL x a1 a2)) <=  max (length a1) (length a2) + length x.
+Proof.
+  intros x a1 a2.
+  set (He := splitL_len x a1 a2).
+  unfold len_pair in He. rewrite PeanoNat.Nat.max_lub_iff in He.
+  destruct He; trivial.
+Qed.
 
-Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat) := Rec split_fin.
+Definition c_split : Coalg (TreeF (list nat) unit) (list nat) :=
+  ltac:(|{ x ~> match x with
+             | nil | cons _ nil => a_leaf x
+             | _ => let (l, r) := splitL x nil nil in
+                    a_node tt l r
+             end
+    }|).
+
+(* Needs to be defined, otherwise msort does not reduce!
+ * UPDATE 12/09/2023 by DC: what's the nonsense above???
+ *)
+
+Lemma split_fin : respects_relation c_split (@length nat) lt.
+Proof.
+  intros [|h [|h' t]] p; simpl in *; try apply (dom_leaf _ p).
+  revert p; rewrite (eta_pair (splitL _ _ _)). simpl; intros p.
+  destruct p as [[|] V]; simpl; rewrite PeanoNat.Nat.lt_succ_r.
+  * apply splitL_len1.
+  * apply splitL_len2.
+Qed.
+
+Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat)
+  := mk_wf_coalg wf_lt split_fin.
 
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
@@ -71,69 +102,29 @@ Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat) := Rec split_fin.
  *)
 Definition msort : Ext (cata merge \o rana tsplit).
   calculate.
-  (* rewrite <- ana_rana. *)
-  (* rewrite compA, cata_ccata. *)
   rewrite cata_ana_hylo.
+  Opaque wf_lt.
   simpl.
-  unfold e_lbranch, e_rbranch.
-  simpl.
-
+  Transparent wf_lt.
   reflexivity.
 Defined.
+
+Module Tests.
+  Import List.
+  Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
+  Fixpoint cycle n :=
+    match n with
+    | 0 => test
+    | S n => test ++ cycle n
+    end.
+  Definition largeTest := Eval compute in cycle 10.
+  Eval compute in msort largeTest.
+End Tests.
+
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
-(* Set Extraction Conservative Types. *)
-Extraction Inline e_lbranch.
-Extraction Inline e_rbranch.
-Extraction Inline dom_leaf.
-Extraction Inline projT1.
-Extraction Inline projT2.
-Extraction Inline comp.
-
 Extraction Inline val.
-Extraction Inline Valid.
-
-Extraction Inline app.
-Extraction Inline coalg.
-Extraction Inline val.
-Extraction Inline shape.
-Extraction Inline cont.
-Extraction Inline hylo.
-Extraction Inline hylo_f__.
-Extraction Inline hylo_def.
-Extraction Inline cata.
-Extraction Inline ccata.
-Extraction Inline ccata_.
-Extraction Inline ccata_f.
-Extraction Inline ccata_f_.
-Extraction Inline liftP.
-Extraction Inline liftP_f_.
-Extraction Inline ana.
-Extraction Inline ana_f.
-Extraction Inline ana_f_.
-Extraction Inline ana_f_u.
-Extraction Inline rana.
-Extraction Inline hylo_f.
-Extraction Inline hylo_f_.
-Extraction Inline LFix_out.
-Extraction Inline l_in.
-Extraction Inline l_out.
-Extraction Inline g_in.
-Extraction Inline g_out.
-Extraction Inline lg_in.
-Extraction Inline lg_out.
-Extraction Inline GFix_out.
-
-Extraction Inline fst.
-Extraction Inline snd.
-
-Extraction Inline merge.
-Extraction Inline a_leaf.
-Extraction Inline a_node.
-Extraction Inline a_out.
-Extraction Inline c_split.
-Extraction Inline tsplit.
 Set Extraction Flag 2047.
 Recursive Extraction msort.

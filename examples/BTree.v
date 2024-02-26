@@ -42,15 +42,12 @@ Proof. intros []. simpl in *. discriminate. Qed.
 Definition dom_leaf L A B (e : L) (x : Pos (F:=TreeF L A) (Leaf A e)) : B :=
   False_rect _ (dom_leaf_false x).
 
-Definition a_leaf {L A X : Type} (x : L)
-  : App (TreeF L A) X := MkCont (Leaf A x) (@dom_leaf L A X x).
-Arguments a_leaf & {L A X}.
-Definition a_node L A X (x : A) (l r : X) : App (TreeF L A) X :=
-  MkCont (Node _ x) (fun p => match val p with
-                            | Lbranch => l
-                            | Rbranch => r
-                            end).
-Arguments a_node & {L A X} x l r.
+Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
+Notation a_node x l r :=
+  (MkCont (Node _ x) (fun p => match val p with
+                              | Lbranch => l
+                              | Rbranch => r
+                              end)).
 
 Definition lnode_valid {L A} (x : Ts L A)
   : forall (n : A), x = Node L n -> valid (x, Lbranch) = true.
@@ -59,23 +56,12 @@ Definition rnode_valid {L A} (x : Ts L A)
   : forall (n : A), x = Node L n -> valid (x, Rbranch) = true.
 Proof. intros n ->. reflexivity. Qed.
 
-Definition e_lbranch {L A} (s : Ts L A) n (H : s = Node _ n)
-  : Pos s := MkElem Lbranch (lnode_valid H).
-Definition e_rbranch {L A} (s : Ts L A) n (H : s = Node _ n)
-  : Pos s := MkElem Rbranch (lnode_valid H).
+Notation e_lbranch H := (MkElem Lbranch (lnode_valid H)).
+Notation e_rbranch H := (MkElem Rbranch (rnode_valid H)).
+Notation leftB  := (e_lbranch eq_refl).
+Notation rightB := (e_rbranch eq_refl).
 
-(* Definition a_out {L A X : Type} : App (TreeF L A) X -> ITreeF L A X. *)
-(*   refine *)
-(*     ( *)
-(*       fun x : App (TreeF L A) X => *)
-(*         let (s, k) := x in *)
-(*         match s as s' return s = s' -> ITreeF L A X with *)
-(*         | Leaf _ x => fun _ => leaf x *)
-(*         | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E)) *)
-(*         end eq_refl *)
-(*     ). *)
-
-  Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
+Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
     refine
       {| app :=
           fun x : App (TreeF L A) X =>
@@ -87,21 +73,39 @@ Definition e_rbranch {L A} (s : Ts L A) n (H : s = Node _ n)
       |}.
   intros [x Fx] [y Fy] [Sxy Kxy]. simpl in *. subst.
   destruct y; trivial; simpl.
-  rewrite (Kxy (e_lbranch _) (e_lbranch eq_refl)); trivial.
-  rewrite (Kxy (e_rbranch _) (e_rbranch eq_refl)); trivial.
+  rewrite (Kxy leftB leftB); trivial.
+  rewrite (Kxy rightB rightB); trivial.
 Defined.
 
-(* TODO: refactor Utilities for QSort *)
-Lemma length_filter A (p : A -> bool) (l : list A) n :
-  Nat.leb (length l) n = true ->
-  Nat.leb (length (List.filter p l)) n = true.
-Proof with (simpl in *; try discriminate; auto).
-  revert n.
-  induction l as [|h t Ih]...
-  intros [|n]...
-  destruct (p h)...
-    intros H. specialize (Ih n H). clear H.
-    generalize dependent (length (List.filter p t)). intros m. revert n.
-    induction m as [|m Ih]; intros n; auto.
-    destruct n as [|n]; simpl in *; try discriminate. apply Ih.
+(* TODO: refactor into Utilities *)
+Lemma length_filter A (p : A -> bool) (l : list A) :
+  length (List.filter p l) <= length l.
+Proof.
+  induction l as [|h t Ih]; try apply le_n.
+  simpl. destruct (p h); simpl.
+  -  apply le_n_S, Ih.
+  -  apply le_S, Ih.
 Qed.
+
+Lemma eta_pair A B (p : A * B) : p = (fst p, snd p).
+Proof. destruct p; trivial. Qed.
+
+Lemma wf_lt : well_founded lt.
+Proof.
+  cut (forall x y, y < x -> Acc lt y).
+  - intros H x. apply (H (S x) x), PeanoNat.Nat.lt_succ_diag_r.
+  - fix Ih 1. intros [|x] y LT.
+    + destruct (PeanoNat.Nat.nlt_0_r _ LT).
+    + constructor. intros y' LT'. apply (Ih x). Guarded.
+      rewrite PeanoNat.Nat.lt_succ_r in LT.
+      apply (PeanoNat.Nat.lt_le_trans _ _ _ LT' LT).
+Defined.
+
+Tactic Notation "|{" ident(x)  "~>" uconstr(T) "}|" :=
+  refine {| app := fun x => T |};
+  try (intros ??->; reflexivity);
+  try (let H := fresh "H" in intros ?? H; simpl in H; subst; reflexivity).
+
+Notation "'morph' T" :=
+  (ltac:( T ))
+    (at level 200, T at level 200, right associativity, only parsing).

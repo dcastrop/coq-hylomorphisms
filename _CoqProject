@@ -13,3 +13,4 @@ theories/FCoalgebra.v
 theories/Hylo.v
 examples/BTree.v
 examples/QSort.v
+examples/MSort.v

@@ -252,6 +252,7 @@ rejects all programs that do not terminate (soundness) and accepts as many
 well-defined programs as possible (completeness). Our aim is to provide an
 additional tool to the every-day programmer to be able to extend the range of
 recursive programs we can write.
+\mvol{What is the ``every-day programmer'' here? Are they working in Coq/Agda?}
 
 \dcas{Note: the below is useful to keep in the intro}
 One of the challenges here is to be able to keep the theory of recursions
@@ -278,16 +279,24 @@ recursion scheme by reducing it to a hylo. The following recursion schemes can
 all be proven by reducing them to an hylo: folds, mutual recursive functions,
 recursion schemes from comonads and their respective coinductive dual.
 \mpav{Moved this from Section 3}
-goals are: (1) the
-mechanisation of hylomorphisms and their laws should be axiom-free; and (2) Coq
+
+\mvol{Need some transiiton here to build up to listing the goals and contributions of the paper. Also, ``axiom-free'' and ``obj.magic'' come out of nowhere here, so both need to be established earlier in the introduction.}
+The primary goals of this work are:
+\begin{enumerate}
+  \item that the
+  mechanisation of hylomorphisms and their laws should be axiom-free; and
+  \item that Coq
 hylomorphisms should be extracted to recursive OCaml functions that use no
-instances of \mintinline{OCaml}{Obj.magic}.  Although the use of
-\mintinline{OCaml}{Obj.magic} is safe in the code extracted by Coq, it has been
-proven that, for higher-order programs, simple interoperations can lead to
-incorrect behaviour or even segfaults~\cite{forster:hal-04329663}.  Therefore,
-the avoidance of axioms and  \mintinline{OCaml}{Obj.magic} means that the
-extracted code will have stronger safety guarantees, and will allow the safe
-interoperation with other OCaml code.
+instances of \mintinline{OCaml}{Obj.magic}.
+\end{enumerate}
+In OCaml, \mintinline{OCaml}{Obj.magic} allows for unsafe casts between types.
+Although the use of \mintinline{OCaml}{Obj.magic} should be safe in the code
+extracted by Coq, it has been proven that, for higher-order programs, simple
+interoperations can lead to incorrect behaviour or even
+segfaults~\cite{forster:hal-04329663}. Therefore, the avoidance of axioms and
+\mintinline{OCaml}{Obj.magic} means that the extracted code will have stronger
+safety guarantees, and will allow the safe interoperation with other OCaml code.
+\mvol{This is good!}
 
 The contributions we make in this paper are as follows:
 \begin{itemize}
@@ -717,11 +726,11 @@ extensionality axiom.
 A container is defined by a type of \emph{shapes} and a \emph{family of position
 types} indexed by shapes.
 \begin{minted}{Coq}
-Context (Shape : Set) (Pos : Shape -> Set).
+Context (Shape : Type) (Pos : Shape -> Type).
 \end{minted}
 An \emph{extension} of this container is a functor defined as follows:
 \begin{minted}{Coq}
-Record App (X : Set) := { shape : Shape; contents : Pos shape -> X }.
+Record App (X : Type) := { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
 with the obvious action on morphisms. Generally, any functor that is isomorphic
 to a container extension is called a \emph{container functor}. However, in our
@@ -736,8 +745,8 @@ container as a type that captures \emph{all} the potential positions in all
 possible shapes, together with a predicate \mintinline{Coq}{Valid} that
 determines whether a position is valid in a shape.
 \begin{minted}{Coq}
-Context (Shape : Set) (Pos : Set) (Valid : Shape -> Pos -> Prop).
-Record App (X : Set) := { shape    : Shape; 
+Context (Shape : Type) (Pos : Type) (Valid : Shape -> Pos -> Prop).
+Record App (X : Type) := { shape    : Shape; 
                           contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
@@ -759,15 +768,15 @@ SSReflect. For simplicity, we define the dependent pair of valid positions as a
 record, which will be extracted to a singleton type with the validity proof
 erased by Coq's code extraction mechanism.
 \begin{minted}{Coq}
-Class Cont (Shape : Set) (Pos : Set) := { valid : Shape -> Pos -> bool }.
+Class Cont (Shape : Type) (Pos : Type) := { valid : Shape -> Pos -> bool }.
 Coercion is_true (b : bool) : Prop := b = true.
 Record PosOf `(C : Cont Shape Pos) (shape : Shape) := 
   ValidPos { val : Pos; IsValid : valid shape pos }.
 \end{minted}
 Then, we define \emph{container extensions} as
 \begin{minted}{Coq}
-Record App `(C : Cont Shape Pos) (X : Set) :=
-  { shape : Shape; contents : PosOf C shape -> X }.
+Record App `(C : Cont Shape Pos) (X : Type) :=
+  MkApp { shape : Shape; contents : PosOf C shape -> X }.
 \end{minted}
 The functorial action for container extensions on morphisms boils down to
 function composition, which trivially preserves identity and composition.
@@ -870,7 +879,7 @@ Definition Ip := unit.
 Instance Id : Cont Is Ip := {
   valid := fun _ _ => true }.
 
-Definition Ks (A : Set) := A.
+Definition Ks (A : Type) := A.
 Definition Kp := False.
 Instance Const A : Cont (Ks A) Kp := {
   valid := fun _ p =>
@@ -1014,14 +1023,68 @@ also provide functions for currying/uncurrying, and partially applying a proper
 morphism. We avoid using definitions, or unfold them, to help Coq's code
 extraction mechanism to inline as many of these small definitions as possible.
 
-These definitions are isomorphic to the equivalent container extension.
+\subsubsection{Isomorphisms of Coq Types and Container Extensions}
 
-We illustrate how these definitions
-\paragraph*{Isomorphisms with Container Extensions} Our definitions involving
-polynomial types are isomorphic to polynomial functors as container extensions.
+Using custom equivalences and proper morphisms, we redefine the definitions of
+container extensions and container equality. In particular, container
+extensions require a proper morphism to check the validity of positions in
+shapes, and container equality now uses equivalences of shapes and contained
+elements: 
+\begin{minted}{Coq}
+Class Cont (Shape : Type) (Pos : Type) := { valid : Shape ~> Pos ~> bool }.
+Inductive AppR `{e : equiv X} (x y : App F X) : Prop :=
+  | AppR_ext (Es : shape x =e shape y)
+             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
+\end{minted}
+Note the use of \mintinline{Coq}{=e} instead of Coq's standard equality.  For
+positions, however, we chose to use Coq's propositional equality, since these
+would leads to simpler code. We explain why in Section~\ref{sec:cata}, and the
+mechanisation of initial algebras of container extensions. The definitions in
+Figure~\ref{fig:poly} are redefined to account for these changes in a
+straightforward way.
 
+We prove the isomorphisms of polynomial types and the equivalent (redefined)
+container extensions. As an example, we discuss (informally) the isomorphisms
+of pairs with their equivalent container extensions. Suppose that we
+know that \mintinline{Coq}{App F X} is isomorphic to \mintinline{Coq}{A}, and
+\mintinline{Coq}{App G X} is isomorphic to \mintinline{Coq}{B}. Then we can
+show that \mintinline{Coq}{App (Prod F G) X} is isomorphic to
+\mintinline{Coq}{A * B}.  If we have an element of type 
+\mintinline{Coq}{App (Prod F G) X},
+using the \mintinline{Coq}{inl} position, we can obtain
+\mintinline{Coq}{App F X}.  Similarly, using \mintinline{Coq}{inr}, we can
+obtain \mintinline{Coq}{App G X}. Since these are the only two valid positions
+in the shape of pairs, we have finished. It is now sufficient to use the
+isomorphisms of \mintinline{Coq}{App F X} and \mintinline{Coq}{App G X} to
+obtain \mintinline{Coq}{A * B}. Similarly if we have \mintinline{Coq}{A * B},
+we can first use the isomorphisms of 
+\mintinline{Coq}{A} and
+\mintinline{Coq}{B} to obtain
+\mintinline{Coq}{App F X * App G X}, and then construct the necessary container
+extension. Given \mintinline{Coq}{p_inl}/\mintinline{Coq}{p_inr} that act as
+\mintinline{Coq}{inl/inr} but on valid product positions, the relevant
+functions that define the isomorphism are:
+\begin{minted}{Coq}
+Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
+  ({| shape := shape (fst x); cont := fun e => cont x (e_inl e) |}, 
+   {| shape := shape (snd x); cont := fun e => cont x (e_inr e) |}).
+Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
+{| shape := (shape (fst x), shape (snd x));
+   cont := fun e => match val e with 
+                    | inl p => fun H => cont (fst x) (ValidPos p H)
+                    | inr p => fun H => cont (snd x) (ValidPos p H)
+                    end (IsValid e)
+|}.
+\end{minted}
+Proving that these functions indeed form an isomorphism is straightforward,
+using the fact that Product containers only have two valid positions.
 
 \subsubsection{Generalised Rewriting for Morphisms}
+
+Since our framework only allows types with equivalences, and proper morphisms,
+we can leverage Coq's \emph{setoid rewrite}
+
+\dcas{Blabla: examples, no need to explain setoid rewrite in detail here}
 
 \section{Extracting Certified Hylomorphisms}
 
@@ -1075,7 +1138,7 @@ Fixpoint LFixR (x y : LFix) : Prop :=
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 \end{minted}
 From such initial algebras, we define \emph{catamorphisms} by recursively
-traversing their structure. As usual, catamorphisms take an
+traversing their structure. As usual, a catamorphism takes an
 \mintinline{Coq}{F}-algebra with carrier \mintinline{Coq}{A}, and produces a
 function from \mintinline{Coq}{LFix F} to \mintinline{Coq}{A}.
 \begin{minted}{Coq}
@@ -1084,7 +1147,7 @@ Definition cata_f `{equiv A} (g : Alg F A) : LFix -> A
   match x with
   | LFix_in ax =>
       let (sx, kx) := ax in
-      g (MkCont sx (fun e => f (kx e)))
+      g (MkApp sx (fun e => f (kx e)))
   end.
 \end{minted}
 It is easy to show that this function is a proper morphism, and we use this
@@ -1124,72 +1187,163 @@ $F$-algebras:
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{minted}
-Using this predicate, we can define the notion of \emph{recursive coalgebras}
-as those that build finite trees. Recursive coalgebras are implemented in Coq
-recursively on the proof that they produce finite trees.  Such proofs will be
-erased when extracting code to OCaml. This is standard practice when building
-general recursive functions in Coq\footnote{\dcas{This technique had a name in
-the community, but I cannot remember. Something predicates}}.
+Catamorphisms from this initial algebra are denoted by \mintinline{Coq}{ccata},
+and they can be used to define the isomorphism between 
+\mintinline{Coq}{{x : GFix F | FinF x}} and
+\mintinline{Coq}{LFix F}. In particular: 
 \begin{minted}{Coq}
-Notation rana_f__ h :=
-  (fix f x H :=
-    let hx := h x in
-    LFix_in (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e)))).
+Lemma cata_ccata `{equiv A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
+Lemma ccata_cata `{equiv A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
+\end{minted}
+Using this new initial algebra, we can compose catamorphisms and anamorphisms,
+\emph{as long as the anamorphisms produce finite trees}. However, if
+anamorphisms produce finite trees, then we can also encode in Coq the notion of
+\emph{recursive anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.
+Recursive coalgebras are coalgebras whose anamorphism produces finite trees.
+The following predicate captures this fact. Note how all the predicate states
+is that \mintinline{Coq}{h} can only be applied finitely many times:
+\begin{minted}{Coq}
+Inductive RecF (h : Coalg F A) : A -> Prop :=
+| RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
+\end{minted}
+We show how this predicate is equivalent to the anamorphism of such coalgebras
+producing finite trees:
+\begin{minted}{Coq}
+Lemma ana_rec_term `{equiv A} (h : Coalg F A)
+  : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
+\end{minted}
+Recursive anamorphisms are implemented in Coq recursively on the proof that
+they can only be applied finitely many times (\mintinline{Coq}{RecF}).  Note
+that such proofs will be erased when extracting code to OCaml. This is standard
+practice when building general recursive functions in Coq\footnote{\dcas{This
+technique had a name in the community, but I cannot remember. Something
+predicates}}. The core definitions are the following:
+\begin{minted}{Coq}
+Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
 
+Definition rana_f__ `{equiv A} (c : Coalg F A)
+  : forall x : A, RecF c x -> LFix F
+  := fix f (x : A) (H : RecF c x) :=
+       let hx := c x in
+       LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
+\end{minted}
+Here, \mintinline{Coq}{RecF_inv} provides the structurally smaller element for
+the Coq recursive definition. We then couple coalgebras with a proof that they
+are recursive, and add a coercion from recursive coalgebras to coalgebras.
+\begin{minted}{Coq}
+Definition RCoalg F A = {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
+\end{minted}
+Similarly to the rest of the definitions, we prove that recursive anamorphisms
+are respectful, and use this fact to build them as higher order proper
+morphisms, and prove its universal law, i.e.\ that recursive anamorphisms are
+the unique solution to the equation 
+\mintinline{Coq}{f =e l_in \o fmap f \o h},
+where \mintinline{Coq}{h} is a recursive coalgebra.
+\begin{minted}{Coq}
 Definition rana `{eA : equiv A} : RCoalg A ~> A ~> LFix F :=...
 
 Lemma rana_univ A {eA : equiv A} (h : RCoalg A) (f : A ~> LFix F)
     : f =e rana h <-> f =e l_in \o fmap f \o h.
 \end{minted}
 
-\subsection{Recursive Hylos}
+\subsection{Recursive Hylomorphisms}
 
-Recursive hylomorphisms are built from an algebra and a recursive coalgebra:
+Given an $F$-algebra and $F$-coalgebra, a solution to the equation $f = a \circ
+F\; f \circ c$ is known as a hylomorphism. Unfortunately, this definition
+cannot be accepted by Coq, since there is no structurally smaller argument to
+do recursion, and there is no corecursive definition that is guaranteed to be
+guarded, due to the use of an arbitrary algebra $a$. Furthermore, solutions to
+the hylomorphism equation are \emph{not} guaranteed to be unique, or to even
+exist. To address these issues, we mechanise \textbf{recursive hylomorphisms}
+which, as we will see, are guaranteed to have a unique solution.
+
+Hylomorphisms \emph{are} the unique solution to $f = a \circ F\; f \circ c$, if
+$c$ is a recursive coalgebra. We show this by first providing the definition
+for hylomorphisms in Coq, and then proving that any function satisfying this
+equation is a hylomorphism. We call these hylomorphisms with a recursive
+coalgebra, \textbf{recursive hylomorphisms}.
 \begin{minted}{Coq}
-Definition hylo_def (a : Alg F B) (c : Coalg F A)
-: forall (x : A), RecF c x -> B
-:= fix f x H :=
-  match c x as h0
-        return
-        (forall e : Pos (shape h0), RecF c (cont h0 e)) ->
-        B
-  with
-  | MkCont s_x c_x => fun H => a (MkCont s_x (fun e => f (c_x e) (H e)))
-  end (RecF_inv H).
+Definition hylo_def (a : Alg F B) (c : Coalg F A) 
+  : forall (x : A), RecF c x -> B := fix f x H 
+  := match c x as h0 return
+       (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
+     with
+     | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
+     end (RecF_inv H).
 \end{minted}
-
+The definition of recursive hylomorphisms is recursive on the proof that the
+anamorphism can only be applied finitely many times on any input. We again use
+\mintinline{Coq}{RecF_inv} to obtain the structurally smaller proof to use in
+the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
+we prove that \mintinline{Coq}{hylo_def} is respectful, and use this proof to
+built the corresponding higher-order proper morphism:
+\begin{minted}{Coq}
+Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
+\end{minted}
+Finally, we show that recursive hylomorphisms are the unique solution to
+the hylomorphism equation.
 \begin{minted}{Coq}
 Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
 \end{minted}
-
-Recursive hylo universal property allows us to prove common optimisations:
-
+This result can be used to prove hylomorphism laws in a way that is analogous
+to pen-and-paper program calculation techniques. We show the rule for 
+hylomorphism fusion as an example:
 \begin{minted}{Coq}
-    Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
-    (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
-    : f2 \o hylo g1 h1 =e hylo g2 h1.
-  Proof.
-    rewrite hylo_univ.
-    rewrite fmap_comp.
-    rewrite compA.
-    rewrite <- E2.
-    rewrite <- compA.
-    rewrite <- compA.
-    rewrite (compA g1).
-    rewrite <- hylo_unr.
-    reflexivity.
-  Qed.
-
-  Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
-    (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
-    : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
-
-  Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
-    (g : Alg F B) (h : RCoalg F A)
-  : cata g \o rana h =e hylo g h.
+Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) 
+  (g2 : Alg F C) (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
+  : f2 \o hylo g1 h1 =e hylo g2 h1.
+Proof.
+  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
+  rewrite hylo_univ.
+  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
+  rewrite fmap_comp.
+  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
+  rewrite compA.
+  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
+  rewrite <- E2.
+  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
+  rewrite <- compA.
+  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
+  rewrite <- compA.
+  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
+  rewrite (compA g1).
+  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
+  rewrite <- hylo_unr.
+  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
+  reflexivity.
+Qed.
 \end{minted}
+Using the hylo fusion law, we can prove the well-known \emph{deforestation
+optimisation}, where two consecutive recursive computations, one that builds a
+data structure, and another one that consumes it, can be fused together into a
+single recursive definition. This, in turn, allows us to prove that a recursive
+hylomorphism is the composition of a catamorphism and a recursive anamorphism.
+\begin{minted}{Coq}
+Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
+  (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
+  : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 
+Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
+  (g : Alg F B) (h : RCoalg F A)
+: cata g \o rana h =e hylo g h.
+\end{minted}
+This result will allow us to \emph{calculate} programs by providing small, easy
+to verify implementations, and combining them into efficient recursive
+functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
+passes}.
+
+
+\section{Extraction}
+
+\dcas{Talk About this}
+\begin{minted}{OCaml}
+  let rec msort x = match x with
+| [] -> x | _ :: l -> (match l with | [] -> x | _ :: _ ->
+     let (l0, r) = splitL x [] [] in
+     let cx = fun p -> match p with | Lbranch -> l0 | Rbranch -> r in
+     mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
+\end{minted}
 
 \section{Related Work}
 
@@ -1215,16 +1369,82 @@ recursive function monad~\cite{McBride15, BoveC01}
         \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 \end{itemize}
 
-\subsection{Sized Types}
+\subsection{Program Calculation}
 
-Another approach to certifying termination of nonstructurally recursive
-functions is the use of \emph{sized types}. Sized types were introduced in
-\cite{HughesPS96} as a way to track/verify various properties of recursive
-programs, including productivity and termination. The core idea of sized types
-is that types express bounds on the sizes of recursive data structures. This
-approach has been used to express nonstructurally recursive algorithms in Agda:
-\cite{CopelloTB14} used sized types in a straightforward formulation of
-mergesort. Such an approach has also been used in MiniAgda~\cite{abs-1202-3496}.
+Within the domain of program optimization, program calculation serves as a
+well-established programming technique aimed at deriving efficient programs from
+their naive counterparts through systematic program transformation. This area
+has been extensively explored over the years. Tesson et al.\ demonstrated the
+efficacy of leveraging Coq to establish an approach for implementing a robust
+system dedicated to verifying the correctness of program transformations for
+functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and
+Emoto went further and\ldots~\cite{MurataE19}
+
+\mvol{Need more general citations for program calculation.}
+
+\subsection{Termination Checking}
+
+Termination and productivity are non-trivial properties of programs, and various
+methods have been proposed for checking that these properties hold. A common
+approach is guardedness checking~\cite{10.5555/646535.695850}, which is a
+\emph{syntactic} check that definitions avoid the introduction of
+non-normalizable terms. This sort of check generally looks for a
+\emph{structural decrease} of arguments in the recursive calls of a function.
+Coq uses such a check, and it works for many classic functional programming
+patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
+definitions will not be accepted by such checks.
+
+In particular, the problem of \emph{nonstructural recursion} (including
+divide-and-conquer algorithms) is well-studied~\cite{BOVE_KRAUSS_SOZEAU_2016}.
+% A distinction between standard and
+% nonstandard recursion lies in the fact that standard recursion adheres strictly
+% to recursing on pattern variables, avoiding reliance on results from other
+% function calls. Nonstandard recursion may deviate from this convention, allowing
+% for more flexibility.
+Certain functions that are not structurally recursive can be reformulated using
+a nonstandard approach to achieve structural recursion~\cite{AbreuDHJMS23}.
+Take, for instance, division by iterated subtraction, which is inherently
+non-structurally recursive since it involves recursion based on the result of a
+subtraction. There is a nonstandard implementation of divivion found on Coq's
+standard library, which involves a four-argument function that effectively
+combines subtraction and division. Similarly, the mergesort in Coq's standard
+library uses an ``explicit stack of pending merges'' in order to avoid issues
+with nonstructural definitions. There is a major downside, however; as noted by
+Abreu et al., the result is ``barely recognizable as a form of
+mergesort''~\cite{AbreuDHJMS23}.
+
+\subsubsection{Sized Types}
+
+Another approach to certifying termination of recursive functions is the use of
+\emph{sized types}. Sized types were introduced by Hughes et al.\ as a way to
+track/verify various properties of recursive programs, including productivity
+and termination~\cite{HughesPS96}. The core idea of sized types is that types
+express bounds on the sizes of recursive data structures. With this approach,
+algorithms are implemented in the standard functional way, following the
+divide-and-conquer pattern of splitting, recurring, and merging, with the
+addition of the data types being indexed by a static approximation of the
+relative \emph{size}. An advantage of this approach is that it allows for code
+to be written in a natural way. There are costs, however. Programs must be
+written in a way that accounts for the handling of size indexes, and support for
+the size types must be added to the language.
+
+This approach has been used to express nonstructurally recursive
+algorithms in Agda: Copello et al.\ used sized types in a straightforward
+formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
+in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
+Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
+
+\subsubsection{Divide and Conquer Recursion}
+
+Abreu et al.\ propose\ldots~\cite{AbreuDHJMS23}. Their approach has similarities to what is presented here.
+
+They differ in requiring the assumption of the functional extensionality axiom.
+Additionally, they are concerned with the erasure of termination proofs but have
+little discussion of what the resulting extracted code \emph{looks like} (that
+is, whether the extracted OCaml code resembles the natural formulation of the
+recursive function).
+\mvol{We should find out for sure if they use \texttt{obj.magic}.}
+
 
 \bibliography{references.bib}
 \appendix

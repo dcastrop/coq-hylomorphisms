@@ -91,7 +91,7 @@ Section CoalgDef.
     - destruct (HyzK ey ez Veq3) as [Gf|[]]. trivial.
   Qed.
 
-  #[export] Instance GFix_Eq : equiv GFix :=
+  #[export] Instance GFix_Eq : setoid GFix :=
     {| eqRel := GFixR;
       e_refl := GFixR_refl;
       e_sym := GFixR_sym;
@@ -124,17 +124,17 @@ Section CoalgDef.
   Lemma g_out_in : g_out \o g_in =e id (A:=App F GFix).
   Proof. simpl. intros. generalize (e_refl x). simpl. trivial. Qed.
 
-  Definition ana_f_u `{equiv A} (c : Coalg F A) (gf : A -> GFix) (x : A) :=
+  Definition ana_f_u `{setoid A} (c : Coalg F A) (gf : A -> GFix) (x : A) :=
     let cx := c x in MkCont (shape cx) (fun e => gf (cont cx e)).
 
-  Definition ana_f_ `{equiv A} (c : Coalg F A)
+  Definition ana_f_ `{setoid A} (c : Coalg F A)
     := cofix f x := GFix_in (ana_f_u c f x).
 
-  Lemma unfold_ana_f `{equiv A} (c : Coalg F A) x
+  Lemma unfold_ana_f `{setoid A} (c : Coalg F A) x
     : GFix_out (ana_f_ c x) = ana_f_u c (ana_f_ c) x.
   Proof. reflexivity. Qed.
 
-  Lemma ana_f_arr `{eA : equiv A} (c : Coalg F A)
+  Lemma ana_f_arr `{eA : setoid A} (c : Coalg F A)
     : forall x y, x =e y -> ana_f_ c x =e ana_f_ c y.
   Proof.
     coind CH. intros x y Exy.
@@ -146,10 +146,10 @@ Section CoalgDef.
     apply Ek; trivial.
   Qed.
 
-  Definition ana_f `(eA : equiv A) (c : Coalg F A) : A ~> GFix
+  Definition ana_f `(eA : setoid A) (c : Coalg F A) : A ~> GFix
     := MkMorph (ana_f_arr c).
 
-  Lemma ana_arr `{eA : equiv A}
+  Lemma ana_arr `{eA : setoid A}
     : forall x y : Coalg F A, x =e y -> ana_f x =e ana_f y.
   Proof.
     intros f g Hfg x. generalize (e_refl x). generalize x at 2 4. intros y Hxy.
@@ -161,9 +161,9 @@ Section CoalgDef.
     apply Ek. trivial.
   Qed.
 
-  Definition ana `{eA : equiv A} : Coalg F A ~> A ~> GFix := MkMorph ana_arr.
+  Definition ana `{eA : setoid A} : Coalg F A ~> A ~> GFix := MkMorph ana_arr.
 
-  Lemma ana_univ_r `(eA : equiv A) (h : Coalg F A) (f : A ~> GFix)
+  Lemma ana_univ_r `(eA : setoid A) (h : Coalg F A) (f : A ~> GFix)
     : f =e g_in \o fmap f \o h -> f =e ana h.
   Proof.
     intros He x. simpl.
@@ -179,7 +179,7 @@ Section CoalgDef.
     specialize (Ek e1 e2 Hv). destruct Ek as [|[]]. trivial.
   Qed.
 
-  Lemma ana_univ_l `{eA : equiv A} (h : Coalg F A) (f : A ~> GFix)
+  Lemma ana_univ_l `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix)
     : f =e ana h -> f =e g_in \o fmap f \o h.
   Proof.
     intros H. rewrite H. intros x. simpl.
@@ -188,11 +188,11 @@ Section CoalgDef.
     rewrite (elem_val_eq Hv). left. apply GFixR_refl.
   Qed.
 
-  Lemma ana_univ `{eA : equiv A} (h : Coalg F A) (f : A ~> GFix)
+  Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix)
     : f =e ana h <-> f =e g_in \o fmap f \o h.
   Proof. split;[apply ana_univ_l|apply ana_univ_r]. Qed.
 
-  Corollary ana_unfold `{eA : equiv A} (h : Coalg F A) :
+  Corollary ana_unfold `{eA : setoid A} (h : Coalg F A) :
     ana h =e g_in \o fmap (ana h) \o h.
   Proof. rewrite <- ana_univ. reflexivity. Qed.
 End CoalgDef.
