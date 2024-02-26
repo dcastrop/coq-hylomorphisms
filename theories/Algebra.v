@@ -74,7 +74,7 @@ Section AlgDef.
     rewrite <- V2. trivial.
   Qed.
 
-  #[export] Instance LFix_Eq : equiv LFix :=
+  #[export] Instance LFix_Eq : setoid LFix :=
     {| eqRel := LFixR;
       e_refl := LFixR_refl;
       e_sym := LFixR_sym;
@@ -102,7 +102,7 @@ Section AlgDef.
     rewrite (elem_val_eq He). apply LFixR_refl.
   Qed.
 
-  Definition cata_f `{eA : equiv A} (g : Alg F A) : LFix -> A
+  Definition cata_f `{eA : setoid A} (g : Alg F A) : LFix -> A
     := fix f (x : LFix) :=
       match x with
       | LFix_in ax =>
@@ -110,7 +110,7 @@ Section AlgDef.
           g (MkCont sx (fun e => f (kx e)))
       end.
 
-  Lemma cata_arr1 `{eA : equiv A} (g : Alg F A)
+  Lemma cata_arr1 `{eA : setoid A} (g : Alg F A)
     : forall x y, x =e y -> cata_f g x =e cata_f g y.
   Proof.
     induction x as [sx Ih]. intros [sy]. simpl in *. intros [Es Ek].
@@ -118,7 +118,7 @@ Section AlgDef.
     apply (app_eq g). split; [trivial|intros e1 e2 Hv]. apply Ih. auto.
   Qed.
 
-  Definition cata_ `{equiv A} (a : Alg F A) :=
+  Definition cata_ `{setoid A} (a : Alg F A) :=
       {| app :=
           fix f (x : LFix) :=
             match x with
@@ -129,7 +129,7 @@ Section AlgDef.
         app_eq := cata_arr1 a
       |}.
 
-  Lemma cata_arr  `{eA : equiv A}
+  Lemma cata_arr  `{eA : setoid A}
     : forall f g : Alg F A, f =e g -> cata_ f =e cata_ g.
   Proof.
     intros x y E t. induction t as [sx Ih]. unfold cata_.
@@ -139,10 +139,10 @@ Section AlgDef.
     apply Ih.
   Qed.
 
-  Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A :=
+  Definition cata `{eA : setoid A} : Alg F A ~> LFix ~> A :=
     Eval unfold cata_ in MkMorph cata_arr.
 
-  Lemma cata_univ_r `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
+  Lemma cata_univ_r `{eA : setoid A} (g : Alg F A) (f : LFix ~> A)
     : f =e g \o fmap f \o l_out -> f =e cata g.
   Proof.
     intros H e. induction e as [e Ih]. destruct e as [se ke].
@@ -151,7 +151,7 @@ Section AlgDef.
     rewrite (elem_val_eq Hv). reflexivity.
   Qed.
 
-  Lemma cata_univ_l `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
+  Lemma cata_univ_l `{eA : setoid A} (g : Alg F A) (f : LFix ~> A)
     : f =e cata g -> f =e g \o fmap f \o l_out.
   Proof.
     intros H [e]. simpl in *. rewrite H. destruct e as [se ke].
@@ -160,11 +160,11 @@ Section AlgDef.
     rewrite (elem_val_eq Hv). reflexivity.
   Qed.
 
-  Lemma cata_univ `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
+  Lemma cata_univ `{eA : setoid A} (g : Alg F A) (f : LFix ~> A)
     : f =e cata g <-> f =e g \o fmap f \o l_out.
   Proof. split;[apply cata_univ_l|apply cata_univ_r]. Qed.
 
-  Corollary cata_unfold `{eA : equiv A} (g : Alg F A)
+  Corollary cata_unfold `{eA : setoid A} (g : Alg F A)
     : cata g =e g \o fmap (cata g) \o l_out.
   Proof. rewrite <- cata_univ. reflexivity. Qed.
 

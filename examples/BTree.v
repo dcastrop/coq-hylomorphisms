@@ -100,3 +100,12 @@ Proof.
       rewrite PeanoNat.Nat.lt_succ_r in LT.
       apply (PeanoNat.Nat.lt_le_trans _ _ _ LT' LT).
 Defined.
+
+Tactic Notation "|{" ident(x)  "~>" uconstr(T) "}|" :=
+  refine {| app := fun x => T |};
+  try (intros ??->; reflexivity);
+  try (let H := fresh "H" in intros ?? H; simpl in H; subst; reflexivity).
+
+Notation "'morph' T" :=
+  (ltac:( T ))
+    (at level 200, T at level 200, right associativity, only parsing).

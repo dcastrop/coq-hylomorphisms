@@ -14,30 +14,24 @@ Require Import Examples.BTree.
 
 Require List.
 
-Definition merge : App (TreeF unit nat) (list nat) ~> list nat.
-  refine {|
-      app := fun x =>
+Definition merge : App (TreeF unit nat) (list nat) ~> list nat :=
+  ltac:(|{ x ~>
                match a_out x with
                | leaf _ => nil
                | node h l r => Datatypes.app l (h :: r)
                end
-    |}.
-  intros x y ->. auto with ffix.
-Defined.
+    }|).
 
-Definition c_split : Coalg (TreeF unit nat) (list nat).
-  refine {|
-      app := fun x =>
-               match x with
-               | nil => a_leaf tt
-               | cons h t =>
-                   let l := List.filter (fun x => Nat.leb x h) t in
-                   let r := List.filter (fun x => negb (Nat.leb x h)) t in
-                   a_node h l r
-               end
-    |}.
-  intros x y ->. auto with ffix.
-Defined.
+Definition c_split : Coalg (TreeF unit nat) (list nat) :=
+  ltac:(|{ x ~>
+             match x with
+             | nil => a_leaf tt
+             | cons h t =>
+                 let l := List.filter (fun x => Nat.leb x h) t in
+                 let r := List.filter (fun x => negb (Nat.leb x h)) t in
+                 a_node h l r
+             end
+    }|).
 
 (* Needs to be defined, otherwise qsort does not reduce!
  * UPDATE 12/09/2023: what's the nonsense above???

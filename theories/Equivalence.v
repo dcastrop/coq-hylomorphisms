@@ -20,8 +20,8 @@ Definition bool_irrelevance {b1 b2 : bool} (p1 p2 : b1 = b2) : p1 = p2 :=
   DecBool.UIP b1 b2 p1 p2.
 
 Reserved Notation "f =e g" (at level 70, no associativity).
-Class equiv A : Type :=
-  MkEquiv
+Class setoid A : Type :=
+  MkSetoid
     { eqRel : A -> A -> Prop;
       e_refl : forall x, eqRel x x;
       e_sym : forall x y, eqRel x y -> eqRel y x;
@@ -30,7 +30,7 @@ Class equiv A : Type :=
 
 Notation "f =e g" := (eqRel f g).
 
-Add Parametric Relation `{eq : equiv A} : A (@eqRel A eq)
+Add Parametric Relation `{eq : setoid A} : A (@eqRel A eq)
     reflexivity proved by (@e_refl A eq)
     symmetry proved by (@e_sym A eq)
     transitivity proved by (@e_trans A eq)
@@ -40,28 +40,28 @@ Add Parametric Relation `{eq : equiv A} : A (@eqRel A eq)
 #[export] Hint Resolve e_sym : ffix.
 #[export] Hint Resolve e_trans : ffix.
 
-#[export] Instance def_eq A : equiv A | 100 :=
+#[export] Instance def_eq A : setoid A | 100 :=
   {| eqRel := @eq A;
      e_refl := @eq_refl A;
      e_sym := @eq_sym A;
      e_trans := @eq_trans A;
   |}.
 
-#[export] Instance ext_eq (A : Type) `{eq_B : equiv B} : equiv (A -> B).
+#[export] Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
 Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun f g =>forall x, eqRel (f x) (g x)))...
+  apply (@MkSetoid _ (fun f g =>forall x, eqRel (f x) (g x)))...
 Defined.
 
-#[export] Instance pair_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A * B).
+#[export] Instance pair_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A * B).
 Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun x y => fst x =e fst y /\ snd x =e snd y))...
+  apply (@MkSetoid _ (fun x y => fst x =e fst y /\ snd x =e snd y))...
   - intros x y [->->]...
   - intros x y z [->->]...
 Defined.
 
-#[export] Instance sum_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A + B).
+#[export] Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
 Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun x y =>
+  apply (@MkSetoid _ (fun x y =>
                        match x, y with
                        | inl u, inl v => u =e v
                        | inr u, inr v => u =e v
@@ -75,22 +75,22 @@ Proof with eauto with ffix.
     * intros [].
 Defined.
 
-#[export] Instance prop_eq : equiv Prop.
+#[export] Instance prop_eq : setoid Prop.
 Proof with eauto with ffix.
-  apply (@MkEquiv _ (fun p q => p <-> q)).
+  apply (@MkSetoid _ (fun p q => p <-> q)).
   - intros. split; trivial.
   - intros. rewrite H; split;  trivial.
   - intros. rewrite H; trivial.
 Defined.
 
-#[export] Instance pred_sub `{eA : equiv A} {P : A -> Prop}
-  : equiv {a : A | P a}.
+#[export] Instance pred_sub `{eA : setoid A} {P : A -> Prop}
+  : setoid {a : A | P a}.
 Proof with eauto with ffix.
-  apply (@ MkEquiv _ (fun px py => proj1_sig px =e proj1_sig py))...
+  apply (@ MkSetoid _ (fun px py => proj1_sig px =e proj1_sig py))...
 Defined.
 
 Class equivs (A : list Type) : Type.
 #[export] Instance e_nil : equivs (@nil Type).
 Defined.
-#[export] Instance e_cons `{equiv A} `{equivs B} : equivs (A::B).
+#[export] Instance e_cons `{setoid A} `{equivs B} : equivs (A::B).
 Defined.

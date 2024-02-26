@@ -9,7 +9,7 @@ Require Import HYLO.Equivalence.
 Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
 
 Section Defn.
-  Context `{eA : equiv A} `{eB : equiv B}.
+  Context `{eA : setoid A} `{eB : setoid B}.
 
   Structure morph :=
     MkMorph
@@ -18,20 +18,20 @@ Section Defn.
       }.
   Hint Resolve app_eq : ffix.
 
-  #[export] Instance eq_morph : equiv morph.
+  #[export] Instance eq_morph : setoid morph.
   Proof with eauto with ffix.
-    apply (@MkEquiv _ (fun f g =>forall x, app f x =e app g x))...
+    apply (@MkSetoid _ (fun f g =>forall x, app f x =e app g x))...
   Defined.
 End Defn.
 Arguments morph A {eA} B {eB}.
 Notation "x ~> y" := (morph x y).
 #[export] Hint Resolve app_eq : ffix.
 
-Lemma f_equal `{equiv A} `{equiv B} (f g : A ~> B)
+Lemma f_equal `{setoid A} `{setoid B} (f g : A ~> B)
   : forall x, f =e g -> f x =e g x.
 Proof. intros x E. apply E. Qed.
 
-Add Parametric Morphism `{eA : equiv A} `{eB : equiv B}
+Add Parametric Morphism `{eA : setoid A} `{eB : setoid B}
   : (@app A eA B eB)
     with signature
     (eqRel (A:=A~>B))
@@ -44,7 +44,7 @@ Proof.
   apply app_eq, Exy.
 Qed.
 
-Add Parametric Morphism `{eA : equiv A} `{eB : equiv B}
+Add Parametric Morphism `{eA : setoid A} `{eB : setoid B}
   : (@app A eA B eB)
     with signature
     (eqRel (A:=A~>B))
@@ -55,7 +55,7 @@ Proof.
 Qed.
 
 Section Id.
-  Context `{eA : equiv A}.
+  Context `{eA : setoid A}.
 
   Notation id_ := (fun x => x).
 
@@ -66,7 +66,7 @@ Section Id.
 End Id.
 
 Section Const.
-  Context `{eA : equiv A} `{eB : equiv B}.
+  Context `{eA : setoid A} `{eB : setoid B}.
   Notation const_ := (fun (k : B) (_ : A) => k).
 
   Lemma const_eq1 (k : B)
@@ -84,7 +84,7 @@ End Const.
 
 
 Section Exp.
-  Context `{equiv A} `{equiv B} `{equiv C}.
+  Context `{setoid A} `{setoid B} `{setoid C}.
 
   Notation eapp_ := (fun x : (_ ~> _) * _ => let (f, v) := x in f v).
 
@@ -105,7 +105,7 @@ End Exp.
 
 Reserved Notation "f \o g" (at level 50, format "f  \o '/ '  g").
 Section Comp.
-  Context `{equiv A} `{equiv B} `{equiv C}.
+  Context `{setoid A} `{setoid B} `{setoid C}.
   Notation comp_ := (fun f g => (fun x => f (g x))).
 
   Lemma comp_eq2 (g : B ~> C) (f : A ~> B)
@@ -124,16 +124,16 @@ Section Comp.
 End Comp.
 Notation "f \o g" := (comp f g).
 
-Lemma compA `{equiv A} `{equiv B} `{equiv C} `{equiv D}
+Lemma compA `{setoid A} `{setoid B} `{setoid C} `{setoid D}
   (f : C ~> D) (g : B ~> C) (h : A ~> B) : f \o (g \o h) =e (f \o g) \o h.
 Proof. intros x. simpl. reflexivity. Qed.
-Lemma idKl `{equiv A} `{equiv B} (f : A ~> B) : id \o f =e f.
+Lemma idKl `{setoid A} `{setoid B} (f : A ~> B) : id \o f =e f.
 Proof. intros x. simpl. reflexivity. Qed.
-Lemma idKr `{equiv A} `{equiv B} (f : A ~> B) : f \o id =e f.
+Lemma idKr `{setoid A} `{setoid B} (f : A ~> B) : f \o id =e f.
 Proof. intros x. simpl. reflexivity. Qed.
 
 Section Pairs.
-  Context `{eA : equiv A} `{eB : equiv B} `{eC : equiv C}.
+  Context `{eA : setoid A} `{eB : setoid B} `{eC : setoid C}.
   Notation fst_ := (fun x : _ * _ => let (y, _) := x in y).
   Notation snd_ := (fun x : _ * _ => let (_, y) := x in y).
   Lemma fst_eq :
@@ -165,20 +165,20 @@ Section Pairs.
   Definition pair := MkMorph pair_feq.
 End Pairs.
 
-Lemma fst_pair `{equiv A} `{equiv B} `{equiv C} (f : A ~> B) (g : A ~> C) :
+Lemma fst_pair `{setoid A} `{setoid B} `{setoid C} (f : A ~> B) (g : A ~> C) :
   fst \o pair f g =e f.
 Proof. intros x. simpl. reflexivity. Qed.
-Lemma snd_pair `{equiv A} `{equiv B} `{equiv C} (f : A ~> B) (g : A ~> C) :
+Lemma snd_pair `{setoid A} `{setoid B} `{setoid C} (f : A ~> B) (g : A ~> C) :
   snd \o pair f g =e g.
 Proof. intros x. simpl. reflexivity. Qed.
 
-Lemma pair_fusion `{equiv A} `{equiv B1} `{equiv B2} `{equiv C1} `{equiv C2}
+Lemma pair_fusion `{setoid A} `{setoid B1} `{setoid B2} `{setoid C1} `{setoid C2}
   (h : A ~> B1) (i : A ~> B2) (f : B1 ~> C1) (g : B2 ~> C2)
   : pair (f \o fst) (g \o snd) \o pair h i =e pair (f \o h) (g \o i).
 Proof. intros x. split; reflexivity. Qed.
 
 Section Sums.
-  Context `{equiv A} `{equiv B} `{equiv C}.
+  Context `{setoid A} `{setoid B} `{setoid C}.
   Lemma inj1_eq : forall x y : A, x =e y -> inl x =e inl y.
   Proof. intros. simpl. trivial. Qed.
   Lemma inj2_eq : forall x y : A, x =e y -> inr x =e inr y.
@@ -204,30 +204,30 @@ Section Sums.
   Definition fcase := MkMorph fcase_eq.
 End Sums.
 
-Lemma inj1_case `{equiv A} `{equiv B} `{equiv C} (f : A ~> C) (g : B ~> C) :
+Lemma inj1_case `{setoid A} `{setoid B} `{setoid C} (f : A ~> C) (g : B ~> C) :
   fcase f g \o inj1 =e f.
 Proof. intros x. simpl. reflexivity. Qed.
-Lemma inj2_case `{equiv A} `{equiv B} `{equiv C} (f : A ~> C) (g : B ~> C) :
+Lemma inj2_case `{setoid A} `{setoid B} `{setoid C} (f : A ~> C) (g : B ~> C) :
   fcase f g \o inj2 =e g.
 Proof. intros x. simpl. reflexivity. Qed.
 
-Lemma eapp_pair_const `{equiv A} `{equiv B} `{equiv C}
+Lemma eapp_pair_const `{setoid A} `{setoid B} `{setoid C}
   (f : B ~> C) (g : A ~> B) : eapp \o pair (const f) g =e f \o g.
 Proof. intros x. simpl. reflexivity. Qed.
 
-Lemma eapp_pair_id `{equiv A} `{equiv B} `{equiv C} (f : A ~> B ~> C) :
+Lemma eapp_pair_id `{setoid A} `{setoid B} `{setoid C} (f : A ~> B ~> C) :
   eapp \o pair (const f) id =e f.
 Proof. intros x. simpl. reflexivity. Qed.
 
-Definition uncurry `{equiv A} `{equiv B} `{equiv C} (f : A ~> B ~> C)
+Definition uncurry `{setoid A} `{setoid B} `{setoid C} (f : A ~> B ~> C)
     : A * B ~> C := eapp \o pair (f \o fst) snd.
 
-Definition curry `{equiv A} `{equiv B} `{equiv C} (f : A * B ~> C)
+Definition curry `{setoid A} `{setoid B} `{setoid C} (f : A * B ~> C)
   : A ~> B ~> C := comp f \o papp pair id \o const.
 
 
 Section SpecDef.
-  Context `{eA : equiv A} `{eB : equiv B}.
+  Context `{eA : setoid A} `{eB : setoid B}.
   Record Ext (f : A ~> B) :=
     MkExt
       { target :> A -> B;
@@ -238,7 +238,7 @@ End SpecDef.
 Ltac calculate := eapply MkExt.
 
 Section PredSubty.
-  Context `{eA : equiv A} `{eB : equiv B}.
+  Context `{eA : setoid A} `{eB : setoid B}.
 
   Definition liftP_f_ (f : A ~> B) (P : B -> Prop) (Pf : forall x, P (f x))
     : A -> {x : B | P x}

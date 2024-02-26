@@ -25,16 +25,13 @@ Fixpoint mergeL l1 l2 {struct l1} :=
     end
   in merge_aux l2.
 
-Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat.
-  refine {|
-      app := fun x =>
-               match a_out x with
-               | node _ l r => mergeL l r
-               | leaf e => e
-               end
-    |}.
-  intros x y ->. auto with ffix.
-Defined.
+Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat :=
+  ltac:(|{ x ~>
+             match a_out x with
+             | node _ l r => mergeL l r
+             | leaf e => e
+             end
+    }|).
 
 Fixpoint splitL (x : list nat) (accL accR : list nat) :=
   match x with
@@ -74,21 +71,17 @@ Proof.
   destruct He; trivial.
 Qed.
 
-Definition c_split : Coalg (TreeF (list nat) unit) (list nat).
-  refine {|
-      app := fun x =>
-               match x with
-               | nil | cons _ nil => a_leaf x
-               | _ => let (l, r) := splitL x nil nil in
-                      a_node tt l r
-               end
-    |}.
-  intros x y H. simpl in H. subst. reflexivity.
-Defined.
+Definition c_split : Coalg (TreeF (list nat) unit) (list nat) :=
+  ltac:(|{ x ~> match x with
+             | nil | cons _ nil => a_leaf x
+             | _ => let (l, r) := splitL x nil nil in
+                    a_node tt l r
+             end
+    }|).
 
-  (* Needs to be defined, otherwise msort does not reduce!
-   * UPDATE 12/09/2023 by DC: what's the nonsense above???
-   *)
+(* Needs to be defined, otherwise msort does not reduce!
+ * UPDATE 12/09/2023 by DC: what's the nonsense above???
+ *)
 
 Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
