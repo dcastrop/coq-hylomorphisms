@@ -169,6 +169,7 @@
 \end{abstract}
 
 \section{Introduction}
+\label{sec:intro}
 Recursive definitions cannot be proven well-defined automatically due to the
 halting problem. Modern proof assistants like Coq or Agda provide a sound, but
 incomplete algorithm which syntactically checks for termination or productivity.
@@ -699,38 +700,33 @@ needed and implement them as hylos.
 but these are not final}
 
 In order to abstract recursion patters we need to be able to talk about functors
-which have the suitable fixed-point properties. Instances of these functors are
-the polynomial ones which are in one-to-one correspondence with the so called
-\emph{containers}~\cite{AbbottAG05}.
-In this section we introduce containers
+which have the suitable fixed-point properties, i.e. those who have an initial
+algebra. Instances of these functors are the polynomial ones.  A common approach
+to construct such functors is to use \emph{container}~\cite{AbbottAG05}.  In
+this section we introduce the basics of polynomial functors as containers
+(Section~\ref{sec:containers}).  However, reasoning about containers equality
+will require us to consider both functional extensionality and heterogeneous
+equality. As stated in previous sections~\ref{sec:intro}, this is rather
+problematic since a stric requirement for this work is that we should remain
+axiom-free. For this purpose in Section~\ref{sec:types-morphisms} we introduce
+a custom equivalence relation on types in order to avoid using the functional
+extensionality axiom.
 
 \subsection{Functors and Containers}
 \label{sec:containers}
-In order to To construct fixpoints of functors, these need to build
-\emph{strictly positive types}. A common approach to construct such strictly
-positive endofunctors is to use \emph{container functors}~\cite{AbbottAG05}.
-However, reasoning about container and container functor equality requires to
-consider both functional extensionality and heterogeneous equality. This is
-problematic since, as stated in Section~\ref{sec:intro}, our goals to remain
-axiom-free.  Furthermore, standard representations of containers in Coq will
-lead to OCaml code that contains \mintinline{OCaml}{Obj.magic}. We will explain
-why, and our mechanisation of containers in the remainder of this section.
-
-A container is defined by a type of \emph{shapes}, and a \emph{family of
-position types} indexed by shapes.
+A container is defined by a type of \emph{shapes} and a \emph{family of position
+types} indexed by shapes.
 \begin{minted}{Coq}
 Context (Shape : Set) (Pos : Shape -> Set).
 \end{minted}
-An \emph{extension} of this container is a functor, whose action on objects is
-given by:
+An \emph{extension} of this container is a functor defined as follows:
 \begin{minted}{Coq}
 Record App (X : Set) := { shape : Shape; contents : Pos shape -> X }.
 \end{minted}
-In our mechanisation, we use \mintinline{Coq}{App} to represent container
-extensions.  Generally, any functor that is isomorphic to a container extension
-is called a \emph{container functor}. However, in our work we will call
-\emph{container functor} to the functors defined by a specific container
-extension.
+with the obvious action on morphisms. Generally, any functor that is isomorphic
+to a container extension is called a \emph{container functor}. However, in our
+work we will call \emph{container functor} to the functors defined by a specific
+container extension.
 
 The first problem in extracting Coq code from such container extensions is the
 use of families of types. Since OCaml's type system cannot accurately capture
