@@ -15,41 +15,39 @@ Section AlgDef.
 
   Unset Elimination Schemes.
 
-  Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
-
+  Inductive LFix_ (INV : forall s : Sh, Po -> Po -> Prop) : Type
+    := LFix_in (s : Sh) (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2).
   Set Elimination Schemes.
 
-  Lemma LFix_rect [P : LFix -> Type]
-    : (forall x : App F LFix,
-          (forall e : Pos (shape x), P (cont x e)) ->
-          P (LFix_in x))
-      -> forall l : LFix, P l.
+  Lemma LFix__rect `[P : LFix_ INV -> Type]
+    : (forall s (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2),
+          (forall e : Pos s, P (k e)) -> P (LFix_in k H)) ->
+      forall l : LFix_ INV, P l.
   Proof.
     intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. Guarded.
   Defined.
-  Lemma LFix_rec [P : LFix -> Set]
-    : (forall x : App F LFix,
-          (forall e : Pos (shape x), P (cont x e)) ->
-          P (LFix_in x))
-      -> forall l : LFix, P l.
-  Proof. intros H. apply LFix_rect, H. Defined.
-  Lemma LFix_ind [P : LFix -> Prop]
-    : (forall x : App F LFix,
-          (forall e : Pos (shape x), P (cont x e)) ->
-          P (LFix_in x))
-      -> forall l : LFix, P l.
-  Proof. intros H. apply LFix_rect, H. Defined.
+  Lemma LFix__rec `[P : LFix_ INV -> Set]
+    : (forall s (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2),
+          (forall e : Pos s, P (k e)) -> P (LFix_in k H)) ->
+      forall l : LFix_ INV, P l.
+  Proof. intros H. apply LFix__rect, H. Defined.
+  Lemma LFix__ind `[P : LFix_ INV -> Prop]
+    : (forall s (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2),
+          (forall e : Pos s, P (k e)) -> P (LFix_in k H)) ->
+      forall l : LFix_ INV, P l.
+  Proof. intros H. apply LFix__rect, H. Defined.
 
-  Fixpoint LFixR (x y : LFix) : Prop :=
-    let f_x := LFix_out x in
-    let f_y := LFix_out y in
-    shape f_x =e shape f_y /\
-      (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
+  Fixpoint LFixR {INV} (x y : LFix_ INV) : Prop :=
+    let (sx, kx, Hx) := x in
+    let (sy, ky, Hy) := y in
+    sx =e sy /\
+      (forall e1 e2, INV sx (val e1) (val e2) -> LFixR (kx e1) (ky e2)) /\
+      (forall e1 e2, INV sy (val e1) (val e2) -> LFixR (ky e1) (ky e2)).
 
-  Lemma LFixR_refl (x : LFix) : LFixR x x.
+  Lemma LFixR_refl {INV} (x : LFix_ INV) : LFixR x x.
   Proof.
-    induction x as [x Ih]. simpl. split; try reflexivity.
-    intros e1 e2 Heq. rewrite (elem_val_eq Heq). apply Ih.
+    induction x as [sx kx Hx Ih]. simpl. split; try reflexivity.
+    intros e1 e2 Heq. rewrite pos_eq in Heq. rewrite Heq. apply Ih.
   Qed.
 
   Lemma LFixR_sym (x y : LFix) : LFixR x y -> LFixR y x.
