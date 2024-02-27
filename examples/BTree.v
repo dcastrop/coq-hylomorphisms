@@ -162,7 +162,3 @@ Proof.
       rewrite PeanoNat.Nat.lt_succ_r in LT.
       apply (PeanoNat.Nat.lt_le_trans _ _ _ LT' LT).
 Defined.
-
-Notation "'morph' T" :=
-  (ltac:( T ))
-    (at level 200, T at level 200, right associativity, only parsing).
