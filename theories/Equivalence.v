@@ -40,12 +40,15 @@ Add Parametric Relation `{eq : setoid A} : A (@eqRel A eq)
 #[export] Hint Resolve e_sym : ffix.
 #[export] Hint Resolve e_trans : ffix.
 
-#[export] Instance def_eq A : setoid A | 100 :=
+(* Import Module when standard equality is needed *)
+Module StdEquiv.
+  #[export] Instance def_eq A : setoid A | 100 :=
   {| eqRel := @eq A;
-     e_refl := @eq_refl A;
-     e_sym := @eq_sym A;
-     e_trans := @eq_trans A;
+    e_refl := @eq_refl A;
+    e_sym := @eq_sym A;
+    e_trans := @eq_trans A;
   |}.
+End StdEquiv.
 
 #[export] Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
 Proof with eauto with ffix.

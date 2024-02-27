@@ -30,6 +30,8 @@ Arguments node & {L N X} ELEM LB RB.
 Inductive Ts L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tp := | Lbranch | Rbranch. (* positions *)
 (* position valid in shape? *)
+
+Import StdEquiv.
 Definition t_dom {L A} : Ts L A * Tp ~> bool.
 |{ x ~> match x with
      | (Node _ _, _)  => true
