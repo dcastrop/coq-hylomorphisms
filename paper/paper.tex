@@ -1137,30 +1137,31 @@ Given a container extension \coq{F}, we define \emph{two}
 algebra in the following section. Our fist initial algebra is defined as the
 straightforward least fixpoint of the container extension \coq{F}:
 \begin{coqcode}
-Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
+Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
 This definition highlights why we cannot define equality of the positions and
 the contained elements generically (recall Section~\ref{sec:TODO}): the
 contained types may not have (yet) an associated equivalence. In other words,
 we would need to provide an equivalence for \coq{LFix}, but the
 only way to do this is to define such equivalence simultaneously to the
-definition for  \coq{LFix}.  We could have overcame this
-circularity by defining  \coq{LFix} independently of container
-extensions, and define later the necessary
-\coq{in}/\coq{out} functions to convert between
-\coq{LFix} and \coq{App}. However, this extra layer
-interferes with code extraction, in that it requires destructing/constructing
-subsequent \coq{LFix} and  \coq{App}, which Coq is not
-always able to inline.
+definition for  \coq{LFix}. Such definition would be rejected by Coq.
+There are other approaches that can circumvent this problem, by separating
+the definition of least fixed points from the proofs that the functions that
+get the contained elements are proper morphisms. But this leads to longer,
+unnecessarily complicated proofs.  Furthermore, this extra layer interferes
+with code extraction, in that it requires destructing/constructing subsequent
+\coq{LFix} and  \coq{App}, and Coq may not always able to inline them.
 
-We provide a custom induction scheme for initial algebras:
-\begin{coqcode}
-Lemma LFix_ind [P : LFix -> Prop]
-  : (forall x : App F LFix,
-        (forall e : Pos (shape x), P (cont x e)) ->
-        P (LFix_in x))
-    -> forall l : LFix, P l.
-\end{coqcode}
+%%\dcas{Boring stuff}
+%The definition of \coq{LFix} in terms of \coq{App} requires us to define our
+%own custom induction scheme for initial algebras:
+%\begin{coqcode}
+%Lemma LFix_ind [P : LFix -> Prop]
+%  : (forall x : App F LFix,
+%        (forall e : Pos (shape x), P (cont x e)) ->
+%        P (LFix_in x))
+%    -> forall l : LFix, P l.
+%\end{coqcode}
 We define the equality of initial algebras of container extensions recursively,
 by traversing the structure and equating the shapes and positions. This
 definition is equivalent to taking the fixpoint of \coq{AppR} in
@@ -1173,12 +1174,21 @@ Fixpoint LFixR (x y : LFix) : Prop :=
   shape f_x =e shape f_y /\
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 \end{coqcode}
-From such initial algebras, we define \emph{catamorphisms} by recursively
-traversing their structure. As usual, a catamorphism takes an
-\coq{F}-algebra with carrier \coq{A}, and produces a
-function from \coq{LFix F} to \coq{A}.
+
+
+Least fixed points of container extensions come with two functions that are
+defined as wrappers around constructor \coq{LFix_in} and projection
+\coq{LFix_out}.
 \begin{coqcode}
-Definition cata_f `{setoid A} (g : Alg F A) : LFix -> A
+l_in : App F (LFix F) ~> LFix F
+l_out : LFix F ~> App F (LFix F)
+\end{coqcode}
+
+We define \emph{catamorphisms} by recursively traversing their structure of the
+input \coq{LFix}. As usual, a catamorphism takes an \coq{F}-algebra with
+carrier \coq{A}, and produces a function from \coq{LFix F} to \coq{A}.
+\begin{coqcode}
+Definition cata_f (g : Alg F A) : LFix -> A
 := fix f (x : LFix) :=
   match x with
   | LFix_in ax =>
@@ -1189,7 +1199,7 @@ Definition cata_f `{setoid A} (g : Alg F A) : LFix -> A
 It is easy to show that this function is a proper morphism, and we use this
 fact to encode them as a higher-order morphism, with the following type:
 \begin{coqcode}
-Definition cata `{eA : setoid A} : Alg F A ~> LFix ~> A := ...
+Definition cata : Alg F A ~> LFix ~> A := ...
 \end{coqcode}
 Finally, we prove that catamorphisms satisfy their expected universal law (i.e.
 they are the unique solution to the equation \coq{f =e g \o fmap f \o l_out}).
@@ -1202,12 +1212,20 @@ Lemma cata_univ `{eA : setoid A} (g : Alg F A) (f : LFix ~> A)
 
 \subsection{(Recursive) Coalgebras}
 
-Terminal coalgebras are defined analogously to initial algebras:
+Terminal coalgebras are defined analogously to initial algebras (see Figure~\ref{fig:term_coalg}).
+\begin{figure}
 \begin{coqcode}
+Context `(F : Cont Sh Po).
 CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
+Definition GFixR : GFix -> GFix -> Prop :=...
+Instance GFix_setoid : setoid GFix := ...GFixR...
+Definition g_in : App F GFix ~> GFix := ...
+Definition g_out : GFix ~> App F GFix := ...
 \end{coqcode}
+\caption{Terminal Coalgebras}\label{fig:term_coalg}
+\end{figure}
 Their equivalence relation, and anamorphisms, and universal properties are
-easy to encode:
+easy to encode, in an analogous way to catamorphisms and initial algebras:
 \begin{coqcode}
   Definition ana `{eA : setoid A} : Coalg F A ~> A ~> GFix...
 
@@ -1215,7 +1233,8 @@ easy to encode:
     : f =e ana h <-> f =e g_in \o fmap f \o h.
 \end{coqcode}
 This definition, however, prevents us from composing catamorphisms and
-anamorphisms. To address this issue, we consider another alternative definition
+anamorphisms: we cannot mix \coq{GFix} and \coq{LFix}.
+To address this issue, we consider another alternative definition
 for initial $F$-algebras. In particular, we show that the terminal coalgebras
 for $F$, coupled with a proof that they are finite are also initial
 $F$-algebras:
@@ -1234,30 +1253,29 @@ Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
 Using this new initial algebra, we can compose catamorphisms and anamorphisms,
 \emph{as long as the anamorphisms produce finite trees}. We refer the reader to
 the supplementary material and Coq code to see how we encode this. In this
-paper, however, we focus on the fact that, anamorphisms produce finite trees,
-then their return type can also be the \emph{least} fixed point of the
+paper, however, we focus on the fact that, if anamorphisms produce finite
+trees, then their return type can also be the \emph{least} fixed point of the
 container extension. We encode in Coq the notion of \emph{recursive
 anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.  Recursive
 coalgebras are coalgebras whose anamorphism produces finite trees.  The
-following predicate captures this fact. The following predicate states that
+following predicate captures this fact, \coq{h} is recursive if
 \coq{h} can only be applied finitely many times:
 \begin{coqcode}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
-We show how this predicate is equivalent to the anamorphism of such coalgebras
-producing finite trees:
+This predicate is equivalent to the proposition that the anamorphism of such
+coalgebras produce only finite trees:
 \begin{coqcode}
 Lemma ana_rec_term `{setoid A} (h : Coalg F A)
   : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
 \end{coqcode}
 Recursive anamorphisms are implemented in Coq recursively on the structure of
-the proof that they can only be applied finitely many times
-(\coq{RecF}).  Note that such proofs will be erased when extracting
-code to OCaml. This is standard practice when building general recursive
-functions in Coq\footnote{\dcas{This technique had a name in the community, but
-I cannot remember. Something predicates}}. The core definitions are the
-following:
+the proof that they can only be applied finitely many times (\coq{RecF}).  Note
+that such proofs will be erased when extracting code to OCaml, and this is
+standard practice when building general recursive functions in
+Coq\footnote{\dcas{This technique had a name in the community, but I cannot
+remember. Something predicates}}. The core definitions are the following:
 \begin{coqcode}
 Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
 
@@ -1318,17 +1336,17 @@ Given an $F$-algebra and $F$-coalgebra, a solution to the equation $f = a \circ
 F\; f \circ c$ is known as a hylomorphism. Unfortunately, this definition
 cannot be accepted by Coq, since there is no structurally smaller argument to
 do recursion, and there is no corecursive definition that is guaranteed to be
-guarded, due to the use of an arbitrary algebra $a$. Furthermore, solutions to
+syntactically guarded (as required by Coq), due to the use of an arbitrary
+algebra $a$. Furthermore, solutions to
 the hylomorphism equation are \emph{not} guaranteed to be unique, or to even
 exist. To address these issues, we mechanise \textbf{recursive hylomorphisms}
 which are guaranteed to have a unique solution to the hylomorphism equation.
 
-If $c$ is a recursive coalgebra, then the equation $f = a \circ F\; f \circ c$ 
-does have a unique solution.
-We show this by first providing the definition
-for hylomorphisms in Coq, and then proving that any function satisfying this
-equation is a hylomorphism. We call these hylomorphisms with a recursive
-coalgebra, \textbf{recursive hylomorphisms}.
+If $c$ is a recursive coalgebra, then the equation $f = a \circ F\; f \circ c$
+does have a unique solution.  We show this by first providing the definition
+for recursive hylomorphisms in Coq, and then proving that any function
+satisfying this equation is a hylomorphism. We call these hylomorphisms with a
+recursive coalgebra, \textbf{recursive hylomorphisms}.
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A) 
   : forall (x : A), RecF c x -> B := fix f x H 
@@ -1361,25 +1379,18 @@ Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B)
   (g2 : Alg F C) (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
   : f2 \o hylo g1 h1 =e hylo g2 h1.
 Proof.
-  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
-  rewrite hylo_univ.
-  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
-  rewrite fmap_comp.
-  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
-  rewrite compA.
-  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
-  rewrite <- E2.
-  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
-  rewrite <- compA.
-  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
-  rewrite <- compA.
-  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
-  rewrite (compA g1).
-  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
-  rewrite <- hylo_unr.
-  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
+  rewrite hylo_univ, fmap_comp compA <- E2 <- compA <- compA (compA g1) <- hylo_unr
   reflexivity.
 Qed.
+  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
+  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
+  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
+  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
+  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
+  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
+  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
+  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
+  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
 \end{coqcode}
 Using the hylo fusion law, we can prove the well-known \emph{deforestation
 optimisation}, where two consecutive recursive computations, one that builds a
@@ -1399,7 +1410,6 @@ This result will allow us to \emph{calculate} programs by providing small, easy
 to verify implementations, and combining them into efficient recursive
 functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
 passes}.
-
 
 \section{Extraction}
 
