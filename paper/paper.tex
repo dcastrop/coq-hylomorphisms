@@ -1006,7 +1006,58 @@ Note that we leverage on Coq's type class mechanism to fill in the necessary
 equivalence relations. Since Coq's code extraction mechanism will erase any
 occurrence of \coq{Prop} in the code, so objects of type
 \coq{A ~> B} will be extracted to the OCaml equivalent to
-\coq{A -> B}.
+\coq{A -> B}. Furthermore, we add a coercion from \coq{A ~> B} to \coq{A -> B}.
+On top of this, we define basic function composition and identity functions:
+\begin{coqcode}
+Notation "f \o g" = (comp f g).
+Definition comp : (B ~> C) ~> (A ~> B) ~> A ~> C := ...
+Definition id : A ~> A := ...
+\end{coqcode}
+
+Using custom equivalences and proper morphisms, we redefine the definitions of
+container extensions and container equality. In particular, container
+extensions require a proper morphism to check the validity of positions in
+shapes, and container equality now uses equivalences of shapes and contained
+elements: 
+\begin{coqcode}
+Class Cont (Shape : Type) (Pos : Type) := { valid : Shape * Pos ~> bool }.
+Inductive AppR `{e : setoid X} (x y : App F X) : Prop :=
+  | AppR_ext (Es : shape x =e shape y)
+             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
+\end{coqcode}
+Note the use of \coq{=e} instead of Coq's standard equality.  For positions,
+however, we chose to use Coq's propositional equality, since these would leads
+to simpler code. We explain why in Section~\ref{sec:cata}, and the
+mechanisation of initial algebras of container extensions. The definitions in
+Figure~\ref{fig:poly} are redefined to account for these changes in a
+straightforward way, i.e. we prove that validity predicates are indeed proper
+morphisms.  \dcas{Should we show, instead, the actual full definition? It
+becomes a bit more complicated ...}
+
+This definition leads to the well-known ``setoid hell'', which we mitigate by
+providing tactics and notations to automatically discharge proofs of
+\coq{app_eq} for morphisms, whenever the types use the standard propositional
+equality, or a combination of propositional and extensional equality. However,
+our compositional approach allows to build morphisms by plugging in other
+morphisms to our combinator, In our framework, our goal is that the
+user-provided functions remain small, with relatively straightforward proofs of
+\coq{app_eq}.
+
+However, by using this mechanisation, we gain simplified proofs via the use of
+Coq's \emph{Generalised Rewriting}.  Since every morphism \coq{f : A ~> B}
+satisfies that if \coq{x =e y}, then \coq{f x =e f y}, we can add every
+morphism as a proper element of Coq's respectfulness relation. In practice,
+this means that we can use the \coq{rewrite} tactic on proofs of type 
+\coq{A =e B}, for arbitrary \coq{A} and \coq{B}, whenever they are used as
+arguments of morphisms, as well as Coq's \coq{reflexivity}, \coq{symmmetry},
+and \coq{transitivity} tactics. For example:
+\begin{coqcode}
+Goal forall `(f : A ~> B) `(g : B ~> C) `(h : C ~> D), 
+  h \o g =e id -> h \o (g \o f) =e f.
+Proof.
+  intros H.  rewrite compA H.  reflexivity.
+Qed.
+\end{coqcode}
 
 \subsubsection{Polynomial Types}
 We define a number of equivalences for polynomial types. These equivalences are
@@ -1035,26 +1086,6 @@ also provide functions for currying/uncurrying, and partially applying a proper
 morphism. We avoid using definitions, or unfold them, to help Coq's code
 extraction mechanism to inline as many of these small definitions as possible.
 
-\subsubsection{Isomorphisms of Coq Types and Container Extensions}
-
-Using custom equivalences and proper morphisms, we redefine the definitions of
-container extensions and container equality. In particular, container
-extensions require a proper morphism to check the validity of positions in
-shapes, and container equality now uses equivalences of shapes and contained
-elements: 
-\begin{coqcode}
-Class Cont (Shape : Type) (Pos : Type) := { valid : Shape ~> Pos ~> bool }.
-Inductive AppR `{e : setoid X} (x y : App F X) : Prop :=
-  | AppR_ext (Es : shape x =e shape y)
-             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
-\end{coqcode}
-Note the use of \coq{=e} instead of Coq's standard equality.  For
-positions, however, we chose to use Coq's propositional equality, since these
-would leads to simpler code. We explain why in Section~\ref{sec:cata}, and the
-mechanisation of initial algebras of container extensions. The definitions in
-Figure~\ref{fig:poly} are redefined to account for these changes in a
-straightforward way.
-
 We prove the isomorphisms of polynomial types and the equivalent (redefined)
 container extensions. As an example, we discuss (informally) the isomorphisms
 of pairs with their equivalent container extensions. Suppose that we
@@ -1074,7 +1105,7 @@ we can first use the isomorphisms of
 \coq{B} to obtain
 \coq{App F X * App G X}, and then construct the necessary container
 extension. Given \coq{p_inl}/\coq{p_inr} that act as
-\coq{inl/inr} but on valid product positions, the relevant
+\coq{inl/inr} on valid product positions, the relevant
 functions that define the isomorphism are:
 \begin{coqcode}
 Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
@@ -1090,13 +1121,6 @@ Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
 \end{coqcode}
 Proving that these functions indeed form an isomorphism is straightforward,
 using the fact that \coq{Prod} containers only have two valid positions.
-
-\subsubsection{Generalised Rewriting for Morphisms}
-
-Since our framework only allows types with equivalences, and proper morphisms,
-we can leverage Coq's \emph{setoid rewrite}
-
-\dcas{Blabla: examples, no need to explain setoid rewrite in detail here}
 
 \section{Extracting Certified Hylomorphisms}
 

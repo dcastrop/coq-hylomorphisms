@@ -5,6 +5,7 @@ Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
 Require Import HYLO.Equivalence.
+Import StdEquiv.
 Require Import HYLO.Morphism.
 
 (** The justification why the class below this comment defines a Container can be
