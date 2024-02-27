@@ -1375,12 +1375,11 @@ This result can be used to prove hylomorphism laws in a way that is analogous
 to pen-and-paper program calculation techniques. We show the rule for 
 hylomorphism fusion as an example:
 \begin{coqcode}
-Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) 
-  (g2 : Alg F C) (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
-  : f2 \o hylo g1 h1 =e hylo g2 h1.
-Proof.
-  rewrite hylo_univ, fmap_comp compA <- E2 <- compA <- compA (compA g1) <- hylo_unr
-  reflexivity.
+Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C) 
+  (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2) : f2 \o hylo g1 h1 =e hylo g2 h1.
+
+  rewrite hylo_univ, fmap_comp, compA, <- E2, 
+          <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
 Qed.
   (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
   (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
