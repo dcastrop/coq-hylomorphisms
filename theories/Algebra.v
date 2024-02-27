@@ -13,66 +13,56 @@ Notation Alg F A := (App F A ~> A).
 Section AlgDef.
   Context `(F : Cont Sh Po).
 
-  Unset Elimination Schemes.
+  Inductive LFix_ : Type
+    := LFix_in { l_shape : Sh; l_cont : Pos l_shape -> LFix_ }.
+  Arguments l_cont : clear implicits.
 
-  Inductive LFix_ (INV : forall s : Sh, Po -> Po -> Prop) : Type
-    := LFix_in (s : Sh) (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2).
-  Set Elimination Schemes.
+  Fixpoint LFixR_ (x y : LFix_) : Prop :=
+    l_shape x =e l_shape y /\
+      forall e1 e2, val e1 =e val e2 -> LFixR_ (l_cont x e1) (l_cont y e2).
 
-  Lemma LFix__rect `[P : LFix_ INV -> Type]
-    : (forall s (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2),
-          (forall e : Pos s, P (k e)) -> P (LFix_in k H)) ->
-      forall l : LFix_ INV, P l.
+  Definition lcont_eq (x : LFix_) : Prop :=
+    forall e1 e2, e1 =e e2 -> LFixR_ (l_cont x e1) (l_cont x e2).
+
+  Fixpoint Wf (x : LFix_) : Prop := lcont_eq x /\ forall e, Wf (l_cont x e).
+
+  Lemma Wf_cont `(H : Wf x) : forall e, Wf (l_cont x e).
+  Proof. destruct x as [sx kx], H; trivial. Qed.
+  Lemma Wf_eq `(H : Wf x) : lcont_eq x.
+  Proof. destruct x as [sx kx], H; trivial. Qed.
+
+  Record LFix := WfLFix { lfix :> LFix_; WF_lfix : Wf lfix }.
+  Definition LFixR (x y : LFix) := LFixR_ (lfix x) (lfix y).
+
+  Lemma LFixR_refl (x : LFix) : LFixR x x.
   Proof.
-    intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. Guarded.
-  Defined.
-  Lemma LFix__rec `[P : LFix_ INV -> Set]
-    : (forall s (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2),
-          (forall e : Pos s, P (k e)) -> P (LFix_in k H)) ->
-      forall l : LFix_ INV, P l.
-  Proof. intros H. apply LFix__rect, H. Defined.
-  Lemma LFix__ind `[P : LFix_ INV -> Prop]
-    : (forall s (k : Pos s -> LFix_ INV) (H : forall e1 e2, INV s e1 e2),
-          (forall e : Pos s, P (k e)) -> P (LFix_in k H)) ->
-      forall l : LFix_ INV, P l.
-  Proof. intros H. apply LFix__rect, H. Defined.
-
-  Fixpoint LFixR {INV} (x y : LFix_ INV) : Prop :=
-    let (sx, kx, Hx) := x in
-    let (sy, ky, Hy) := y in
-    sx =e sy /\
-      (forall e1 e2, INV sx (val e1) (val e2) -> LFixR (kx e1) (ky e2)) /\
-      (forall e1 e2, INV sy (val e1) (val e2) -> LFixR (ky e1) (ky e2)).
-
-  Lemma LFixR_refl {INV} (x : LFix_ INV) : LFixR x x.
-  Proof.
-    induction x as [sx kx Hx Ih]. simpl. split; try reflexivity.
-    intros e1 e2 Heq. rewrite pos_eq in Heq. rewrite Heq. apply Ih.
+    destruct x as [[sx kx] WFx]; unfold LFixR.
+    split; try reflexivity. intros e1 e2 Heq. apply Wf_eq; trivial.
   Qed.
 
   Lemma LFixR_sym (x y : LFix) : LFixR x y -> LFixR y x.
   Proof.
-    revert y. induction x as [x Ih].
-    intros [y] [Sxy H]. simpl in *.
-    split; auto with ffix.
+    destruct x as [x WFx], y as [y WFy]; revert WFx y WFy. unfold LFixR.
+    simpl. induction x as [sx kx IH]. destruct y as [sy ky]. simpl.
+    unfold lcont_eq; simpl. intros [Keq WFy] [Sxy H].
+    split; auto with ffix. intros e1 e2 Hv. apply IH; auto with ffix.
+    apply WFx.
   Qed.
 
   Lemma LFixR_trans (x y z : LFix) : LFixR x y -> LFixR y z -> LFixR x z.
   Proof.
-    revert y z.
-    induction x as [sx Ih].
-    intros y z.
-    destruct y as [sy]; simpl.
-    destruct z as [sz]; simpl.
-    intros [Sxy Exy] [Syz Eyz].
+    destruct x as [x WFx], y as [y WFy], z as [z WFz].
+    revert WFx y WFy z WFz. unfold LFixR; simpl in *.
+    induction x as [sx kx IH].
+    intros [Kx WFx] [sy ky] [_ WFy] [sz kz] [_ WFz].
+    unfold lcont_eq in *; simpl in *. intros [Sxy Exy] [Syz Eyz].
     split; [rewrite Sxy; trivial | idtac].
-    intros e1 e2 V1.
-    destruct (elem_valid_irr Sxy e1) as [e3 V2].
-    apply (Ih _ _ _ (Exy _ _ V2)), Eyz.
+    intros e1 e2 V1. destruct (elem_valid_irr Sxy e1) as [e3 V2].
+    apply (IH e1 (WFx _) _ (WFy _) _ (WFz _) (Exy _ _ V2)), Eyz.
     rewrite <- V2. trivial.
   Qed.
 
-  #[export] Instance LFix_Eq : equiv LFix :=
+  #[export] Instance LFix_Eq : setoid LFix :=
     {| eqRel := LFixR;
       e_refl := LFixR_refl;
       e_sym := LFixR_sym;
