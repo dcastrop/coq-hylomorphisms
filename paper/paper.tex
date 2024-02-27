@@ -110,7 +110,10 @@
 \newcommand{\floor}[1]{\lfloor #1 \rfloor}
 \newcommand{\pair}[2]{\langle #1, #2 \rangle}
 \newcommand{\haskell}[1]{\mintinline{haskell}{#1}}
-\newcommand{\coq}[1]{\mintinline{coq}{#1}}
+
+%\newcommand{\coq}[1]{\mintinline{coq}{#1}}
+\newmintinline[coq]{coq}{fontsize=\small}
+\newminted{coq}{fontsize=\small}
 
 \title{A Mechanised Library for Generic (Co)Programming}
 
@@ -338,11 +341,11 @@ program is written in Coq notation to be consistent, but it is not a program
 that Coq can accept.}
 
 \mpav{I need this to be written in Coq notation}
-\begin{minted}{coq}
+\begin{coqcode}
 qs :: [a] -> [a]
 qs [] = []
 qs (x:xs) = qs (filter (x <=) xs) ++ [x] ++ (qs (filter (x >) xs))
-\end{minted}
+\end{coqcode}
 This program is formed of essentially two parts. The first one is what is
 commonly thought as the \emph{partition} function destructuring the input list
 in three parts, the pivot and the other two sublists, and the second part
@@ -351,17 +354,17 @@ recursing over the sublists and composing the results back together.
 Notice that if we define the functor \coq{TreeF} $X = X \times A \times X$ with
 the obvious functorial action then \coq{partition} can be viewed as a
 \coq{TreeF}-coalgebra on lists over the type $A$
-\begin{minted}{coq}
+\begin{coqcode}
 c : [A] -> TreeF [A]
 c (x:xs) = (filter (x <=) xs, x, filter (x >) xs)
-\end{minted}
+\end{coqcode}
 
 While we can define an \coq{TreeF}-algebra on lists
 over $A$ as well, that is a map
-\begin{minted}{coq}
+\begin{coqcode}
 a : TreeF [A] -> [A]
 a (left, x, right) = left ++ [x] ++ right
-\end{minted}
+\end{coqcode}
 
 It should be easy to see that the program \coq{qs} can now be defined as the
 unique program that runs the coalgebra $c$ recurses over the sublists produced
@@ -729,13 +732,13 @@ extensionality axiom.
 \label{sec:containers}
 A container is defined by a type of \emph{shapes} and a \emph{family of position
 types} indexed by shapes.
-\begin{minted}{Coq}
+\begin{coqcode}
 Context (Shape : Type) (Pos : Shape -> Type).
-\end{minted}
+\end{coqcode}
 An \emph{extension} of this container is a functor defined as follows:
-\begin{minted}{Coq}
+\begin{coqcode}
 Record App (X : Type) := { shape : Shape; contents : Pos shape -> X }.
-\end{minted}
+\end{coqcode}
 with the obvious action on morphisms. Generally, any functor that is isomorphic
 to a container extension is called a \emph{container functor}. However, in our
 work we will call \emph{container functor} to the functors defined by a specific
@@ -748,11 +751,11 @@ casts. To avoid unsafe casts, we can consider representing the positions of a
 container as a type that captures \emph{all} the potential positions in all
 possible shapes, together with a predicate \coq{Valid} that
 determines whether a position is valid in a shape.
-\begin{minted}{Coq}
+\begin{coqcode}
 Context (Shape : Type) (Pos : Type) (Valid : Shape -> Pos -> Prop).
 Record App (X : Type) := { shape    : Shape; 
                           contents : {p | Valid shape p} -> X }.
-\end{minted}
+\end{coqcode}
 This approach solves the the problem of the unsafe casts, since the code
 extracted for \coq{{p | Valid shape pos}} will be an OCaml singleton
 type defined as the OCaml equivalent to \coq{Pos}.
@@ -771,23 +774,23 @@ functions that return a boolean, and lift booleans to propositions similarly to
 SSReflect. For simplicity, we define the dependent pair of valid positions as a
 record, which will be extracted to a singleton type with the validity proof
 erased by Coq's code extraction mechanism.
-\begin{minted}{Coq}
+\begin{coqcode}
 Class Cont (Shape : Type) (Pos : Type) := { valid : Shape -> Pos -> bool }.
 Coercion is_true (b : bool) : Prop := b = true.
 Record PosOf `(C : Cont Shape Pos) (shape : Shape) := 
   ValidPos { val : Pos; IsValid : valid shape pos }.
-\end{minted}
+\end{coqcode}
 Then, we define \emph{container extensions} as
-\begin{minted}{Coq}
+\begin{coqcode}
 Record App `(C : Cont Shape Pos) (X : Type) :=
   MkApp { shape : Shape; contents : PosOf C shape -> X }.
-\end{minted}
+\end{coqcode}
 The functorial action for container extensions on morphisms boils down to
 function composition, which trivially preserves identity and composition.
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition fmap `(C : Cont Shape Pos) `(f : A -> B) (x : App C A) : App C B
   := {| shape := shape x; contents := fun e => f (contents x e) |}
-\end{minted}
+\end{coqcode}
 
 \subsubsection{Polynomial Functors as Container Extensions}
 Polynomial functors can be defined as container extensions~\ref{fig:poly}. We
@@ -847,9 +850,9 @@ The Coq value \coq{inl n} of type
 \coq{nat + bool * bool} would look as follows as a container
 extension 
 \coq{App (Sum (Const nat) (Prod Id Id)) bool}:
-\begin{minted}{Coq}
+\begin{coqcode}
 {| shape := inl n; cont := fun e => uninhabited e|}
-\end{minted}
+\end{coqcode}
 We omit the definition of \coq{uninhabited}, which exploits the
 fact that \coq{e} for \coq{inl n} implies
 \coq{False} to build an element of type \coq{bool}%
@@ -858,7 +861,7 @@ any arbitrary value instead of \coq{uninhabited e}.}.
 
 Similarly, the Coq value \coq{inr (true, false)} as a container
 extension is as follows:
-\begin{minted}{Coq}
+\begin{coqcode}
   {| shape := inr (tt,tt);
      cont := fun e : {p | valid (inr (tt, tt)) p} =>
         match proj1_sig e with
@@ -867,7 +870,7 @@ extension is as follows:
         | inr (inr tt) => fun _ => false
         end
   |}
-\end{minted}
+\end{coqcode}
 Here, the position \coq{inl f} is impossible, as
 \coq{f} would need to be a proof of \coq{False}.
 Of the two remaining positions, the left one will return 
@@ -938,11 +941,11 @@ extensions that have the same shape, and that, for equal shape and position,
 they return the same element. To avoid the use of functional extensionality
 axioms, we capture this relation with the following inductive proposition in
 Coq:
-\begin{minted}{Coq}
+\begin{coqcode}
 Inductive AppR `{F : Cont Sh P} {X} (x y : App F X) : Prop :=
 | AppR_ext (Es : shape x = shape y)
            (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 = cont y e2).
-\end{minted}
+\end{coqcode}
 Note that  we do not care about the validity proof of the positions, only their
 value. This is to simplify (slightly) our proofs. This relation is
 trivially \emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
@@ -955,9 +958,9 @@ these types now come with their own equivalence, any function that manipulates
 them needs to be \emph{respectful}. I.e.\ given 
 \coq{R : X -> X -> Prop} and \coq{R' : Y -> Y -> Prop},
 we want functions (morphisms) that satisfy the following property:
-\begin{minted}{Coq}
+\begin{coqcode}
 forall (x y : X), R x y -> R' (f x) (f y)
-\end{minted}
+\end{coqcode}
 
 \subsection{Types and Morphisms}
 \label{sec:types-morphisms}
@@ -972,7 +975,7 @@ the equivalence relation of a setoid. By default, we associate every Coq type
 with the standard propositional equality, unless a different equivalence is
 specified (i.e.\ we allow overlapping instances, and Coq's propositional
 equality takes the lowest priority). 
-\begin{minted}{Coq}
+\begin{coqcode}
 Reserved Notation "f =e g" (at level 70, no associativity).
 Class setoid A : Type :=
   MkEquiv
@@ -982,20 +985,20 @@ Class setoid A : Type :=
       e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
     }.
 Notation "f =e g" := (eqRel f g).
-\end{minted}
+\end{coqcode}
 Given types \coq{A} and  \coq{B}, with their respective
 equivalence relations \coq{eA : A -> A -> Prop} and
 \coq{eB : B -> B -> Prop}, the we define the type
 \coq{A ~> B} to represents \emph{proper} morphisms of the
 respectfulness relation of \coq{R} to \coq{R'}.
-\begin{minted}{Coq}
+\begin{coqcode}
 Structure morph A {eA : setoid A} B {eB : setoid B} :=
   MkMorph
     { app :> A -> B;
       app_eq : forall x y, x =e y -> app x =e app y
     }.
 Notation "A ~> B" := (@morph A _ B _).
-\end{minted}
+\end{coqcode}
 Note that we leverage on Coq's type class mechanism to fill in the necessary
 equivalence relations. Since Coq's code extraction mechanism will erase any
 occurrence of \coq{Prop} in the code, so objects of type
@@ -1005,13 +1008,13 @@ occurrence of \coq{Prop} in the code, so objects of type
 \subsubsection{Polynomial Types}
 We define a number of equivalences for polynomial types. These equivalences are
 be used when building proper morphisms that manipulate their respective types.
-\begin{minted}{Coq}
+\begin{coqcode}
 Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
 Instance pair_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A * B).
 Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
 Instance prop_eq : setoid Prop.
 Instance pred_sub `{eA : setoid A} {P : A -> Prop} : setoid {a : A | P a}.
-\end{minted}
+\end{coqcode}
 
 Most of the definitions that involve functions and polynomial types are
 straightworward.  Identity and composition are defined as 
@@ -1036,12 +1039,12 @@ container extensions and container equality. In particular, container
 extensions require a proper morphism to check the validity of positions in
 shapes, and container equality now uses equivalences of shapes and contained
 elements: 
-\begin{minted}{Coq}
+\begin{coqcode}
 Class Cont (Shape : Type) (Pos : Type) := { valid : Shape ~> Pos ~> bool }.
 Inductive AppR `{e : setoid X} (x y : App F X) : Prop :=
   | AppR_ext (Es : shape x =e shape y)
              (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
-\end{minted}
+\end{coqcode}
 Note the use of \coq{=e} instead of Coq's standard equality.  For
 positions, however, we chose to use Coq's propositional equality, since these
 would leads to simpler code. We explain why in Section~\ref{sec:cata}, and the
@@ -1070,7 +1073,7 @@ we can first use the isomorphisms of
 extension. Given \coq{p_inl}/\coq{p_inr} that act as
 \coq{inl/inr} but on valid product positions, the relevant
 functions that define the isomorphism are:
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
   ({| shape := shape (fst x); cont := fun e => cont x (e_inl e) |}, 
    {| shape := shape (snd x); cont := fun e => cont x (e_inr e) |}).
@@ -1081,9 +1084,9 @@ Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
                     | inr p => fun H => cont (snd x) (ValidPos p H)
                     end (IsValid e)
 |}.
-\end{minted}
+\end{coqcode}
 Proving that these functions indeed form an isomorphism is straightforward,
-using the fact that Product containers only have two valid positions.
+using the fact that \coq{Prod} containers only have two valid positions.
 
 \subsubsection{Generalised Rewriting for Morphisms}
 
@@ -1099,16 +1102,16 @@ we can leverage Coq's \emph{setoid rewrite}
 Algebras on container extensions are defined as expected. The carrier of the
 algebra is \coq{A}, and the operations of the algebra are morphisms
 of the following type:
-\begin{minted}{Coq}
+\begin{coqcode}
 Notation Alg F A := (App F A ~> A).
-\end{minted}
+\end{coqcode}
 Given a container extension \coq{F}, we define \emph{two}
 (isomorphic) initial algebras. We will show the need for the second initial
 algebra in the following section. Our fist initial algebra is defined as the
 straightforward least fixpoint of the container extension \coq{F}:
-\begin{minted}{Coq}
+\begin{coqcode}
 Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
-\end{minted}
+\end{coqcode}
 This definition highlights why we cannot define equality of the positions and
 the contained elements generically (recall Section~\ref{sec:TODO}): the
 contained types may not have (yet) an associated equivalence. In other words,
@@ -1124,30 +1127,30 @@ subsequent \coq{LFix} and  \coq{App}, which Coq is not
 always able to inline.
 
 We provide a custom induction scheme for initial algebras:
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma LFix_ind [P : LFix -> Prop]
   : (forall x : App F LFix,
         (forall e : Pos (shape x), P (cont x e)) ->
         P (LFix_in x))
     -> forall l : LFix, P l.
-\end{minted}
+\end{coqcode}
 We define the equality of initial algebras of container extensions recursively,
 by traversing the structure and equating the shapes and positions. This
 definition is equivalent to taking the fixpoint of \coq{AppR} in
 Section~\ref{sec:TODO}, where the shapes must be equivalent and, for equal
 positions, the contents must be related by \coq{LFixR}.
-\begin{minted}{Coq}
+\begin{coqcode}
 Fixpoint LFixR (x y : LFix) : Prop :=
   let f_x := LFix_out x in
   let f_y := LFix_out y in
   shape f_x =e shape f_y /\
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
-\end{minted}
+\end{coqcode}
 From such initial algebras, we define \emph{catamorphisms} by recursively
 traversing their structure. As usual, a catamorphism takes an
 \coq{F}-algebra with carrier \coq{A}, and produces a
 function from \coq{LFix F} to \coq{A}.
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition cata_f `{setoid A} (g : Alg F A) : LFix -> A
 := fix f (x : LFix) :=
   match x with
@@ -1155,52 +1158,52 @@ Definition cata_f `{setoid A} (g : Alg F A) : LFix -> A
       let (sx, kx) := ax in
       g (MkApp sx (fun e => f (kx e)))
   end.
-\end{minted}
+\end{coqcode}
 It is easy to show that this function is a proper morphism, and we use this
 fact to encode them as a higher-order morphism, with the following type:
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition cata `{eA : setoid A} : Alg F A ~> LFix ~> A := ...
-\end{minted}
+\end{coqcode}
 Finally, we prove that catamorphisms satisfy their expected universal law (i.e.
 they are the unique solution to the equation \coq{f =e g \o fmap f \o l_out}).
 The proof is by induction on the input to \coq{f} and
 \coq{cata g}.
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma cata_univ `{eA : setoid A} (g : Alg F A) (f : LFix ~> A)
     : f =e cata g <-> f =e g \o fmap f \o l_out.
-\end{minted}
+\end{coqcode}
 
 \subsection{(Recursive) Coalgebras}
 
 Terminal coalgebras are defined analogously to initial algebras:
-\begin{minted}{Coq}
+\begin{coqcode}
 CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
-\end{minted}
+\end{coqcode}
 Their equivalence relation, and anamorphisms, and universal properties are
 easy to encode:
-\begin{minted}{Coq}
+\begin{coqcode}
   Definition ana `{eA : setoid A} : Coalg F A ~> A ~> GFix...
 
   Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix)
     : f =e ana h <-> f =e g_in \o fmap f \o h.
-\end{minted}
+\end{coqcode}
 This definition, however, prevents us from composing catamorphisms and
 anamorphisms. To address this issue, we consider another alternative definition
 for initial $F$-algebras. In particular, we show that the terminal coalgebras
 for $F$, coupled with a proof that they are finite are also initial
 $F$-algebras:
-\begin{minted}{Coq}
+\begin{coqcode}
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
-\end{minted}
+\end{coqcode}
 Catamorphisms from this initial algebra are denoted by \coq{ccata},
 and they can be used to define the isomorphism between 
 \coq{{x : GFix F | FinF x}} and
 \coq{LFix F}. In particular: 
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma cata_ccata `{setoid A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
 Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
-\end{minted}
+\end{coqcode}
 Using this new initial algebra, we can compose catamorphisms and anamorphisms,
 \emph{as long as the anamorphisms produce finite trees}. We refer the reader to
 the supplementary material and Coq code to see how we encode this. In this
@@ -1211,16 +1214,16 @@ anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.  Recursive
 coalgebras are coalgebras whose anamorphism produces finite trees.  The
 following predicate captures this fact. The following predicate states that
 \coq{h} can only be applied finitely many times:
-\begin{minted}{Coq}
+\begin{coqcode}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
-\end{minted}
+\end{coqcode}
 We show how this predicate is equivalent to the anamorphism of such coalgebras
 producing finite trees:
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma ana_rec_term `{setoid A} (h : Coalg F A)
   : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
-\end{minted}
+\end{coqcode}
 Recursive anamorphisms are implemented in Coq recursively on the structure of
 the proof that they can only be applied finitely many times
 (\coq{RecF}).  Note that such proofs will be erased when extracting
@@ -1228,7 +1231,7 @@ code to OCaml. This is standard practice when building general recursive
 functions in Coq\footnote{\dcas{This technique had a name in the community, but
 I cannot remember. Something predicates}}. The core definitions are the
 following:
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
 
 Definition rana_f__ `{setoid A} (c : Coalg F A)
@@ -1236,20 +1239,20 @@ Definition rana_f__ `{setoid A} (c : Coalg F A)
   := fix f (x : A) (H : RecF c x) :=
        let hx := c x in
        LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
-\end{minted}
+\end{coqcode}
 Here, \coq{RecF_inv} provides the structurally smaller element for
 the Coq recursive definition. We then couple coalgebras with a proof that they
 are recursive, and add a coercion from recursive coalgebras to coalgebras.
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition RCoalg F A = Rec {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
-\end{minted}
+\end{coqcode}
 In some cases, proving that coalgebras can only be applied finitely many
 times is straightforward (e.g.\ they are recursive on some inductive type in
 Coq). However, in many cases, proving that a coalgebra is recursive directly
 can be tedious and cumbersome. To ease development, we prove that if a 
 given coalgebra respects a \emph{well-founded relation}, then it is 
 necessarily recursive.
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition respects_relation `{setoid A} (c : Coalg F A)
       {B} (m : A -> B) (R : B -> B -> Prop)
   := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
@@ -1257,7 +1260,7 @@ Definition respects_relation `{setoid A} (c : Coalg F A)
 Lemma wf_coalg_rec `{setoid A} {B}
   (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
   (c : Coalg F A) (RR : respects_relation c m R) : RecP c.
-\end{minted}
+\end{coqcode}
 In the above definition, \coq{m} is used as a form of ``metric''
 for termination, and the well-founded relation is on \coq{B}. This
 works equivalently to transporting a well-founded relation 
@@ -1275,12 +1278,12 @@ morphisms, and prove their universal law, i.e.\ that recursive anamorphisms are
 the unique solution to the equation 
 \coq{f =e l_in \o fmap f \o h},
 where \coq{h} is a recursive coalgebra.
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F :=...
 
 Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
     : f =e rana h <-> f =e l_in \o fmap f \o h.
-\end{minted}
+\end{coqcode}
 
 \subsection{Recursive Hylomorphisms}
 
@@ -1299,7 +1302,7 @@ We show this by first providing the definition
 for hylomorphisms in Coq, and then proving that any function satisfying this
 equation is a hylomorphism. We call these hylomorphisms with a recursive
 coalgebra, \textbf{recursive hylomorphisms}.
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A) 
   : forall (x : A), RecF c x -> B := fix f x H 
   := match c x as h0 return
@@ -1307,26 +1310,26 @@ Definition hylo_def (a : Alg F B) (c : Coalg F A)
      with
      | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
      end (RecF_inv H).
-\end{minted}
+\end{coqcode}
 The definition of recursive hylomorphisms is recursive on the proof that the
 anamorphism can only be applied finitely many times on any input. We again use
 \coq{RecF_inv} to obtain the structurally smaller proof to use in
 the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
 we prove that \coq{hylo_def} is respectful, and use this proof to
 built the corresponding higher-order proper morphism:
-\begin{minted}{Coq}
+\begin{coqcode}
 Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
-\end{minted}
+\end{coqcode}
 Finally, we show that recursive hylomorphisms are the unique solution to
 the hylomorphism equation.
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
-\end{minted}
+\end{coqcode}
 This result can be used to prove hylomorphism laws in a way that is analogous
 to pen-and-paper program calculation techniques. We show the rule for 
 hylomorphism fusion as an example:
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) 
   (g2 : Alg F C) (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
   : f2 \o hylo g1 h1 =e hylo g2 h1.
@@ -1350,13 +1353,13 @@ Proof.
   (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
   reflexivity.
 Qed.
-\end{minted}
+\end{coqcode}
 Using the hylo fusion law, we can prove the well-known \emph{deforestation
 optimisation}, where two consecutive recursive computations, one that builds a
 data structure, and another one that consumes it, can be fused together into a
 single recursive definition. This, in turn, allows us to prove that a recursive
 hylomorphism is the composition of a catamorphism and a recursive anamorphism.
-\begin{minted}{Coq}
+\begin{coqcode}
 Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
   (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
   : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
@@ -1364,7 +1367,7 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
 Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
   (g : Alg F B) (h : RCoalg F A)
 : cata g \o rana h =e hylo g h.
-\end{minted}
+\end{coqcode}
 This result will allow us to \emph{calculate} programs by providing small, easy
 to verify implementations, and combining them into efficient recursive
 functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
