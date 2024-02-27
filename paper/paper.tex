@@ -1,4 +1,4 @@
-\documentclass[a4paper, UKenglish, cleveref, autoref, thm-restate]{lipics-v2021}
+\documentclass[anonymous, a4paper, UKenglish, cleveref, autoref, thm-restate]{lipics-v2021}
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
 % \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
@@ -117,17 +117,21 @@
 \bibliographystyle{plainurl}% the mandatory bibstyle
 %\titlerunning{Dummy short title} %TODO optional, please use if title is longer than one line
 
-\author{Jane {Open Access}}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional. Use additional curly braces to indicate the correct name splitting when the last name consists of multiple name parts.
+\author{David Castro-Perez}{School of Computing, University of Kent}{d-castro-perez@kent.ac.uk}{}{}
+\author{Marco Paviotti}{School of Computing, University of Kent}{m.paviotti@kent.ac.uk}{}{}
+\author{Michael Vollmer}{School of Computing, University of Kent}{m.vollmer@kent.ac.uk}{}{}
 
-\author{Joan R. Public\footnote{Optional footnote, e.g. to mark corresponding author}}{Department of Informatics, Dummy College, [optional: Address], Country}{joanrpublic@dummycollege.org}{[orcid]}{[funding]}
+%\author{Jane {Open Access}}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional. Use additional curly braces to indicate the correct name splitting when the last name consists of multiple name parts.
 
-\authorrunning{J. Open Access and J.\,R. Public} %TODO mandatory. First: Use abbreviated first/middle names. Second (only in severe cases): Use first author plus 'et al.'
+%\author{Joan R. Public\footnote{Optional footnote, e.g. to mark corresponding author}}{Department of Informatics, Dummy College, [optional: Address], Country}{joanrpublic@dummycollege.org}{[orcid]}{[funding]}
 
-\Copyright{Jane Open Access and Joan R. Public} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
+\authorrunning{D. Castro-Perez, M. Paviotti, and M. Vollmer} %TODO mandatory. First: Use abbreviated first/middle names. Second (only in severe cases): Use first author plus 'et al.'
+
+\Copyright{D. Castro-Perez, M. Paviotti, and M. Vollmer} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
 
 \ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
 
-\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+\keywords{hylomorphisms, Coq, code extraction, verification} %TODO mandatory; please add comma-separated list of keywords
 
 \category{} %optional, e.g. invited paper
 
@@ -139,7 +143,7 @@
 
 %\funding{(Optional) general funding statement \dots}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
 
-\acknowledgements{I want to thank \dots}%optional
+%\acknowledgements{I want to thank \dots}%optional
 
 %\nolinenumbers %uncomment to disable line numbering
 
@@ -742,7 +746,7 @@ use of families of types. Since OCaml's type system cannot accurately capture
 such families of types, Coq's code extraction mechanism will insert unsafe
 casts. To avoid unsafe casts, we can consider representing the positions of a
 container as a type that captures \emph{all} the potential positions in all
-possible shapes, together with a predicate \mintinline{Coq}{Valid} that
+possible shapes, together with a predicate \coq{Valid} that
 determines whether a position is valid in a shape.
 \begin{minted}{Coq}
 Context (Shape : Type) (Pos : Type) (Valid : Shape -> Pos -> Prop).
@@ -750,12 +754,12 @@ Record App (X : Type) := { shape    : Shape;
                           contents : {p | Valid shape p} -> X }.
 \end{minted}
 This approach solves the the problem of the unsafe casts, since the code
-extracted for \mintinline{Coq}{{p | Valid shape pos}} will be an OCaml singleton
-type defined as the OCaml equivalent to \mintinline{Coq}{Pos}.
+extracted for \coq{{p | Valid shape pos}} will be an OCaml singleton
+type defined as the OCaml equivalent to \coq{Pos}.
 
 However, there still remains the issue of reasoning about the equality of
 container extensions. The contents of the container extensions need to be
-accessed via a function \mintinline{Coq}{contents}. The domain of this function
+accessed via a function \coq{contents}. The domain of this function
 depends on the shape of the container. This means that, for a given type of
 shapes and positions, the equality of two objects of a container extension will
 need to deal with heterogeneous equality. Since we want to remain axiom-free,
@@ -797,62 +801,62 @@ This functor is built as the sum of two functors: $X \mapsto \mathbb{N}$ and $X 
 X \times X$. Consider first $X \mapsto \mathbb{N}$. This is a constant functor
 that maps $X$ to the type $\mathbb{N}$. More generally, a functor that, given a
 type $A$, maps everything to it, $X \mapsto A$, only needs one shape ($A$, L9
-of Fig~\ref{fig:poly}), and zero positions (In Coq, \mintinline{Coq}{False},
+of Fig~\ref{fig:poly}), and zero positions (In Coq, \coq{False},
 L10 of Fig~\ref{fig:poly}). The reason why there are zero valid positions in
 a constant container extension is because, given something of type 
-\mintinline{Coq}{App (Const (Ks A) Kp) X}, it should be impossible to get
-something of type \mintinline{Coq}{X}. But from the container shape, we will
+\coq{App (Const (Ks A) Kp) X}, it should be impossible to get
+something of type \coq{X}. But from the container shape, we will
 always be able to get the element of type $A$\footnote{%
-  Our decision to use \mintinline{Coq}{False} is arbitrary. In general, we
+  Our decision to use \coq{False} is arbitrary. In general, we
   could have chosen any time, with a validity predicate that always returns
-  \mintinline{Coq}{false}. It would make no difference for code extraction.
-}. This functor is, therefore \mintinline{Coq}{Const nat}.
+  \coq{false}. It would make no difference for code extraction.
+}. This functor is, therefore \coq{Const nat}.
 
 Consider now $X \mapsto X \times X$. This is the product of two
 identity functors $X \mapsto X$. The identity functor only has one shape, and
 we can use the unit type to represent such shapes. From this shape we should be
 able to get an element of type $X$, and we can capture this by using the unit
 type for positions. To build an element of the container extension type, we
-will need to provide a function of type \mintinline{Coq}{unit -> X}, which is
-isomorphic to \mintinline{Coq}{X}. 
+will need to provide a function of type \coq{unit -> X}, which is
+isomorphic to \coq{X}. 
 
 The shape of the product of two container extensions is the product of their
 shapes. The product of such container extensions should allow us to get either
 the left, or the right element in the product. Therefore, the positions of this
 container extension is the sum of the positions of the two container
 extensions. What is a valid position in a given shape? If the position is
-\mintinline{Coq}{inl p} (or \mintinline{Coq}{inr p}), then it is only valid if
-\mintinline{Coq}{p} is valid in the first (resp. second) component of the
+\coq{inl p} (or \coq{inr p}), then it is only valid if
+\coq{p} is valid in the first (resp. second) component of the
 shape. The product of our two container extensions is
-\mintinline{Coq}{Prod Id Id}. 
+\coq{Prod Id Id}. 
 
 Finally, the shape the sum of two container extensions is the sum of their
 shapes. The positions are, like for products, the sum of their shapes. But to
 check the validity of shapes in positions, their constructor must match, e.g.
-shape \mintinline{Coq}{inl s} and shape \mintinline{Coq}{inl p}, with
-\mintinline{Coq}{valid s p}. 
+shape \coq{inl s} and shape \coq{inl p}, with
+\coq{valid s p}. 
 
 Our final container extension is the following: 
-\mintinline{Coq}{Sum (Const nat) (Prod Id Id)}.
+\coq{Sum (Const nat) (Prod Id Id)}.
 The shape of this functor is: 
-\mintinline{Coq}{nat + unit * unit}. The positions of this functor
+\coq{nat + unit * unit}. The positions of this functor
 are \mintinline[breaklines]{Coq}{False + (unit + unit)}, which is isomorphic
-to \mintinline{Coq}{unit + unit}, which will only be valid in the RHS.
+to \coq{unit + unit}, which will only be valid in the RHS.
 
-The Coq value \mintinline{Coq}{inl n} of type
-\mintinline{Coq}{nat + bool * bool} would look as follows as a container
+The Coq value \coq{inl n} of type
+\coq{nat + bool * bool} would look as follows as a container
 extension 
-\mintinline{Coq}{App (Sum (Const nat) (Prod Id Id)) bool}:
+\coq{App (Sum (Const nat) (Prod Id Id)) bool}:
 \begin{minted}{Coq}
 {| shape := inl n; cont := fun e => uninhabited e|}
 \end{minted}
-We omit the definition of \mintinline{Coq}{uninhabited}, which exploits the
-fact that \mintinline{Coq}{e} for \mintinline{Coq}{inl n} implies
-\mintinline{Coq}{False} to build an element of type \mintinline{Coq}{bool}%
-\footnote{Note that, since \mintinline{Coq}{e} is uninhabited we could return
-any arbitrary value instead of \mintinline{Coq}{uninhabited e}.}.
+We omit the definition of \coq{uninhabited}, which exploits the
+fact that \coq{e} for \coq{inl n} implies
+\coq{False} to build an element of type \coq{bool}%
+\footnote{Note that, since \coq{e} is uninhabited we could return
+any arbitrary value instead of \coq{uninhabited e}.}.
 
-Similarly, the Coq value \mintinline{Coq}{inr (true, false)} as a container
+Similarly, the Coq value \coq{inr (true, false)} as a container
 extension is as follows:
 \begin{minted}{Coq}
   {| shape := inr (tt,tt);
@@ -864,10 +868,10 @@ extension is as follows:
         end
   |}
 \end{minted}
-Here, the position \mintinline{Coq}{inl f} is impossible, as
-\mintinline{Coq}{f} would need to be a proof of \mintinline{Coq}{False}.
+Here, the position \coq{inl f} is impossible, as
+\coq{f} would need to be a proof of \coq{False}.
 Of the two remaining positions, the left one will return 
-\mintinline{Coq}{true}, and the right position \mintinline{Coq}{false}.
+\coq{true}, and the right position \coq{false}.
 \begin{figure}
 \begin{minipage}{.52\textwidth}
   \begin{minted}[linenos, fontsize=\small]{Coq}
@@ -946,10 +950,10 @@ trivially \emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
 However, the use of a different equality for container extensions now forces us
 to deal with the fact that some types have different definitions of equality.
 In particular, we want to reason about the equality of functions of types such
-as \mintinline{Coq}{App F A -> B} (or \mintinline{Coq}{B -> App F A}). Since 
+as \coq{App F A -> B} (or \coq{B -> App F A}). Since 
 these types now come with their own equivalence, any function that manipulates
 them needs to be \emph{respectful}. I.e.\ given 
-\mintinline{Coq}{R : X -> X -> Prop} and \mintinline{Coq}{R' : Y -> Y -> Prop},
+\coq{R : X -> X -> Prop} and \coq{R' : Y -> Y -> Prop},
 we want functions (morphisms) that satisfy the following property:
 \begin{minted}{Coq}
 forall (x y : X), R x y -> R' (f x) (f y)
@@ -957,18 +961,20 @@ forall (x y : X), R x y -> R' (f x) (f y)
 
 \subsection{Types and Morphisms}
 \label{sec:types-morphisms}
-We address the different forms of equality by coupling every type with an
-associated equivalence relation, and every morphism with a proof that it is
-\emph{respectful} (i.e. \emph{proper} morphisms with respect to the function
-\emph{respectfulness} relation). We use \mintinline{Coq}{=e} to denote the
-equivalence relation associated with a type. Every Coq type is associated by
-default with the standard Coq propositional equality, unless a different
-equivalence is specified. We use the type-class mechanism to help Coq's code
-extraction mechanism to remove any occurence of custom equivalence relations
-in the extracted OCaml code.
+We address the different forms of equality by defining a class of setoids,
+i.e.\ types with na associated equivalence relation, and considering only
+functions that respect the associated equivalences, i.e. \emph{proper}
+morphisms with respect to the function \emph{respectfulness} relation.  We use
+the type-class mechanism, instead of setoids in Coq's standard library, to help
+Coq's code extraction mechanism remove any occurence of custom equivalence
+relations in the extracted OCaml code.  We use \coq{=e} to denote
+the equivalence relation of a setoid. By default, we associate every Coq type
+with the standard propositional equality, unless a different equivalence is
+specified (i.e.\ we allow overlapping instances, and Coq's propositional
+equality takes the lowest priority). 
 \begin{minted}{Coq}
 Reserved Notation "f =e g" (at level 70, no associativity).
-Class equiv A : Type :=
+Class setoid A : Type :=
   MkEquiv
     { eqRel : A -> A -> Prop;
       e_refl : forall x, eqRel x x;
@@ -977,13 +983,13 @@ Class equiv A : Type :=
     }.
 Notation "f =e g" := (eqRel f g).
 \end{minted}
-Given types \mintinline{Coq}{A} and  \mintinline{Coq}{B}, with their respective
-equivalence relations \mintinline{Coq}{eA : A -> A -> Prop} and
-\mintinline{Coq}{eB : B -> B -> Prop}, the we define the type
-\mintinline{Coq}{A ~> B} to represents \emph{proper} morphisms of the
-respectfulness relation of \mintinline{Coq}{R} to \mintinline{Coq}{R'}.
+Given types \coq{A} and  \coq{B}, with their respective
+equivalence relations \coq{eA : A -> A -> Prop} and
+\coq{eB : B -> B -> Prop}, the we define the type
+\coq{A ~> B} to represents \emph{proper} morphisms of the
+respectfulness relation of \coq{R} to \coq{R'}.
 \begin{minted}{Coq}
-Structure morph A {eA : equiv A} B {eB : equiv B} :=
+Structure morph A {eA : setoid A} B {eB : setoid B} :=
   MkMorph
     { app :> A -> B;
       app_eq : forall x y, x =e y -> app x =e app y
@@ -992,32 +998,32 @@ Notation "A ~> B" := (@morph A _ B _).
 \end{minted}
 Note that we leverage on Coq's type class mechanism to fill in the necessary
 equivalence relations. Since Coq's code extraction mechanism will erase any
-occurrence of \mintinline{Coq}{Prop} in the code, so objects of type
-\mintinline{Coq}{A ~> B} will be extracted to the OCaml equivalent to
-\mintinline{Coq}{A -> B}.
+occurrence of \coq{Prop} in the code, so objects of type
+\coq{A ~> B} will be extracted to the OCaml equivalent to
+\coq{A -> B}.
 
 \subsubsection{Polynomial Types}
 We define a number of equivalences for polynomial types. These equivalences are
 be used when building proper morphisms that manipulate their respective types.
 \begin{minted}{Coq}
-Instance ext_eq (A : Type) `{eq_B : equiv B} : equiv (A -> B).
-Instance pair_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A * B).
-Instance sum_eq `{eq_A : equiv A} `{eq_B : equiv B} : equiv (A + B).
-Instance prop_eq : equiv Prop.
-Instance pred_sub `{eA : equiv A} {P : A -> Prop} : equiv {a : A | P a}.
+Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
+Instance pair_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A * B).
+Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
+Instance prop_eq : setoid Prop.
+Instance pred_sub `{eA : setoid A} {P : A -> Prop} : setoid {a : A | P a}.
 \end{minted}
 
 Most of the definitions that involve functions and polynomial types are
 straightworward.  Identity and composition are defined as 
-\mintinline{Coq}{fun x => x} and \mintinline{Coq}{fun f g x => f (g x)} 
+\coq{fun x => x} and \coq{fun f g x => f (g x)} 
 respectively, and the proofs that they are proper morphisms is straightforward,
 and automatically discharged by Coq. 
-Products are built using function \mintinline{Coq}{fun f g x => (f x, g x)},
-with the projections being the standard Coq  \mintinline{Coq}{fst} and
-\mintinline{Coq}{snd} functions. Similarly, sum injections are encoded using
-Coq's \mintinline{Coq}{inl} and \mintinline{Coq}{inr} constructors, and
+Products are built using function \coq{fun f g x => (f x, g x)},
+with the projections being the standard Coq  \coq{fst} and
+\coq{snd} functions. Similarly, sum injections are encoded using
+Coq's \coq{inl} and \coq{inr} constructors, and
 pattern matching on them uses the function 
-\mintinline{Coq}{fun f g x => match x with | inl y => f y | inr y => g y end}.
+\coq{fun f g x => match x with | inl y => f y | inr y => g y end}.
 The proofs that these morphisms are proper are straightforward.  Finally, we
 also provide functions for currying/uncurrying, and partially applying a proper
 morphism. We avoid using definitions, or unfold them, to help Coq's code
@@ -1032,11 +1038,11 @@ shapes, and container equality now uses equivalences of shapes and contained
 elements: 
 \begin{minted}{Coq}
 Class Cont (Shape : Type) (Pos : Type) := { valid : Shape ~> Pos ~> bool }.
-Inductive AppR `{e : equiv X} (x y : App F X) : Prop :=
+Inductive AppR `{e : setoid X} (x y : App F X) : Prop :=
   | AppR_ext (Es : shape x =e shape y)
              (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
 \end{minted}
-Note the use of \mintinline{Coq}{=e} instead of Coq's standard equality.  For
+Note the use of \coq{=e} instead of Coq's standard equality.  For
 positions, however, we chose to use Coq's propositional equality, since these
 would leads to simpler code. We explain why in Section~\ref{sec:cata}, and the
 mechanisation of initial algebras of container extensions. The definitions in
@@ -1046,23 +1052,23 @@ straightforward way.
 We prove the isomorphisms of polynomial types and the equivalent (redefined)
 container extensions. As an example, we discuss (informally) the isomorphisms
 of pairs with their equivalent container extensions. Suppose that we
-know that \mintinline{Coq}{App F X} is isomorphic to \mintinline{Coq}{A}, and
-\mintinline{Coq}{App G X} is isomorphic to \mintinline{Coq}{B}. Then we can
-show that \mintinline{Coq}{App (Prod F G) X} is isomorphic to
-\mintinline{Coq}{A * B}.  If we have an element of type 
-\mintinline{Coq}{App (Prod F G) X},
-using the \mintinline{Coq}{inl} position, we can obtain
-\mintinline{Coq}{App F X}.  Similarly, using \mintinline{Coq}{inr}, we can
-obtain \mintinline{Coq}{App G X}. Since these are the only two valid positions
+know that \coq{App F X} is isomorphic to \coq{A}, and
+\coq{App G X} is isomorphic to \coq{B}. Then we can
+show that \coq{App (Prod F G) X} is isomorphic to
+\coq{A * B}.  If we have an element of type 
+\coq{App (Prod F G) X},
+using the \coq{inl} position, we can obtain
+\coq{App F X}.  Similarly, using \coq{inr}, we can
+obtain \coq{App G X}. Since these are the only two valid positions
 in the shape of pairs, we have finished. It is now sufficient to use the
-isomorphisms of \mintinline{Coq}{App F X} and \mintinline{Coq}{App G X} to
-obtain \mintinline{Coq}{A * B}. Similarly if we have \mintinline{Coq}{A * B},
+isomorphisms of \coq{App F X} and \coq{App G X} to
+obtain \coq{A * B}. Similarly if we have \coq{A * B},
 we can first use the isomorphisms of 
-\mintinline{Coq}{A} and
-\mintinline{Coq}{B} to obtain
-\mintinline{Coq}{App F X * App G X}, and then construct the necessary container
-extension. Given \mintinline{Coq}{p_inl}/\mintinline{Coq}{p_inr} that act as
-\mintinline{Coq}{inl/inr} but on valid product positions, the relevant
+\coq{A} and
+\coq{B} to obtain
+\coq{App F X * App G X}, and then construct the necessary container
+extension. Given \coq{p_inl}/\coq{p_inr} that act as
+\coq{inl/inr} but on valid product positions, the relevant
 functions that define the isomorphism are:
 \begin{minted}{Coq}
 Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
@@ -1091,30 +1097,30 @@ we can leverage Coq's \emph{setoid rewrite}
 \subsection{Algebras}
 
 Algebras on container extensions are defined as expected. The carrier of the
-algebra is \mintinline{Coq}{A}, and the operations of the algebra are morphisms
+algebra is \coq{A}, and the operations of the algebra are morphisms
 of the following type:
 \begin{minted}{Coq}
 Notation Alg F A := (App F A ~> A).
 \end{minted}
-Given a container extension \mintinline{Coq}{F}, we define \emph{two}
+Given a container extension \coq{F}, we define \emph{two}
 (isomorphic) initial algebras. We will show the need for the second initial
 algebra in the following section. Our fist initial algebra is defined as the
-straightforward least fixpoint of the container extension \mintinline{Coq}{F}:
+straightforward least fixpoint of the container extension \coq{F}:
 \begin{minted}{Coq}
 Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
 \end{minted}
 This definition highlights why we cannot define equality of the positions and
 the contained elements generically (recall Section~\ref{sec:TODO}): the
 contained types may not have (yet) an associated equivalence. In other words,
-we would need to provide an equivalence for \mintinline{Coq}{LFix}, but the
+we would need to provide an equivalence for \coq{LFix}, but the
 only way to do this is to define such equivalence simultaneously to the
-definition for  \mintinline{Coq}{LFix}.  We could have overcame this
-circularity by defining  \mintinline{Coq}{LFix} independently of container
+definition for  \coq{LFix}.  We could have overcame this
+circularity by defining  \coq{LFix} independently of container
 extensions, and define later the necessary
-\mintinline{Coq}{in}/\mintinline{Coq}{out} functions to convert between
-\mintinline{Coq}{LFix} and \mintinline{Coq}{App}. However, this extra layer
+\coq{in}/\coq{out} functions to convert between
+\coq{LFix} and \coq{App}. However, this extra layer
 interferes with code extraction, in that it requires destructing/constructing
-subsequent \mintinline{Coq}{LFix} and  \mintinline{Coq}{App}, which Coq is not
+subsequent \coq{LFix} and  \coq{App}, which Coq is not
 always able to inline.
 
 We provide a custom induction scheme for initial algebras:
@@ -1127,9 +1133,9 @@ Lemma LFix_ind [P : LFix -> Prop]
 \end{minted}
 We define the equality of initial algebras of container extensions recursively,
 by traversing the structure and equating the shapes and positions. This
-definition is equivalent to taking the fixpoint of \mintinline{Coq}{AppR} in
+definition is equivalent to taking the fixpoint of \coq{AppR} in
 Section~\ref{sec:TODO}, where the shapes must be equivalent and, for equal
-positions, the contents must be related by \mintinline{Coq}{LFixR}.
+positions, the contents must be related by \coq{LFixR}.
 \begin{minted}{Coq}
 Fixpoint LFixR (x y : LFix) : Prop :=
   let f_x := LFix_out x in
@@ -1139,10 +1145,10 @@ Fixpoint LFixR (x y : LFix) : Prop :=
 \end{minted}
 From such initial algebras, we define \emph{catamorphisms} by recursively
 traversing their structure. As usual, a catamorphism takes an
-\mintinline{Coq}{F}-algebra with carrier \mintinline{Coq}{A}, and produces a
-function from \mintinline{Coq}{LFix F} to \mintinline{Coq}{A}.
+\coq{F}-algebra with carrier \coq{A}, and produces a
+function from \coq{LFix F} to \coq{A}.
 \begin{minted}{Coq}
-Definition cata_f `{equiv A} (g : Alg F A) : LFix -> A
+Definition cata_f `{setoid A} (g : Alg F A) : LFix -> A
 := fix f (x : LFix) :=
   match x with
   | LFix_in ax =>
@@ -1153,14 +1159,14 @@ Definition cata_f `{equiv A} (g : Alg F A) : LFix -> A
 It is easy to show that this function is a proper morphism, and we use this
 fact to encode them as a higher-order morphism, with the following type:
 \begin{minted}{Coq}
-Definition cata `{eA : equiv A} : Alg F A ~> LFix ~> A := ...
+Definition cata `{eA : setoid A} : Alg F A ~> LFix ~> A := ...
 \end{minted}
 Finally, we prove that catamorphisms satisfy their expected universal law (i.e.
-they are the unique solution to the equation \mintinline{Coq}{f =e g \o fmap f \o l_out}).
-The proof is by induction on the input to \mintinline{Coq}{f} and
-\mintinline{Coq}{cata g}.
+they are the unique solution to the equation \coq{f =e g \o fmap f \o l_out}).
+The proof is by induction on the input to \coq{f} and
+\coq{cata g}.
 \begin{minted}{Coq}
-Lemma cata_univ `{eA : equiv A} (g : Alg F A) (f : LFix ~> A)
+Lemma cata_univ `{eA : setoid A} (g : Alg F A) (f : LFix ~> A)
     : f =e cata g <-> f =e g \o fmap f \o l_out.
 \end{minted}
 
@@ -1173,9 +1179,9 @@ CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
 Their equivalence relation, and anamorphisms, and universal properties are
 easy to encode:
 \begin{minted}{Coq}
-  Definition ana `{eA : equiv A} : Coalg F A ~> A ~> GFix...
+  Definition ana `{eA : setoid A} : Coalg F A ~> A ~> GFix...
 
-  Lemma ana_univ `{eA : equiv A} (h : Coalg F A) (f : A ~> GFix)
+  Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix)
     : f =e ana h <-> f =e g_in \o fmap f \o h.
 \end{minted}
 This definition, however, prevents us from composing catamorphisms and
@@ -1187,21 +1193,24 @@ $F$-algebras:
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{minted}
-Catamorphisms from this initial algebra are denoted by \mintinline{Coq}{ccata},
+Catamorphisms from this initial algebra are denoted by \coq{ccata},
 and they can be used to define the isomorphism between 
-\mintinline{Coq}{{x : GFix F | FinF x}} and
-\mintinline{Coq}{LFix F}. In particular: 
+\coq{{x : GFix F | FinF x}} and
+\coq{LFix F}. In particular: 
 \begin{minted}{Coq}
-Lemma cata_ccata `{equiv A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
-Lemma ccata_cata `{equiv A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
+Lemma cata_ccata `{setoid A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
+Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
 \end{minted}
 Using this new initial algebra, we can compose catamorphisms and anamorphisms,
-\emph{as long as the anamorphisms produce finite trees}. However, if
-anamorphisms produce finite trees, then we can also encode in Coq the notion of
-\emph{recursive anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.
-Recursive coalgebras are coalgebras whose anamorphism produces finite trees.
-The following predicate captures this fact. Note how all the predicate states
-is that \mintinline{Coq}{h} can only be applied finitely many times:
+\emph{as long as the anamorphisms produce finite trees}. We refer the reader to
+the supplementary material and Coq code to see how we encode this. In this
+paper, however, we focus on the fact that, anamorphisms produce finite trees,
+then their return type can also be the \emph{least} fixed point of the
+container extension. We encode in Coq the notion of \emph{recursive
+anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.  Recursive
+coalgebras are coalgebras whose anamorphism produces finite trees.  The
+following predicate captures this fact. The following predicate states that
+\coq{h} can only be applied finitely many times:
 \begin{minted}{Coq}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
@@ -1209,40 +1218,67 @@ Inductive RecF (h : Coalg F A) : A -> Prop :=
 We show how this predicate is equivalent to the anamorphism of such coalgebras
 producing finite trees:
 \begin{minted}{Coq}
-Lemma ana_rec_term `{equiv A} (h : Coalg F A)
+Lemma ana_rec_term `{setoid A} (h : Coalg F A)
   : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
 \end{minted}
-Recursive anamorphisms are implemented in Coq recursively on the proof that
-they can only be applied finitely many times (\mintinline{Coq}{RecF}).  Note
-that such proofs will be erased when extracting code to OCaml. This is standard
-practice when building general recursive functions in Coq\footnote{\dcas{This
-technique had a name in the community, but I cannot remember. Something
-predicates}}. The core definitions are the following:
+Recursive anamorphisms are implemented in Coq recursively on the structure of
+the proof that they can only be applied finitely many times
+(\coq{RecF}).  Note that such proofs will be erased when extracting
+code to OCaml. This is standard practice when building general recursive
+functions in Coq\footnote{\dcas{This technique had a name in the community, but
+I cannot remember. Something predicates}}. The core definitions are the
+following:
 \begin{minted}{Coq}
 Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
 
-Definition rana_f__ `{equiv A} (c : Coalg F A)
+Definition rana_f__ `{setoid A} (c : Coalg F A)
   : forall x : A, RecF c x -> LFix F
   := fix f (x : A) (H : RecF c x) :=
        let hx := c x in
        LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
 \end{minted}
-Here, \mintinline{Coq}{RecF_inv} provides the structurally smaller element for
+Here, \coq{RecF_inv} provides the structurally smaller element for
 the Coq recursive definition. We then couple coalgebras with a proof that they
 are recursive, and add a coercion from recursive coalgebras to coalgebras.
 \begin{minted}{Coq}
-Definition RCoalg F A = {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
+Definition RCoalg F A = Rec {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
 \end{minted}
+In some cases, proving that coalgebras can only be applied finitely many
+times is straightforward (e.g.\ they are recursive on some inductive type in
+Coq). However, in many cases, proving that a coalgebra is recursive directly
+can be tedious and cumbersome. To ease development, we prove that if a 
+given coalgebra respects a \emph{well-founded relation}, then it is 
+necessarily recursive.
+\begin{minted}{Coq}
+Definition respects_relation `{setoid A} (c : Coalg F A)
+      {B} (m : A -> B) (R : B -> B -> Prop)
+  := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
+
+Lemma wf_coalg_rec `{setoid A} {B}
+  (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
+  (c : Coalg F A) (RR : respects_relation c m R) : RecP c.
+\end{minted}
+In the above definition, \coq{m} is used as a form of ``metric''
+for termination, and the well-founded relation is on \coq{B}. This
+works equivalently to transporting a well-founded relation 
+\coq{R}
+on
+\coq{B} to \coq{A} as 
+\coq{R' := fun x y => R (m x) (m y)}, which is also trivially
+well-founded. Using these definitions, we can construct recursive coalgebras by
+proving that they respect a well-founded relation, which generally leads to
+simpler proofs.
+
 Similarly to the rest of the definitions, we prove that recursive anamorphisms
 are respectful, and use this fact to build them as higher order proper
-morphisms, and prove its universal law, i.e.\ that recursive anamorphisms are
+morphisms, and prove their universal law, i.e.\ that recursive anamorphisms are
 the unique solution to the equation 
-\mintinline{Coq}{f =e l_in \o fmap f \o h},
-where \mintinline{Coq}{h} is a recursive coalgebra.
+\coq{f =e l_in \o fmap f \o h},
+where \coq{h} is a recursive coalgebra.
 \begin{minted}{Coq}
-Definition rana `{eA : equiv A} : RCoalg A ~> A ~> LFix F :=...
+Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F :=...
 
-Lemma rana_univ A {eA : equiv A} (h : RCoalg A) (f : A ~> LFix F)
+Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
     : f =e rana h <-> f =e l_in \o fmap f \o h.
 \end{minted}
 
@@ -1255,10 +1291,11 @@ do recursion, and there is no corecursive definition that is guaranteed to be
 guarded, due to the use of an arbitrary algebra $a$. Furthermore, solutions to
 the hylomorphism equation are \emph{not} guaranteed to be unique, or to even
 exist. To address these issues, we mechanise \textbf{recursive hylomorphisms}
-which, as we will see, are guaranteed to have a unique solution.
+which are guaranteed to have a unique solution to the hylomorphism equation.
 
-Hylomorphisms \emph{are} the unique solution to $f = a \circ F\; f \circ c$, if
-$c$ is a recursive coalgebra. We show this by first providing the definition
+If $c$ is a recursive coalgebra, then the equation $f = a \circ F\; f \circ c$ 
+does have a unique solution.
+We show this by first providing the definition
 for hylomorphisms in Coq, and then proving that any function satisfying this
 equation is a hylomorphism. We call these hylomorphisms with a recursive
 coalgebra, \textbf{recursive hylomorphisms}.
@@ -1273,9 +1310,9 @@ Definition hylo_def (a : Alg F B) (c : Coalg F A)
 \end{minted}
 The definition of recursive hylomorphisms is recursive on the proof that the
 anamorphism can only be applied finitely many times on any input. We again use
-\mintinline{Coq}{RecF_inv} to obtain the structurally smaller proof to use in
+\coq{RecF_inv} to obtain the structurally smaller proof to use in
 the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
-we prove that \mintinline{Coq}{hylo_def} is respectful, and use this proof to
+we prove that \coq{hylo_def} is respectful, and use this proof to
 built the corresponding higher-order proper morphism:
 \begin{minted}{Coq}
 Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
@@ -1324,7 +1361,7 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
   (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
   : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 
-Corollary cata_ana_hylo `(F : Cont Sh P) `{equiv A} `{equiv B}
+Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
   (g : Alg F B) (h : RCoalg F A)
 : cata g \o rana h =e hylo g h.
 \end{minted}
