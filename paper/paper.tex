@@ -193,11 +193,11 @@ proof assistant. One example is the quicksort algorith, written in OCaml below:
   let divide = function
     | [] -> None
     | x::xs -> Some (x, List.partition (fun y -> y < x) xs);;
-  let rec quicksort xs = match divide xs with
+  let rec qsort xs = match divide xs with
     | None -> []
-    | Some (x, (smaller, larger)) -> quicksort smaller @ (x::quicksort larger)
+    | Some (x, (smaller, larger)) -> qsort smaller @ (x::qsort larger)
 \end{minted}
-While \ocaml{quicksort} is a well-defined mathematical function it cannot be
+While \ocaml{qsort} is a well-defined mathematical function it cannot be
 accepted by a proof assistant.  The reason is that the \ocaml{divide}
 function \emph{destructuring} the input ``dives'' deeper in the input returning
 two sublists with the head as a pivot.
@@ -216,7 +216,7 @@ functions.
 
 A better approach for reasoning about program equivalences comes from
 \emph{structured recursion schemes}, and their associated algebraic laws.  In
-particular, \ocaml{quicksort} is an instance of a \emph{divide-and-conquer}
+particular, \ocaml{qsort} is an instance of a \emph{divide-and-conquer}
 algorithm which, in the functional programming literature is known as a
 hylomorphism~\cite{MeijerFP91, HuIT96}.  Hinze et al.~\cite{HinzeWG15} showed
 that every recursive program can be turned into an hylomorphism, which implies
@@ -225,7 +225,7 @@ Furthermore, the laws that are satisfied by hylomorphisms ease reasoning about
 program equivalences, since they can capture a number of useful equivalences,
 ranging from common optimisations such as \emph{short-cut
 fusion}~\cite{TakanoM95}, to (semi-)automatic
-parallelisations~\cite{Gibbons96:Third}.
+parallelisations~\cite{Gibbons96:Third, farmsCastro}.
 
 Despite the benefits of hylomorphisms for reasoning about program equivalences,
 not many approaches mechanise structured recursion schemes in proof assistants.
@@ -254,7 +254,7 @@ allows the extraction of naturally-looking, clean OCaml code. While programmers
 still need to reason about the termination of their programs, our mechanisation
 will allow the use of the algebraic laws of hylomorphisms for program
 reasoning, as well as extracting to clean, naturally-looking code. As an
-example our mechanisation of \ocaml{quicksort} as a hylomorphism will produce
+example our mechanisation of \ocaml{qsort} as a hylomorphism will produce
 the following code:
 \begin{coqcode}
 let rec qsort = function
