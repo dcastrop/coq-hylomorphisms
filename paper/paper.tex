@@ -715,31 +715,54 @@ needed and implement them as hylos.
 \dcas{Subsections are tentative topics to remember what I need to fill in here,
 but these are not final}
 
-In order to abstract recursion patters we need to be able to talk about functors
-which have the suitable fixed-point properties, i.e. those who have an initial
-algebra. Instances of these functors are the polynomial ones.  A common approach
-to construct such functors is to use \emph{container}~\cite{AbbottAG05}.  In
-this section we introduce the basics of polynomial functors as containers
-(Section~\ref{sec:containers}).  However, reasoning about containers equality
-will require us to consider both functional extensionality and heterogeneous
-equality. As stated in previous sections~\ref{sec:intro}, this is rather
-problematic since a stric requirement for this work is that we should remain
-axiom-free. For this purpose in Section~\ref{sec:types-morphisms} we introduce
-a custom equivalence relation on types in order to avoid using the functional
-extensionality axiom.
+In order to abstract recursion patters we need to be able to abstract away from
+the particular shape of the data.  This is achieved by introducing the concept
+of \emph{functors} which have the suitable fixed-point properties, i.e. those
+who have a initial algebras. A common approach to construct such functors is to
+use \emph{container}~\cite{AbbottAG05} which is what we introduce in this
+Section~\ref{sec:containers}.  However, reasoning about containers equality will
+require us to consider both functional extensionality and heterogeneous
+equality. To avoid this in Section~\ref{sec:types-morphisms} we introduce a
+custom equivalence relation on types.
 
 \subsection{Functors and Containers}
 \label{sec:containers}
-A container is defined by a type of \emph{shapes} and a \emph{family of position
-types} indexed by shapes.
+To abstract away the shape of a particular data structure we use functors.
+These are functions \coq{F : Type -> Type} which additionally have a
+map \coq{fmap : forall A B, (A -> B) -> F A -> F B} witnessing the idea that a
+functor represents a container for abstract data that can be manipulated without
+changing the outer structure. For example, the type \coq{List : Type -> Type} is
+a functor and \coq{List A} is the type of lists over elements of type \coq{A}
+with the obvious \coq{fmap} function recursive over a list and applying the
+function \coq{A -> B} for each element of the list.
+Additionally the type of lists arises as the least fixed-point for the
+functor \coq{F X = unit + (A * X) }.
+
+In general not every functor has a fixed-point, so we are going to restrict
+ourselves to polynomial functors as represented by containers.  A container is
+defined by a type of \emph{shapes} and a \emph{family of position types} indexed
+by shapes.
 \begin{coqcode}
 Context (Shape : Type) (Pos : Shape -> Type).
 \end{coqcode}
-An \emph{extension} of this container is a functor defined as follows:
+In our previuos example, we would define \coq{Shape} as \coq{unit + A}
+indicating there are two constructors in the data type and one of these contains
+a piece of data of type \coq{A}. Moreover, we would define the positions
+as \coq{Pos (inl tt) = Empty_set} and \coq{Pos (inr a) = unit} indicating that
+the first constructor does not have any recursive type variables and the second
+constructor has one type variable.
+
+Therefore an \emph{extension} of this container is a functor defined as follows:
 \begin{coqcode}
 Record App (X : Type) := { shape : Shape; contents : Pos shape -> X }.
 \end{coqcode}
-with the obvious action on morphisms. Generally, any functor that is isomorphic
+with the obvious action on morphisms. Note that for \coq{Pos (inl tt)} we have a
+type of functions \coq{Empty_set -> X} which is only inhabited by the trivial
+map from the empty type and for \coq{Pos (inr a)} we have the type of
+functions \coq{unit -> X} which has cardinality \coq{unit}.
+
+
+Generally, any functor that is isomorphic
 to a container extension is called a \emph{container functor}. However, in our
 work we will call \emph{container functor} the functors defined by a specific
 container extension.
@@ -768,21 +791,21 @@ objects of a container extension will need to deal with heterogeneous equality.
 Since we want to remain axiom-free, one way to deal with this is to rely on a
 \emph{decidable} validity predicate.
 
-Finally we can define the type of containers we need for performing Coq
-extraction correctly. First, containers are defined as pairs of shape and
-position types that have a
-\emph{decidable} validity predicate. We represent decidable predicates as
-functions that return a boolean and lift booleans to propositions similarly to the implementation provided by
-SSReflect~\cite{GonthierL09}.
-For simplicity, we define the dependent pair of valid positions as a record,
-which will be extracted to a singleton type with the validity proof erased by
-Coq's code extraction mechanism.
+Finally we can define the type of containers as follows:
 \begin{coqcode}
 Class Cont (Shape : Type) (Pos : Type) := { valid : Shape -> Pos -> bool }.
 Coercion is_true (b : bool) : Prop := b = true.
 Record PosOf `(C : Cont Shape Pos) (shape : Shape) := 
   ValidPos { val : Pos; IsValid : valid shape pos }.
 \end{coqcode}
+where \coq{valid} is the First, containers are defined as pairs of shape and
+position types that have a \emph{decidable} validity predicate. We represent
+decidable predicates as functions that return a boolean and lift booleans to
+propositions similarly to the implementation provided by
+SSReflect~\cite{GonthierL09}.  For simplicity, we define the dependent pair of
+valid positions as a record, which will be extracted to a singleton type with
+the validity proof erased by Coq's code extraction mechanism.
+
 Then, we define \emph{container extensions} as follows:
 \begin{coqcode}
 Record App `(C : Cont Shape Pos) (X : Type) :=
