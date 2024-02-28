@@ -113,6 +113,7 @@
 
 %\newcommand{\coq}[1]{\mintinline{coq}{#1}}
 \newmintinline[coq]{coq}{fontsize=\small}
+\newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
 
 \title{A Mechanised Library for Generic (Co)Programming}
@@ -179,27 +180,110 @@
 \label{sec:intro}
 Recursive definitions cannot be proven well-defined automatically due to the
 halting problem. Modern proof assistants like Coq or Agda provide a sound, but
-incomplete algorithm which syntactically checks for termination or productivity.
-For recursion, this is done by trying to (automatically) infer which argument in
-the recursive call gets smaller with respects to the original input argument.
-For productivity, the algorithm checks that the (co)recursive call appears
-directly under a constructor to make sure that this function always produce at
-least one element after each recursive step.
+incomplete algorithm which syntactically checks for termination or
+productivity.  For recursion, this is done by trying to (automatically) infer
+which argument in the recursive call gets smaller with respects to the original
+input argument.  For productivity, the algorithm checks that the (co)recursive
+call appears directly under a constructor to make sure that this function
+always produce at least one element after each recursive step.
 
 As mentioned, some functions, though well-defined, cannot be accepted by the
-proof assistant. One example is the quicksort algorithm. This is given by the
-\haskell{partition} and \haskell{quicksort} function below (written in Haskell
-code):
-While \haskell{quicksort} is a well-defined mathematical function it cannot be
-accepted by a proof assistant.  The reason is that the \haskell{partition}
+proof assistant. One example is the quicksort algorith, written in OCaml below:
+\begin{minted}{OCaml}
+  let divide = function
+  |  [] -> None
+  |  x::xs -> Some (x, List.partition (fun y -> y < x) xs);;
+
+  let rec quicksort xs = match divide xs with
+    | None -> []
+    | Some (x, (smaller, larger)) -> quicksort smaller @ (x::quicksort larger)
+\end{minted}
+While \ocaml{quicksort} is a well-defined mathematical function it cannot be
+accepted by a proof assistant.  The reason is that the \ocaml{divide}
 function \emph{destructuring} the input ``dives'' deeper in the input returning
 two sublists with the head as a pivot.
 
-A pen-and-paper technique would be to show that the \haskell{partition} is a
-\emph{well-founded coalgebra} on the functor $(- \times A \times -)$ for a fixed
-type $A$. Here the term ``well-founded'' refers to the fact that the infinite
-iteration of this coalgebra will produce a \emph{finite} binary tree with nodes
-in $A$.
+The main approach for implementing nonstructural recursion in Coq is to use
+\emph{well-founded recursion}, where recursive definitions are coupled with
+\emph{termination proofs}. Using well-founded recursion, the recursive calls
+will happen on \emph{structurally smaller termination proofs}. A benefit of
+this approach is that, extracting verified nonstructural recursive functions to
+OCaml will erase the termination proofs, and so produce code that will be
+closer to what a programmer may have written directly in OCaml. However,
+reasoning about program equivalences requires dealing with such termination
+proofs, and it is common practice to use custom reduction lemmas that will be
+used extensively when proving properties  about the nonstructural recursive
+functions.
+
+A better approach for reasoning about program equivalences comes from
+\emph{structured recursion schemes}, and their associated algebraic laws.  In
+particular, \ocaml{quicksort} is an instance of a \emph{divide-and-conquer}
+algorithm which, in the functional programming literature is known as a
+hylomorphism~\cite{MeijerFP91, HuIT96}.  Hinze et al.~\cite{HinzeWG15} showed
+that every recursive program can be turned into an hylomorphism, which implies
+that, ``\emph{every recursion scheme can be formalised as an hylomorphism}''.
+Furthermore, the laws that are satisfied by hylomorphisms ease reasoning about
+program equivalences, since they can capture a number of useful equivalences,
+ranging from common optimisations such as \emph{short-cut
+fusion}~\cite{TakanoM95}, to (semi-)automatic
+parallelisations~\cite{Gibbons96:Third}.
+
+Despite the benefits of hylomorphisms for reasoning about program equivalences,
+not many approaches mechanise structured recursion schemes in proof assistants.
+A recent approach by Abreu et al.\~\cite{AbreuDHJMS23} encode an algebraic
+approach to divide-and-conquer computations, in which termination is entirely
+enforced by the typing discipline of the recursion scheme. However, although
+their approach solves the problem of termination proofs, as well as the
+performance of the code that is run \emph{within Coq}, it no longer allows the
+extraction of clean, naturally-looking code.  By naturally-looking and clean,
+we mean code that (1) preserves the recursive structure intended by the
+programmer; and (2) does not lead to unsafe casts \ocaml{Obj.magic} in the
+generated code. 
+
+In OCaml, \ocaml{Obj.magic} allows for unsafe casts between types.
+Although the use of \ocaml{Obj.magic} should be safe in the code
+extracted by Coq, it has been proven that, for higher-order programs, simple
+interoperations can lead to incorrect behaviour or even
+segfaults~\cite{forster:hal-04329663}. Therefore, the avoidance of axioms and
+\ocaml{Obj.magic} means that the extracted code will have stronger
+safety guarantees, and will allow the safe interoperation with other OCaml
+code.
+
+This work presents the first formalisation in Coq of \emph{hylomorphisms}, as
+well as their algebraic laws that: (1) is \textbf{fully axiom-free}; and (2)
+allows the extraction of naturally-looking, clean OCaml code. While programmers
+still need to reason about the termination of their programs, our mechanisation
+will allow the use of the algebraic laws of hylomorphisms for program
+reasoning, as well as extracting to clean, naturally-looking code. As an
+example our mechanisation of \ocaml{quicksort} as a hylomorphism will produce
+the following code:
+\begin{coqcode}
+let rec qsort = function
+  | [] -> []
+  | h :: t ->
+    let (l, r) = partition (fun x0 -> (<=) x0 h) t in
+    let cx = fun p -> match p with | Lbranch -> l | Rbranch -> r in 
+    app (qsort (cx Lbranch)) (h :: (qsort (cx Rbranch)))
+\end{coqcode}
+
+The contributions we make in this paper are as follows:
+\begin{itemize}
+  \item We provide a framework for \emph{generic programming} with recursion
+    schemes in Coq, with a strong focus on proving their algebraic laws and 
+    program equivalences, and clean code extraction.
+  \item We formalise algorithms for divide and conquer, dynamic programming and
+    mutual recursion.
+  \item We verified the well-known short-cut fusion optimisation in Coq and
+    extract the resulting code to OCaml.
+\end{itemize}
+
+\dcas{Rewritten up to here}
+In
+\ocaml{quicksort} above, a pen-and-paper technique to prove termination would
+be to show that \ocaml{divide} is a \emph{well-founded coalgebra} on the
+functor $(1 + A \times - \times -)$ for a fixed type $A$. Here the term
+``well-founded'' refers to the fact that the infinite iteration of this
+coalgebra will produce a \emph{finite} binary tree with nodes in $A$.
 
 More generally, this is an instance of a \emph{divide-and-conquer} algorithm.
 Such algorithms are structured in three parts: first, the input is broken down
@@ -294,14 +378,14 @@ The primary goals of this work are:
   mechanisation of hylomorphisms and their laws should be axiom-free; and
   \item that Coq
 hylomorphisms should be extracted to recursive OCaml functions that use no
-instances of \mintinline{OCaml}{Obj.magic}.
+instances of \ocaml{Obj.magic}.
 \end{enumerate}
-In OCaml, \mintinline{OCaml}{Obj.magic} allows for unsafe casts between types.
-Although the use of \mintinline{OCaml}{Obj.magic} should be safe in the code
+In OCaml, \ocaml{Obj.magic} allows for unsafe casts between types.
+Although the use of \ocaml{Obj.magic} should be safe in the code
 extracted by Coq, it has been proven that, for higher-order programs, simple
 interoperations can lead to incorrect behaviour or even
 segfaults~\cite{forster:hal-04329663}. Therefore, the avoidance of axioms and
-\mintinline{OCaml}{Obj.magic} means that the extracted code will have stronger
+\ocaml{Obj.magic} means that the extracted code will have stronger
 safety guarantees, and will allow the safe interoperation with other OCaml code.
 \mvol{This is good!}
 

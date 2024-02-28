@@ -28,8 +28,7 @@ Definition c_split : Coalg (TreeF unit nat) (list nat) :=
              match x with
              | nil => a_leaf tt
              | cons h t =>
-                 let l := List.filter (fun x => Nat.leb x h) t in
-                 let r := List.filter (fun x => negb (Nat.leb x h)) t in
+                 let (l, r) := List.partition (fun x => Nat.leb x h) t in
                  a_node h l r
              end
     }|).
