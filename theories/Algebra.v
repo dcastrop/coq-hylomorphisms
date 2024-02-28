@@ -14,9 +14,7 @@ Section AlgDef.
   Context `(F : Cont Sh Po).
 
   Unset Elimination Schemes.
-
   Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
-
   Set Elimination Schemes.
 
   Lemma LFix_rect [P : LFix -> Type]
