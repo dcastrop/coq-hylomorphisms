@@ -191,9 +191,8 @@ As mentioned, some functions, though well-defined, cannot be accepted by the
 proof assistant. One example is the quicksort algorith, written in OCaml below:
 \begin{minted}{OCaml}
   let divide = function
-  |  [] -> None
-  |  x::xs -> Some (x, List.partition (fun y -> y < x) xs);;
-
+    | [] -> None
+    | x::xs -> Some (x, List.partition (fun y -> y < x) xs);;
   let rec quicksort xs = match divide xs with
     | None -> []
     | Some (x, (smaller, larger)) -> quicksort smaller @ (x::quicksort larger)
@@ -230,7 +229,7 @@ parallelisations~\cite{Gibbons96:Third}.
 
 Despite the benefits of hylomorphisms for reasoning about program equivalences,
 not many approaches mechanise structured recursion schemes in proof assistants.
-A recent approach by Abreu et al.\~\cite{AbreuDHJMS23} encode an algebraic
+A recent approach by Abreu et al.~\cite{AbreuDHJMS23} encode an algebraic
 approach to divide-and-conquer computations, in which termination is entirely
 enforced by the typing discipline of the recursion scheme. However, although
 their approach solves the problem of termination proofs, as well as the
