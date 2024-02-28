@@ -1412,6 +1412,29 @@ passes}.
 
 \section{Extraction}
 
+This section covers how to use our approach to calculate recursive programs
+from simple, non-recursive specifications. The steps are the following:
+\begin{enumerate}
+  \item Write a specification as a morphism \coq{f : A ~> B}.
+  \item Use Coq's generalised rewriting and the laws of morphisms to 
+    rewrite it to some \coq{g : A ~> B} such that \coq{f =e g}.
+  \item Project the function \coq{h : A -> B} from \coq{g}
+    (i.e. \coq{h = app g}).
+  \item Extract \coq{h} to OCaml.
+\end{enumerate}
+Note that steps 2 and 3 are \emph{proofs} that \coq{f} and \coq{h} are
+\emph{extensionally equal}. Then, Coq's extraction mechanism will erase any
+proofs from the code, and inline our definitions. To ease the application of
+these steps, we provide the following helper type:
+\begin{coqcode}
+  Record Ext (f : A ~> B) := 
+    MkExt { target :> A -> B; tgt_eq : app f =e target; }.
+\end{coqcode}
+Note that \coq{tgt_eq} will be erased when extracting \coq{Ext f} to OCaml,
+since it is in \coq{Prop}. This implies that the code extracted for \coq{Ext f}
+will be the function \coq{target} that is extensionally equal to \coq{f}.
+
+\subsection{Sorting Algorithms}
 \dcas{Talk About this}
 \begin{minted}{OCaml}
   let rec msort x = match x with
@@ -1420,6 +1443,10 @@ passes}.
      let cx = fun p -> match p with | Lbranch -> l0 | Rbranch -> r in
      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
 \end{minted}
+
+\subsection{Knapsack}
+
+\subsection{Harper's Regular-Expression Matcher}
 
 \section{Related Work}
 
