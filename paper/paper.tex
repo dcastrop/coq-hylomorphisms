@@ -767,21 +767,23 @@ second inhabitant is the pair composed by \coq{inr a : Shape}, for
 some \coq{a : A}, and a function \coq{Pos (inr a) -> X}.  This latter type is
 equal to \coq{unit -> X} which represents the elements of \coq{X} and therefore
 is isomorphic to \coq{X}.  This particular pair of shapes and positions is
-isomorphic to the type \coq{unit + A * X}. The correspondence between containers
-and polynomial functors has been formalised in this work and has been moved to
-the Appendix~\ref{sec:pol-containers} for space reasons.
+isomorphic to the type \coq{unit + A * X}.
 
-Generally, any functor that is isomorphic to a container extension is called a
-\emph{container functor}. However, in our work we will call \emph{container
-functor} the functors defined by a specific container extension.
+The correspondence between containers and polynomial functors has been
+formalised in this work and has been moved to the
+Appendix~\ref{sec:pol-containers} for space reasons. Generally, any functor that
+is isomorphic to a container extension is called a \emph{container functor}.
+Here we will call \emph{container functor} the functors defined
+by a specific container extension.
 
-The first problem in extracting Coq code from such container extensions is the
-use of families of types. Since OCaml's type system cannot accurately capture
-such families of types, Coq's code extraction mechanism will insert unsafe
-casts. To avoid unsafe casts, we can consider representing the positions of a
-container as a type that captures \emph{all} the potential positions in all
-possible shapes, together with a predicate \coq{Valid} that determines whether a
-position is valid in a shape.
+\subsection{Extractable Containers}
+In the previous section we defined containers using dependent types.  However,
+Ocaml's type system is not equipped to handle these and to solve this problem
+Coq's code extraction mechanism will insert unsafe casts.
+
+Here consider instead representing the positions of a
+container using a validity predicate which assigns shapes to positions.
+A container extension is then defined as follows:
 \begin{coqcode}
 Context (Shape : Type) (Pos : Type) (Valid : Shape -> Pos -> Prop).
 Record App (X : Type) := { shape    : Shape; 
@@ -1440,8 +1442,8 @@ recursive function).
 
 \bibliography{references.bib}
 \appendix
-\mpav{Dumped}
 \section{Polynomial Functors as Container Extensions}
+\label{sec:pol-containers}
 Polynomial functors can be defined as container extensions~\ref{fig:poly}. We
 omit here the proofs that these container extensions are isomorphic to
 polynomials, but this proof is straightforward. To illustrate how the identity,
