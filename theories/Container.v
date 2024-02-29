@@ -8,6 +8,7 @@ Require Import HYLO.Equivalence.
 Import StdEquiv.
 Require Import HYLO.Morphism.
 
+
 (** The justification why the class below this comment defines a Container can be
   * found later, with the definitions: App, fmapA, etc.
   * - [S] is the type of "shapes" of this Cont
@@ -45,10 +46,12 @@ Class Cont `{Esh : setoid Sh} (P : Type) :=
   }.
 Arguments Cont Sh {Esh} P.
 
+Coercion is_true b : Prop := b = true.
+
 Record Pos `{Cont Sh P} (s : Sh) :=
   MkElem {
       val : P;
-      Valid : valid (s, val) = true
+      Valid : valid (s, val)
     }.
 Arguments Pos & {Sh _ P F} s : rename.
 Arguments MkElem & {Sh _ P F s} val Valid : rename.
@@ -254,3 +257,42 @@ Section Composition.
   #[export]
     Instance CompCont : Cont (App F S2) (P1 * P2) := { valid := composeValid }.
 End Composition.
+
+Section NaturalTransformation.
+  Context `(F : Cont S1 P1) `(G : Cont S2 P2).
+
+  Variable eta_S : S1 ~> S2.
+  Variable eta_P : P2 -> P1.
+  Variable eta_C : forall s p, valid (eta_S s, p) -> valid (s, eta_P p).
+
+  Definition eta_Pos : forall s, Pos (eta_S s) -> Pos s
+    := fun _ p => {| val := eta_P (val p); Valid := eta_C (Valid p) |}.
+
+  Definition eta_ {X} : App F X -> App G X :=
+    fun x => {| shape := eta_S (shape x); cont := fun p => cont x (eta_Pos p) |}.
+  Lemma eta_morph `{setoid X} : forall x y, x =e y -> @eta_ X x =e @eta_ X y.
+  Proof.
+    intros [sx kx] [sy ky] [Es Ek]. unfold eta_. simpl in *.
+    constructor; simpl; rewrite ?Es; auto with ffix.
+    intros e1 e2 Ep. apply Ek.
+    destruct e1 as [v1 V1], e2 as [v2 V2]; simpl in *; subst; trivial.
+  Qed.
+  Definition eta `{setoid X} : App F X ~> App G X :=
+    Eval unfold eta_, eta_Pos in MkMorph eta_morph.
+
+  Context `{setoid X} `{setoid Y}.
+  Lemma eta_is_eta : forall (f : X ~> Y), @eta Y _ \o fmap f =e fmap f \o @eta X _.
+  Proof.
+    intros f [sx kx]. constructor; simpl; auto with ffix.
+    intros e1 e2 Hv; apply app_eq; simpl.
+    destruct e1 as [p1 V1], e2 as [p2 V2]; simpl in *.
+    revert V2. rewrite <- Hv. intros V2.
+    rewrite (bool_irrelevance V1 V2). reflexivity.
+  Qed.
+End NaturalTransformation.
+
+Definition eta1 `{F : Cont S1 P} `{G : Cont S2 P}
+  (f : S1 ~> S2) (H : forall s p, valid (f s, p) -> valid (s, p)) `{setoid X} :
+  App F X ~> App G X := @eta _ _ _ _ _ _ _ _ f id H X _.
+
+Arguments eta1 {S1}%type_scope {Esh} {P}%type_scope {F} {S2}%type_scope {Esh0 G} f H {X}%type_scope {H0}.
