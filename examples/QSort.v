@@ -38,11 +38,9 @@ Definition c_split : Coalg (TreeF unit nat) (list nat) :=
 Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
   intros [|h t] p; simpl in *; try (apply (dom_leaf _ p)).
-  rewrite PeanoNat.Nat.lt_succ_r. destruct p as [[|] V]; simpl.
-  (* destruct (val p). *)
-  (* apply length_filter. *)
-(* Qed. *)
-Admitted.
+  rewrite PeanoNat.Nat.lt_succ_r. revert p. rewrite List.partition_as_filter.
+  intros []; simpl in *. destruct val; apply List.filter_length_le.
+Qed.
 
 Definition tsplit : RCoalg (TreeF unit nat) (list nat)
   := mk_wf_coalg wf_lt split_fin.

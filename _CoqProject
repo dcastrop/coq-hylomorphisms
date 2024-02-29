@@ -3,6 +3,8 @@
 -R examples/ "Examples"
 -arg -w
 -arg all
+-docroot coq-hylomorphisms
+
 util/Cofix.v
 theories/Equivalence.v
 theories/Morphism.v

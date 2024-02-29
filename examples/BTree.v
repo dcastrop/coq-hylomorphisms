@@ -142,14 +142,6 @@ Lemma tree_itree_iso2 {L A}
 Qed.
 
 (* TODO: refactor into Utilities *)
-Lemma length_filter A (p : A -> bool) (l : list A) :
-  length (List.filter p l) <= length l.
-Proof.
-  induction l as [|h t Ih]; try apply le_n.
-  simpl. destruct (p h); simpl.
-  -  apply le_n_S, Ih.
-  -  apply le_S, Ih.
-Qed.
 
 Lemma eta_pair A B (p : A * B) : p = (fst p, snd p).
 Proof. destruct p; trivial. Qed.
