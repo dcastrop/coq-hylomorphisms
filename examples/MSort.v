@@ -43,33 +43,14 @@ Fixpoint splitL (x : list nat) (accL accR : list nat) :=
 Definition len_pair (p : list nat * list nat)
   := max (length (fst p)) (length (snd p)).
 
+Require Import Lia.
 Lemma splitL_len : forall x a1 a2,
-    len_pair (splitL x a1 a2) <= max (length a1) (length a2) + length x.
+    length (fst (splitL x a1 a2)) <= max (length a1) (length a2) + length x /\
+      length (snd (splitL x a1 a2)) <= max (length a1) (length a2) + length x.
 Proof.
   induction x as [|h t Ih]; intros a1 a2; unfold len_pair; simpl in *.
-  - rewrite <- plus_n_O. apply le_n.
-  - specialize (Ih a2 (cons h a1)). simpl in *.
-    apply (PeanoNat.Nat.le_trans _ _ _ Ih). clear Ih.
-    rewrite <- plus_n_Sm, <- plus_Sn_m, PeanoNat.Nat.succ_max_distr.
-    rewrite <- PeanoNat.Nat.add_le_mono_r.
-    rewrite PeanoNat.Nat.max_comm.
-    apply PeanoNat.Nat.max_le_compat; [|apply le_S]; apply le_n.
-Qed.
-Lemma splitL_len1 : forall x a1 a2,
-    length (fst (splitL x a1 a2)) <=  max (length a1) (length a2) + length x.
-Proof.
-  intros x a1 a2.
-  set (He := splitL_len x a1 a2).
-  unfold len_pair in He. rewrite PeanoNat.Nat.max_lub_iff in He.
-  destruct He; trivial.
-Qed.
-Lemma splitL_len2 : forall x a1 a2,
-    length (snd (splitL x a1 a2)) <=  max (length a1) (length a2) + length x.
-Proof.
-  intros x a1 a2.
-  set (He := splitL_len x a1 a2).
-  unfold len_pair in He. rewrite PeanoNat.Nat.max_lub_iff in He.
-  destruct He; trivial.
+  - lia.
+  - specialize (Ih a2 (cons h a1)). simpl in *. lia.
 Qed.
 
 Definition c_split : Coalg (TreeF (list nat) unit) (list nat) :=
@@ -88,9 +69,8 @@ Lemma split_fin : respects_relation c_split (@length nat) lt.
 Proof.
   intros [|h [|h' t]] p; simpl in *; try apply (dom_leaf _ p).
   revert p; rewrite (eta_pair (splitL _ _ _)). simpl; intros p.
-  destruct p as [[|] V]; simpl; rewrite PeanoNat.Nat.lt_succ_r.
-  * apply splitL_len1.
-  * apply splitL_len2.
+  destruct (splitL_len t (h::nil) (h'::nil)) as [H1 H2]; simpl in *.
+  destruct p as [[|] V]; rewrite PeanoNat.Nat.lt_succ_r; trivial.
 Qed.
 
 Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat)
