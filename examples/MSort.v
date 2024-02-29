@@ -13,6 +13,7 @@ Require Import HYLO.Hylo.
 
 Require Import Examples.BTree.
 
+Require Import Lia.
 Require List.
 Require Import Nat.
 
@@ -43,7 +44,6 @@ Fixpoint splitL (x : list nat) (accL accR : list nat) :=
 Definition len_pair (p : list nat * list nat)
   := max (length (fst p)) (length (snd p)).
 
-Require Import Lia.
 Lemma splitL_len : forall x a1 a2,
     length (fst (splitL x a1 a2)) <= max (length a1) (length a2) + length x /\
       length (snd (splitL x a1 a2)) <= max (length a1) (length a2) + length x.
