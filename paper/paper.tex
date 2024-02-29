@@ -1099,7 +1099,56 @@ Proving that these functions indeed form an isomorphism is straightforward,
 using the fact that \coq{Prod} containers only have two valid positions.
 
 \section{Algebras, Coalgebras and Hylomorphisms}
-In the previous sections we have introduced the concept of a
+Recursion schemes provide an abstract way to consume and generate data.  The
+most simple and well-known recursion scheme is the \emph{fold} or
+\emph{catamorphism} which consumes data. Its dual is the \emph{unfold} or
+\emph{anamorphisms} which produces data.
+
+For example, assuming the type of lists over a type \coq{A},
+namely \coq{List A}, and given an
+algebra \coq{alg : unit + A * List A -> List A} a
+catamorphism \coq{cata alg : List A -> B} destructs a list into its head and
+tail using a destructor \coq{InOp : List A -> unit + A * List A}. This latter is
+actually an isomorphim with its inverse \coq{In : unit + A * List A -> List A}
+defined by the maps \coq{Empty : unit -> List A}
+and \coq{Cons : A * List A -> List A}.
+
+After destructing the input the catamorphism is applying itsefl recursively.
+This is done using functoriality of the shape of the data, which is a map of
+type \coq{unit + A * List A -> unit + A * List B}. Once the recursion as
+returned it result it applies the algebra \coq{alg} which composes together the
+results of the recursion yielding the result of type \coq{B}.
+
+More abstractly, assuming a base functor \coq{F} a catamorphism is the unique solution to the equation
+\coq{cata alg = alg . fmap (cata alg) . InOp}.
+
+% where $F$ is a \emph{base functor}, $Ff$ is the \emph{functorial action} which
+% can be thought of the program $\operator{fmap}\; f$, $a$ is a program of type
+% $F A \to A$ (an $F$-algebra),  $c$ is a program of type $C \to FC$ (a
+% $F$-coalgebra), $\InOp$ is the isomoprhism on the least fixed-point of $F$,
+% namely $\InOp : \mu F \to F\mu F$, and $\OutOp$ is the isomorphism on the
+% greatest fixed-point of $F$, namely $F \nu F \to \nu F$. When the unique
+% solutions to the above equations exist we denote them as $\cata{a}$ and
+% $\ana{c}$ respectively.
+
+% C
+Hylomorphism are more general recursion schemes capturing the
+\emph{divide-and-conquer} idea. In short, the input is destructured by its not
+structurally. In the example, we gave in the introduction the destructuring
+program is given by \coq{divide} which is not an isomorphism.  The question the
+hylomorphism satisfies is more general than the catamorphism in that the
+destructing map \coq{InOp} is generalised to a \emph{recursive coalgebra}, that
+is intuitively a coalgebra that can be applied only a finite amount of times.
+In fact, in the case of \coq{divide} this is a recursive coalgebra because the
+size of the list is getting smaller.
+
+% This program is formed of essentially two parts. The first one is what is
+% commonly thought as the \emph{partition} function destructuring the input list
+% in three parts, the pivot and the other two sublists, and the second part
+% recursing over the sublists and composing the results back together.
+
+With this in mind we know proceed onto describing how to formalise hylomorphisms
+in Coq.
 
 \subsection{Algebras}
 Algebras on container extensions are defined as expected. The carrier of the
@@ -1150,7 +1199,6 @@ Fixpoint LFixR (x y : LFix) : Prop :=
   shape f_x =e shape f_y /\
     (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
 \end{coqcode}
-
 
 Least fixed points of container extensions come with two functions that are
 defined as wrappers around constructor \coq{LFix_in} and projection
