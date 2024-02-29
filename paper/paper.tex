@@ -1109,18 +1109,29 @@ namely \coq{List A}, and given an
 algebra \coq{alg : unit + A * List A -> List A} a
 catamorphism \coq{cata alg : List A -> B} destructs a list into its head and
 tail using a destructor \coq{InOp : List A -> unit + A * List A}. This latter is
-actually an isomorphim with its inverse \coq{In : unit + A * List A -> List A}
+actually an isomorphim with its inverse
+\begin{minted}{coq}
+In : unit + A * List A -> List A
+\end{minted}
+
 defined by the maps \coq{Empty : unit -> List A}
 and \coq{Cons : A * List A -> List A}.
 
 After destructing the input the catamorphism is applying itsefl recursively.
 This is done using functoriality of the shape of the data, which is a map of
-type \coq{unit + A * List A -> unit + A * List B}. Once the recursion as
-returned it result it applies the algebra \coq{alg} which composes together the
-results of the recursion yielding the result of type \coq{B}.
+type
+\begin{minted}{coq}
+unit + A * List A -> unit + A * List B
+\end{minted}
+Once the recursion as returned it result it applies the algebra \coq{alg} which
+composes together the results of the recursion yielding the result of
+type \coq{B}.
 
-More abstractly, assuming a base functor \coq{F} a catamorphism is the unique solution to the equation
-\coq{cata alg = alg . fmap (cata alg) . InOp}.
+More abstractly, assuming a base functor \coq{F} a catamorphism is the unique
+solution to the equation
+\begin{minted}{coq}
+cata alg = alg . fmap (cata alg) . InOp
+\end{minted}
 
 % where $F$ is a \emph{base functor}, $Ff$ is the \emph{functorial action} which
 % can be thought of the program $\operator{fmap}\; f$, $a$ is a program of type
@@ -1137,10 +1148,11 @@ Hylomorphism are more general recursion schemes capturing the
 structurally. In the example, we gave in the introduction the destructuring
 program is given by \coq{divide} which is not an isomorphism.  The question the
 hylomorphism satisfies is more general than the catamorphism in that the
-destructing map \coq{InOp} is generalised to a \emph{recursive coalgebra}, that
-is intuitively a coalgebra that can be applied only a finite amount of times.
-In fact, in the case of \coq{divide} this is a recursive coalgebra because the
-size of the list is getting smaller.
+destructing map \coq{InOp} is generalised to a \emph{recursive
+coalgebra}~\cite{AdamekMM19,CaprettaUV04}, that is intuitively a coalgebra that
+can be applied only a finite amount of times.  In fact, in the case
+of \coq{divide} this is a recursive coalgebra because the size of the list is
+getting smaller.
 
 % This program is formed of essentially two parts. The first one is what is
 % commonly thought as the \emph{partition} function destructuring the input list
@@ -1280,7 +1292,7 @@ the supplementary material and Coq code to see how we encode this. In this
 paper, however, we focus on the fact that, if anamorphisms produce finite
 trees, then their return type can also be the \emph{least} fixed point of the
 container extension. We encode in Coq the notion of \emph{recursive
-anamorphisms} and \emph{recursive coalgebras}~\cite{TODO}.  Recursive
+anamorphisms} and \emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  Recursive
 coalgebras are coalgebras whose anamorphism produces finite trees.  The
 following predicate captures this fact, \coq{h} is recursive if
 \coq{h} can only be applied finitely many times:
