@@ -54,7 +54,7 @@ Section FCoalgDef.
     - intros Pf x. rewrite    H. trivial.
   Qed.
 
-  Record RCoalg `{eA : setoid A} :=
+  Structure RCoalg `{eA : setoid A} :=
     Rec {
         coalg :> Coalg F A;
         recP : RecP coalg
@@ -128,7 +128,7 @@ Section FCoalgDef.
   Lemma fin_out : forall x, RecF l_out x.
   Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
 
-  Definition f_out : RCoalg (LFix F) := Rec _ fin_out.
+  Canonical Structure f_out : RCoalg (LFix F) := Rec _ fin_out.
 
   Definition rana_f__ `{setoid A} (c : Coalg F A)
     : forall x : A, RecF c x -> LFix F :=
@@ -384,7 +384,7 @@ Section FinRec.
 
   Lemma ccata_ana_r `{setoid A}
     (f : A ~> GFix F) (Ff : forall x, FinF (f x)) (g : A ~> LFix F)
-    : ccata l_in \o liftP f Ff =e g -> f =e ana f_out \o g.
+    : ccata l_in \o liftP f Ff =e g -> f =e ana l_out \o g.
   Proof.
     unfold liftP,liftP_f_. simpl. unfold ccata_f.  simpl. intros Hx x.
     specialize (Hx x). generalize dependent (Ff x). generalize (g x) (f x).
@@ -397,7 +397,7 @@ Section FinRec.
 
   Lemma ccata_ana_l `{setoid A}
     (f : A ~> GFix F) (Ff : forall x, FinF (f x)) (g : A ~> LFix F)
-    : f =e ana f_out \o g -> ccata l_in \o liftP f Ff =e g.
+    : f =e ana l_out \o g -> ccata l_in \o liftP f Ff =e g.
   Proof.
     unfold liftP,liftP_f_. simpl. unfold ccata_f.  simpl. intros Hx x.
     specialize (Hx x). revert Hx. generalize (g x) (f x) (Ff x).
@@ -410,10 +410,10 @@ Section FinRec.
 
   Lemma ccata_ana `{setoid A}
     (f : A ~> GFix F) (Ff : forall x, FinF (f x)) (g : A ~> LFix F)
-    : f =e ana f_out \o g <-> ccata l_in \o liftP f Ff =e g.
+    : f =e ana l_out \o g <-> ccata l_in \o liftP f Ff =e g.
   Proof. split; [apply ccata_ana_l| apply ccata_ana_r]. Qed.
 
-  Lemma rana_ana `{setoid A} (f : RCoalg F A) : ana f =e ana f_out \o rana f.
+  Lemma rana_ana `{setoid A} (f : RCoalg F A) : ana f =e ana l_out \o rana f.
   Proof.
     symmetry. apply ana_univ.
     rewrite fmap_comp, <- (idKl (fmap (rana _))), <- l_out_in.
@@ -428,3 +428,22 @@ Section FinRec.
     : ccata l_in \o liftP (ana f) (rcoalg_fin f) =e rana f.
   Proof. rewrite <- ccata_ana. apply rana_ana. Qed.
 End FinRec.
+
+About cmap.
+
+
+Lemma f_comp_eta_rec `{F : Cont Sf Pf} {Pg} {G : Cont Sf Pg}
+  `{setoid X} `{setoid Y} `{setoid A} (f : X ~> Y) (c : RCoalg (Nest F G X) A)
+  : RecP (cmap f \o c).
+Proof.
+  intros x. generalize (terminating c x). intros R.
+  induction R as [x _ Ih].
+  constructor. Opaque cmap. simpl in *. Transparent cmap.
+  unfold cmap at 1 4. Opaque cmap.  simpl.
+  destruct (c x) as [[sx kx] kx']; simpl in *. intros [v V]. simpl in *.
+  apply Ih.
+Defined.
+
+Canonical Structure f_comp_eta `{F : Cont Sf Pf} {Pg} {G : Cont Sf Pg}
+  `{setoid X} `{setoid Y} `{setoid A} (f : X ~> Y) (c : RCoalg (Nest F G X) A)
+  := Rec (coalg:=(cmap f \o c)) (f_comp_eta_rec f c).

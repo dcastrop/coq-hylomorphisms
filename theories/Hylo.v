@@ -100,7 +100,7 @@ Section HyloFusion.
   Context `{F : Cont Sh Po}.
   Context `{eA : setoid A} `{eB : setoid B} `{eC : setoid C}.
 
-  Lemma hylo_cata (g : Alg F B) : cata g =e hylo g f_out.
+  Lemma hylo_cata (g : Alg F B) : cata g =e hylo g l_out.
   Proof. rewrite hylo_univ. rewrite<-cata_univ. reflexivity. Qed.
 
   Lemma hylo_ana (h : RCoalg F A) : rana h =e hylo l_in h.
@@ -150,13 +150,13 @@ Section HyloFusion.
     rewrite INV.
     rewrite idKr.
     reflexivity.
-    Restart.
-    apply hylo_fusion_r.
-    rewrite hylo_unr at 1.
-    rewrite compA,compA.
-    rewrite INV.
-    rewrite idKl.
-    reflexivity.
+    (* Restart. *)
+    (* apply hylo_fusion_r. *)
+    (* rewrite hylo_unr at 1. *)
+    (* rewrite compA,compA. *)
+    (* rewrite INV. *)
+    (* rewrite idKl. *)
+    (* reflexivity. *)
   Qed.
 End HyloFusion.
 
@@ -169,3 +169,44 @@ Corollary cata_ana_hylo_f `(F : Cont Sh P) `{setoid A} `{setoid B}
   (g : Alg F B) (h : RCoalg F A)
   : cata g \o ccata l_in \o liftP (ana h) (rcoalg_fin h) =e hylo g h.
 Proof. rewrite <- compA, ana_rana, cata_ana_hylo. reflexivity. Qed.
+
+Corollary cata_ana_hylo_gf `(F : Cont Sh P) `{setoid A} `{setoid B}
+  (g : Alg F B) (h : RCoalg F A)
+  : ccata g \o liftP (ana h) (rcoalg_fin h) =e hylo g h.
+Proof. rewrite <- cata_ccata, cata_ana_hylo_f. reflexivity. Qed.
+
+Corollary hylo_map_shift `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}
+  `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+  (g : Alg (Nest F G Y) B) (m : X ~> Y) (h : RCoalg (Nest F G X) A)
+  : hylo g (cmap m \o h) =e hylo (g \o cmap m) h.
+Proof.
+  apply hylo_univ. rewrite hylo_unr at 1.
+  rewrite (compA _ (cmap m) h), <- (compA g _ (cmap m)), <- cmap_is_eta, compA.
+  reflexivity.
+Qed.
+
+Arguments deforest & {_ _ _ _ _ _ _ _ _ _ _ _ _ _}.
+Arguments l_out_in & {_ _ _ F}.
+
+Corollary hylo_map_fusion_c `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}
+  `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+  (g : Alg (Nest F G Y) B) (m : X ~> Y) (h : RCoalg (Nest F G X) A)
+  : hylo g l_out \o hylo (l_in \o cmap m) h =e hylo g (cmap m \o h).
+Proof.
+  rewrite <- hylo_map_shift, (deforest l_out_in).
+  reflexivity.
+Qed.
+
+Corollary hylo_map_fusion `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}
+  `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+  (g : Alg (Nest F G Y) B) (m : X ~> Y) (h : RCoalg (Nest F G X) A)
+  : hylo g l_out \o hylo (l_in \o cmap m) h =e hylo (g \o cmap m) h.
+Proof.
+  rewrite <- hylo_map_shift, (deforest l_out_in), hylo_map_shift.
+  reflexivity.
+Qed.
+
+Definition everywhere `{setoid X} `{setoid Y}
+  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg}
+  : (X ~> Y) ~> LFix (Nest F G X) ~> LFix (Nest F G Y) :=
+  papp hylo l_out \o eapp \o pair (const (comp l_in)) cmap.

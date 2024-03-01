@@ -41,14 +41,12 @@ Add Parametric Relation `{eq : setoid A} : A (@eqRel A eq)
 #[export] Hint Resolve e_trans : ffix.
 
 (* Import Module when standard equality is needed *)
-Module StdEquiv.
-  #[export] Instance def_eq A : setoid A | 100 :=
-  {| eqRel := @eq A;
-    e_refl := @eq_refl A;
-    e_sym := @eq_sym A;
-    e_trans := @eq_trans A;
-  |}.
-End StdEquiv.
+#[export] Instance def_eq A : setoid A | 100 :=
+{| eqRel := @eq A;
+  e_refl := @eq_refl A;
+  e_sym := @eq_sym A;
+  e_trans := @eq_trans A;
+|}.
 
 #[export] Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
 Proof with eauto with ffix.
@@ -62,15 +60,27 @@ Proof with eauto with ffix.
   - intros x y z [->->]...
 Defined.
 
+Add Parametric Morphism `{eA : setoid A} `{eB : setoid B}
+  : (@Datatypes.pair A B)
+    with signature
+    (eqRel (A:=A))
+      ==> (eqRel (A:=B))
+      ==> (eqRel (A:=A * B))
+      as coqPairMorphism.
+Proof.
+  intros ?? Efg x y Exy.
+  split; [apply Efg| apply Exy].
+Qed.
+
 #[export] Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
 Proof with eauto with ffix.
   apply (@MkSetoid _ (fun x y =>
-                       match x, y with
-                       | inl u, inl v => u =e v
-                       | inr u, inr v => u =e v
-                       | _, _ => False
-                       end
-                       ))...
+                        match x, y with
+                        | inl u, inl v => u =e v
+                        | inr u, inr v => u =e v
+                        | _, _ => False
+                        end
+        ))...
   - intros []...
   - intros [x|x] [y|y]...
   - intros [x|x] [y|y] [z|z]...

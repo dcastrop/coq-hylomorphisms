@@ -5,7 +5,6 @@ Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
 Require Import HYLO.Equivalence.
-Import StdEquiv.
 Require Import HYLO.Morphism.
 
 
@@ -258,18 +257,40 @@ Section Composition.
     Instance CompCont : Cont (App F S2) (P1 * P2) := { valid := composeValid }.
 End Composition.
 
+Section Nest.
+  Context `{SS: setoid Shape} {Pf Pg : Type}
+    (F : Cont Shape Pf) (G : Cont Shape Pg) `{SX : setoid X}.
+
+  Definition nest_valid (sp : App F X * Pg) : bool :=
+    valid (shape (fst sp), snd sp).
+  Lemma nest_valid_morph
+    : forall e1 e2, e1 =e e2 -> nest_valid e1 =e nest_valid e2.
+  Proof.
+    unfold nest_valid. Opaque eqRel.
+    intros [[s1 k1] p1] [[s2 k2] p2] [[Es Ek] Ep]. simpl in *.
+    rewrite Es, Ep. reflexivity.
+  Qed.
+  Definition nest_v : App F X * Pg ~> bool
+    := MkMorph nest_valid_morph.
+
+  #[export]
+    Instance Nest : Cont (App F X) Pg := { valid := nest_v }.
+End Nest.
+Arguments Nest {Shape}%type_scope {SS} {Pf Pg}%type_scope F G X {SX}.
+
 Section NaturalTransformation.
   Context `(F : Cont S1 P1) `(G : Cont S2 P2).
 
-  Variable eta_S : S1 ~> S2.
-  Variable eta_P : P2 -> P1.
-  Variable eta_C : forall s p, valid (eta_S s, p) -> valid (s, eta_P p).
+  Context (eta_S : S1 ~> S2)
+    (eta_P : P2 -> P1)
+    (eta_C : forall s p, valid (eta_S s, p) -> valid (s, eta_P p)).
 
   Definition eta_Pos : forall s, Pos (eta_S s) -> Pos s
     := fun _ p => {| val := eta_P (val p); Valid := eta_C (Valid p) |}.
 
   Definition eta_ {X} : App F X -> App G X :=
-    fun x => {| shape := eta_S (shape x); cont := fun p => cont x (eta_Pos p) |}.
+    fun x => let (sx, kx) := x in
+             {| shape := eta_S sx; cont := fun p => kx (eta_Pos p) |}.
   Lemma eta_morph `{setoid X} : forall x y, x =e y -> @eta_ X x =e @eta_ X y.
   Proof.
     intros [sx kx] [sy ky] [Es Ek]. unfold eta_. simpl in *.
@@ -277,11 +298,12 @@ Section NaturalTransformation.
     intros e1 e2 Ep. apply Ek.
     destruct e1 as [v1 V1], e2 as [v2 V2]; simpl in *; subst; trivial.
   Qed.
-  Definition eta `{setoid X} : App F X ~> App G X :=
-    Eval unfold eta_, eta_Pos in MkMorph eta_morph.
+  Definition eta `{Ex : setoid X} : App F X ~> App G X :=
+    Eval unfold eta_, eta_Pos in MkMorph (@eta_morph X Ex).
+  Arguments eta & {X eX} : rename.
 
   Context `{setoid X} `{setoid Y}.
-  Lemma eta_is_eta : forall (f : X ~> Y), @eta Y _ \o fmap f =e fmap f \o @eta X _.
+  Lemma eta_is_eta : forall (f : X ~> Y), eta \o fmap f =e fmap f \o eta.
   Proof.
     intros f [sx kx]. constructor; simpl; auto with ffix.
     intros e1 e2 Hv; apply app_eq; simpl.
@@ -291,8 +313,68 @@ Section NaturalTransformation.
   Qed.
 End NaturalTransformation.
 
-Definition eta1 `{F : Cont S1 P} `{G : Cont S2 P}
-  (f : S1 ~> S2) (H : forall s p, valid (f s, p) -> valid (s, p)) `{setoid X} :
-  App F X ~> App G X := @eta _ _ _ _ _ _ _ _ f id H X _.
+Arguments eta {S1}%type_scope {Esh} {P1}%type_scope [F] {S2}%type_scope {Esh0}
+  {P2}%type_scope [G eta_S] [eta_P]%function_scope eta_C%function_scope
+  X%type_scope {Ex}.
 
-Arguments eta1 {S1}%type_scope {Esh} {P}%type_scope {F} {S2}%type_scope {Esh0 G} f H {X}%type_scope {H0}.
+Section EtaMap.
+  Context `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}.
+
+  Local Definition eta_S  `{setoid X} `{setoid Y} (f : X ~> Y)
+    : App F X ~> App F Y := fmap f.
+  Local Definition eta_P : Pg ~> Pg := id.
+  Lemma eta_C `{setoid X} `{setoid Y} (f : X ~> Y)
+    : forall (s : App F X) p, valid (eta_S f s, p) -> valid (s, eta_P p).
+  Proof. intros [s k] p; trivial. Defined.
+
+  Local Definition cmap_ `{setoid X} `{setoid Y} `{setoid A} (f : X ~> Y)
+    : App (Nest F G X) A ~> App (Nest F G Y) A := eta (@eta_C _ _ _ _ f) A.
+  Arguments cmap_ {X _ Y _ A _} f.
+
+  Lemma cmap_morph `{setoid X} `{setoid Y} `{setoid A}
+    : forall (f g : X ~> Y), f =e g -> cmap_ f =e cmap_ g.
+  Proof.
+    intros f g E [s k]. unfold cmap_. simpl. constructor; simpl.
+    - constructor; auto with ffix; simpl. intros [v1 V1] [v2 V2].
+      simpl. intros Ev; revert V2; rewrite <- Ev. intros V2.
+      rewrite (bool_irrelevance V2 V1). apply f_equal. exact E.
+    - intros [v1 V1] [v2 V2]; simpl in *. unfold nest_valid in *.
+      simpl in *. intros EQ. revert V2. rewrite <- EQ.
+      destruct s as [s k']. simpl in *. intros V2.
+      rewrite (bool_irrelevance V2 V1). reflexivity.
+  Qed.
+
+  Definition cmap `{setoid X} `{setoid Y} `{setoid A} :
+    (X ~> Y) ~> App (Nest F G X) A ~> App (Nest F G Y) A
+    := Eval unfold cmap_, eta, eta_S, fmap, eta_P, id, app in
+      MkMorph (cmap_morph (A:=A)).
+
+  Lemma cmap__is_eta `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+    (f : X ~> Y) (g : A ~> B)
+    : cmap_ f \o fmap g =e fmap g \o cmap_ f.
+  Proof. unfold cmap_. rewrite eta_is_eta. reflexivity. Qed.
+
+  Lemma cmap_is_eta `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+    (f : X ~> Y) (g : A ~> B)
+    : cmap f \o fmap g =e fmap g \o cmap f.
+  Proof. apply cmap__is_eta. Qed.
+
+  Lemma cmap_id `{setoid X} `{setoid A}
+    : cmap id =e id (A:=App (Nest F G X) A).
+  Proof.
+    intros [[s k] p]. constructor; auto with ffix. simpl in *.
+    intros [p1 V1] [p2 V2]. simpl. intros Ep. subst.
+    rewrite (bool_irrelevance V2 V1). reflexivity.
+  Qed.
+
+  Lemma cmap_comp `{setoid X} `{setoid Y} `{setoid Z} `{setoid A}
+    (f : Y ~> Z) (g : X ~> Y) : cmap (A:=A) (f \o g) =e cmap f \o cmap g.
+  Proof.
+    intros [[s k] p]. simpl. constructor; auto with ffix. simpl in *.
+    intros [p1 V1] [p2 V2]. simpl. intros Ep. subst.
+    rewrite (bool_irrelevance V2 V1). reflexivity.
+  Qed.
+End EtaMap.
+
+Arguments cmap & {Sf}%type_scope {H} {Pf Pg}%type_scope {F G} {X}%type_scope
+                   {H0} {Y}%type_scope {H1} {A}%type_scope {H2}.

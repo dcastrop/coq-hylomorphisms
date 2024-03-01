@@ -3,7 +3,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 Require Import HYLO.Equivalence.
-Import StdEquiv.
 Require Import HYLO.Morphism.
 Require Import HYLO.Container.
 Require Import HYLO.Algebra.
