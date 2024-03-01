@@ -210,3 +210,26 @@ Definition everywhere `{setoid X} `{setoid Y}
   `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg}
   : (X ~> Y) ~> LFix (Nest F G X) ~> LFix (Nest F G Y) :=
   papp hylo l_out \o eapp \o pair (const (comp l_in)) cmap.
+
+Lemma app_everywhere `{setoid X} `{setoid Y}
+  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg} (f : X ~> Y)
+  : everywhere f = hylo (l_in \o cmap f) l_out.
+Proof. trivial. Qed.
+
+Lemma everywhere_id `{setoid X}
+  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg} :
+  everywhere id =e id.
+Proof.
+  rewrite app_everywhere. symmetry. apply hylo_univ.
+  rewrite fmap_id, cmap_id, idKr, idKr, l_in_out.
+  reflexivity.
+Qed.
+
+Lemma everywhere_comp `{setoid X} `{setoid Y} `{setoid Z}
+  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg}
+  (f : Y ~> Z) (g : X ~> Y)
+  : everywhere f \o everywhere g =e everywhere (f \o g).
+Proof.
+  rewrite !app_everywhere. rewrite hylo_map_fusion. rewrite <- compA.
+  rewrite cmap_comp. reflexivity.
+Qed.
