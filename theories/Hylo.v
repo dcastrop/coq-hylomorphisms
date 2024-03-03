@@ -175,61 +175,59 @@ Corollary cata_ana_hylo_gf `(F : Cont Sh P) `{setoid A} `{setoid B}
   : ccata g \o liftP (ana h) (rcoalg_fin h) =e hylo g h.
 Proof. rewrite <- cata_ccata, cata_ana_hylo_f. reflexivity. Qed.
 
-Corollary hylo_map_shift `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}
-  `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
-  (g : Alg (Nest F G Y) B) (m : X ~> Y) (h : RCoalg (Nest F G X) A)
-  : hylo g (cmap m \o h) =e hylo (g \o cmap m) h.
+Corollary hylo_map_shift `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
+  `{setoid A} `{setoid B}
+  (g : Alg G B) (m : naturalM F G) (h : RCoalg F A)
+  : hylo (g \o natural m) h =e hylo g (natural m \o h).
 Proof.
   apply hylo_univ. rewrite hylo_unr at 1.
-  rewrite (compA _ (cmap m) h), <- (compA g _ (cmap m)), <- cmap_is_eta, compA.
+  rewrite (compA _ (natural m) h), <- (compA g _ (natural m)).
+  unfold natural. rewrite <- eta_is_natural, compA.
   reflexivity.
 Qed.
 
 Arguments deforest & {_ _ _ _ _ _ _ _ _ _ _ _ _ _}.
 Arguments l_out_in & {_ _ _ F}.
 
-Corollary hylo_map_fusion_c `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}
-  `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
-  (g : Alg (Nest F G Y) B) (m : X ~> Y) (h : RCoalg (Nest F G X) A)
-  : hylo g l_out \o hylo (l_in \o cmap m) h =e hylo g (cmap m \o h).
+Corollary hylo_map_fusion_c `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
+  `{setoid A} `{setoid B} (g : Alg G B) (m : naturalM F G) (h : RCoalg F A)
+  : hylo g l_out \o hylo (l_in \o natural m) h =e hylo g (natural m \o h).
 Proof.
-  rewrite <- hylo_map_shift, (deforest l_out_in).
+  rewrite hylo_map_shift, (deforest l_out_in).
   reflexivity.
 Qed.
 
-Corollary hylo_map_fusion `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}
-  `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
-  (g : Alg (Nest F G Y) B) (m : X ~> Y) (h : RCoalg (Nest F G X) A)
-  : hylo g l_out \o hylo (l_in \o cmap m) h =e hylo (g \o cmap m) h.
+Corollary hylo_map_fusion `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
+  `{setoid A} `{setoid B}
+  (g : Alg G B) (m : naturalM F G) (h : RCoalg F A)
+  : hylo g l_out \o hylo (l_in \o natural m) h =e hylo (g \o natural m) h.
 Proof.
-  rewrite <- hylo_map_shift, (deforest l_out_in), hylo_map_shift.
+  rewrite hylo_map_shift, (deforest l_out_in), hylo_map_shift.
   reflexivity.
 Qed.
 
-Definition everywhere `{setoid X} `{setoid Y}
-  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg}
-  : (X ~> Y) ~> LFix (Nest F G X) ~> LFix (Nest F G Y) :=
-  papp hylo l_out \o eapp \o pair (const (comp l_in)) cmap.
+Definition everywhere `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
+  (f : naturalM F G) : LFix F ~> LFix G :=
+  hylo (l_in \o natural f) l_out.
+  (* papp hylo l_out \o eapp \o pair (const (comp l_in)) natural. *)
 
-Lemma app_everywhere `{setoid X} `{setoid Y}
-  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg} (f : X ~> Y)
-  : everywhere f = hylo (l_in \o cmap f) l_out.
-Proof. trivial. Qed.
+(* Lemma app_everywhere  *)
+(*   `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg} (f : X ~> Y) *)
+(*   : everywhere f = hylo (l_in \o cmap f) l_out. *)
+(* Proof. trivial. Qed. *)
 
-Lemma everywhere_id `{setoid X}
-  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg} :
-  everywhere id =e id.
+Lemma everywhere_id `{F : Cont Sf P} :
+  everywhere id =e id (A:=LFix F).
 Proof.
-  rewrite app_everywhere. symmetry. apply hylo_univ.
-  rewrite fmap_id, cmap_id, idKr, idKr, l_in_out.
+  unfold everywhere. symmetry. apply hylo_univ.
+  rewrite fmap_id, idKr, natural_idI, idKr, l_in_out.
   reflexivity.
 Qed.
 
-Lemma everywhere_comp `{setoid X} `{setoid Y} `{setoid Z}
-  `{F : Cont Sh Pf} {Pg} {G : Cont Sh Pg}
-  (f : Y ~> Z) (g : X ~> Y)
+Lemma everywhere_comp `{F : Cont Sf P} `{SSg : setoid Sg} {G : Cont Sg P}
+  `{SSh : setoid Sh} {H : Cont Sh P} (f : naturalM G H) (g : naturalM F G)
   : everywhere f \o everywhere g =e everywhere (f \o g).
 Proof.
-  rewrite !app_everywhere. rewrite hylo_map_fusion. rewrite <- compA.
-  rewrite cmap_comp. reflexivity.
+  unfold everywhere. rewrite hylo_map_fusion, <- compA.
+  rewrite natural_comp. reflexivity.
 Qed.

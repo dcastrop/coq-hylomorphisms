@@ -429,9 +429,6 @@ Section FinRec.
   Proof. rewrite <- ccata_ana. apply rana_ana. Qed.
 End FinRec.
 
-About cmap.
-
-
 Lemma f_comp_eta_rec `{F : Cont Sf Pf} {Pg} {G : Cont Sf Pg}
   `{setoid X} `{setoid Y} `{setoid A} (f : X ~> Y) (c : RCoalg (Nest F G X) A)
   : RecP (cmap f \o c).
@@ -444,6 +441,20 @@ Proof.
   apply Ih.
 Defined.
 
-Canonical Structure f_comp_eta `{F : Cont Sf Pf} {Pg} {G : Cont Sf Pg}
-  `{setoid X} `{setoid Y} `{setoid A} (f : X ~> Y) (c : RCoalg (Nest F G X) A)
-  := Rec (coalg:=(cmap f \o c)) (f_comp_eta_rec f c).
+(* Canonical Structure f_comp_eta `{F : Cont Sf Pf} {Pg} {G : Cont Sf Pg} *)
+(*   `{setoid X} `{setoid Y} `{setoid A} (f : X ~> Y) (c : RCoalg (Nest F G X) A) *)
+(*   := Rec (coalg:=(cmap f \o c)) (f_comp_eta_rec f c). *)
+
+Lemma f_nat_eta_rec `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P} `{setoid A}
+  (f : naturalM F G) (c : RCoalg F A) : RecP (natural f \o c).
+Proof.
+  intros x. generalize (terminating c x). intros R.
+  induction R as [x _ Ih].
+  constructor. simpl in *.
+  destruct (c x) as [sx kx]; simpl in *. intros [v V]. simpl in *.
+  apply Ih.
+Defined.
+
+Canonical Structure f_nat_eta `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
+  `{setoid A} (f : naturalM F G) (c : RCoalg F A) : RCoalg G A
+  := Rec (coalg :=natural f \o c) (f_nat_eta_rec f c).

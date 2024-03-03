@@ -303,7 +303,7 @@ Section NaturalTransformation.
   Arguments eta & {X eX} : rename.
 
   Context `{setoid X} `{setoid Y}.
-  Lemma eta_is_eta : forall (f : X ~> Y), eta \o fmap f =e fmap f \o eta.
+  Lemma eta_is_natural : forall (f : X ~> Y), eta \o fmap f =e fmap f \o eta.
   Proof.
     intros f [sx kx]. constructor; simpl; auto with ffix.
     intros e1 e2 Hv; apply app_eq; simpl.
@@ -316,6 +316,59 @@ End NaturalTransformation.
 Arguments eta {S1}%type_scope {Esh} {P1}%type_scope [F] {S2}%type_scope {Esh0}
   {P2}%type_scope [G eta_S] [eta_P]%function_scope eta_C%function_scope
   X%type_scope {Ex}.
+
+Section NatShape.
+  Context `(F : Cont S1 P) `{SS2 : setoid S2} (G : Cont S2 P).
+
+  Definition NaturalIn natT : Prop
+    := forall (s : S1) (p : P), valid (natT s, p) -> valid(s,p).
+  Structure naturalM :=
+    { natT :> S1 ~> S2;
+      natC : NaturalIn natT
+    }.
+  Definition natural `{setoid X} (f : naturalM) : App F X ~> App G X :=
+    eta (eta_P:=fun x=>x) (@natC f) X.
+End NatShape.
+
+Arguments natural {S1 _ P F} {S2 _ G}  {X _} f.
+
+Lemma id_is_nat `{F : Cont Sf P} : forall s p, valid (id s, p) -> valid(s, p).
+Proof.
+  simpl. trivial.
+Qed.
+Canonical Structure nat_id `{F : Cont Sf P}
+  : naturalM F F := {| natT :=id; natC := id_is_nat |}.
+
+Lemma comp_is_nat `{F : Cont Sf P} `{SSg : setoid Sg} {G : Cont Sg P}
+  `{SSh : setoid Sh} {H : Cont Sh P} (f : naturalM G H) (g : naturalM F G)
+  : forall s p, valid((f \o g) s, p) -> valid(s, p).
+Proof.
+  intros s p V; simpl in *. do 2 apply natC in V. trivial.
+Qed.
+Arguments comp_is_nat {_ _ _ _ _ _ _ _ _ _} f g s p.
+Canonical Structure nat_comp `{F : Cont Sf P} `{SSg : setoid Sg} {G : Cont Sg P}
+  `{SSh : setoid Sh} {H : Cont Sh P} (f : naturalM G H) (g : naturalM F G)
+  := {| natT := f \o g; natC := comp_is_nat f g |}.
+
+Lemma natural_idI `{F : Cont Sf P} `{setoid X} : natural id =e id (A:=App F X).
+Proof.
+  intros [sx kx]; constructor; simpl; auto with ffix.
+  intros [v1 V1] [v2 V2] Hv. simpl in *; subst.
+  rewrite (bool_irrelevance (id_is_nat _) V2). reflexivity.
+Qed.
+
+Lemma natural_comp `{F : Cont Sf P} `{SSg : setoid Sg} {G : Cont Sg P}
+    `{SSh : setoid Sh} {H : Cont Sh P} (f : naturalM G H) (g : naturalM F G)
+    `{EX : setoid X} :
+  natural f \o natural g =e natural (X:=X) (f \o g).
+Proof.
+  intros [s k]. Opaque eqRel. simpl. constructor; auto with ffix; simpl.
+  Transparent eqRel.
+  intros [v1 V1] [v2 V2] EQ. simpl in *; subst.
+  rewrite (bool_irrelevance (natC _) (comp_is_nat f g s v2 V2)).
+  reflexivity.
+Qed.
+
 
 Section EtaMap.
   Context `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}.
@@ -349,15 +402,15 @@ Section EtaMap.
     := Eval unfold cmap_, eta, eta_S, fmap, eta_P, id, app in
       MkMorph (cmap_morph (A:=A)).
 
-  Lemma cmap__is_eta `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+  Lemma cmap__is_natural `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
     (f : X ~> Y) (g : A ~> B)
     : cmap_ f \o fmap g =e fmap g \o cmap_ f.
-  Proof. unfold cmap_. rewrite eta_is_eta. reflexivity. Qed.
+  Proof. unfold cmap_. rewrite eta_is_natural. reflexivity. Qed.
 
-  Lemma cmap_is_eta `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
+  Lemma cmap_is_natural `{setoid X} `{setoid Y} `{setoid A} `{setoid B}
     (f : X ~> Y) (g : A ~> B)
     : cmap f \o fmap g =e fmap g \o cmap f.
-  Proof. apply cmap__is_eta. Qed.
+  Proof. apply cmap__is_natural. Qed.
 
   Lemma cmap_id `{setoid X} `{setoid A}
     : cmap id =e id (A:=App (Nest F G X) A).
