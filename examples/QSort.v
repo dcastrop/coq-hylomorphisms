@@ -66,16 +66,13 @@ Defined.
 Definition qsort_times_two
   : Ext (cata merge \o everywhere (nt_shape (L:=unit) id times_two) \o rana tsplit).
   calculate.
-  (* rewrite <- ana_rana. *)
-  (* rewrite compA, cata_ccata. *)
   unfold everywhere.
-  Search natural.
   rewrite hylo_cata.
   rewrite hylo_ana.
   rewrite hylo_map_fusion.
   rewrite deforest; last (rewrite l_out_in; reflexivity).
-  unfold natural, eta, merge, app, tsplit.
-  Opaque wf_lt. simpl. Transparent wf_lt.
+  unfold natural, eta, merge, tsplit, hylo, times_two, natT, app, mk_wf_coalg.
+  Opaque wf_lt mult. simpl. Transparent wf_lt.
   reflexivity.
 Defined.
 
@@ -89,6 +86,7 @@ Module Tests.
     end.
   Definition largeTest := Eval compute in cycle 10.
   Eval compute in qsort largeTest.
+  Eval compute in qsort_times_two largeTest.
 End Tests.
 
 From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
