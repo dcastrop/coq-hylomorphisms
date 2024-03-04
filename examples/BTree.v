@@ -43,6 +43,23 @@ Defined.
   { valid := @t_dom L A }.
 Definition Tree L A := LFix (TreeF L A).
 
+Definition nt_shape {L L' A A'} (f : L ~> L') (g : A ~> A') : Ts L A ~> Ts L' A'.
+|{
+    x ~> match x with
+                    | Leaf _ l => Leaf _ (f l)
+                    | Node _ n => Node _ (g n)
+                    end
+  }|.
+Defined.
+
+Lemma nt_shape_is_nat {L L' A A'} (f : L ~> L') (g : A ~> A')
+  : NaturalIn (TreeF L A) (TreeF L' A') (nt_shape f g).
+Proof. intros [l|n] p; trivial. Qed.
+
+Canonical Structure natural_shape {L L' A A'} (f : L ~> L') (g : A ~> A')
+  : naturalM (TreeF L A) (TreeF L' A')
+  := {| natT := nt_shape f g; natC := @nt_shape_is_nat _ _ _ _ f g |}.
+
 Lemma dom_leaf_false L A (x : L) : Pos (F:=TreeF L A) (Leaf A x) -> False.
 Proof. intros []. simpl in *. discriminate. Qed.
 Definition dom_leaf L A B (e : L) (x : Pos (F:=TreeF L A) (Leaf A e)) : B :=

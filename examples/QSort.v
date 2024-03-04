@@ -58,6 +58,27 @@ Definition qsort : Ext (cata merge \o rana tsplit).
   reflexivity.
 Defined.
 
+Definition times_two : nat ~> nat.
+refine {| app:= fun x => 2 * x |}.
+intros ??->. reflexivity.
+Defined.
+
+Definition qsort_times_two
+  : Ext (cata merge \o everywhere (nt_shape (L:=unit) id times_two) \o rana tsplit).
+  calculate.
+  (* rewrite <- ana_rana. *)
+  (* rewrite compA, cata_ccata. *)
+  unfold everywhere.
+  Search natural.
+  rewrite hylo_cata.
+  rewrite hylo_ana.
+  rewrite hylo_map_fusion.
+  rewrite deforest; last (rewrite l_out_in; reflexivity).
+  unfold natural, eta, merge, app, tsplit.
+  Opaque wf_lt. simpl. Transparent wf_lt.
+  reflexivity.
+Defined.
+
 Module Tests.
   Import List.
   Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
@@ -76,3 +97,4 @@ Set Extraction TypeExpand.
 Extraction Inline val.
 Set Extraction Flag 2047.
 Recursive Extraction qsort.
+Recursive Extraction qsort_times_two.
