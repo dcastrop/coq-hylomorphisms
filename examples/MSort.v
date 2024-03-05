@@ -10,11 +10,14 @@ Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
 
+Require Import Util.Utils.
+
 Require Import Examples.BTree.
 
 Require Import Lia.
 Require List.
-Require Import Nat.
+(* Require Import Nat. *)
+Require Import Coq.Numbers.Cyclic.Int63.Sint63.
 
 Fixpoint mergeL l1 l2 {struct l1} :=
   let fix merge_aux l2 :=
@@ -23,10 +26,10 @@ Fixpoint mergeL l1 l2 {struct l1} :=
     | _, nil => l1
     | cons a1 l1', cons a2 l2' =>
       if a1 <=? a2 then cons a1 (mergeL l1' l2) else cons a2 (merge_aux l2')
-    end
+    end%sint63
   in merge_aux l2.
 
-Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat :=
+Definition merge : App (TreeF (list int) unit) (list int) ~> list int :=
   ltac:(|{ x ~>
              match a_out x with
              | node _ l r => mergeL l r
@@ -34,13 +37,13 @@ Definition merge : App (TreeF (list nat) unit) (list nat) ~> list nat :=
              end
     }|).
 
-Fixpoint splitL (x : list nat) (accL accR : list nat) :=
+Fixpoint splitL (x : list int) (accL accR : list int) :=
   match x with
   | nil => (accL, accR)
   | cons x xs => splitL xs accR (cons x accL)
   end.
 
-Definition len_pair (p : list nat * list nat)
+Definition len_pair (p : list int * list int)
   := max (length (fst p)) (length (snd p)).
 
 Lemma splitL_len : forall x a1 a2,
@@ -52,7 +55,7 @@ Proof.
   - specialize (Ih a2 (cons h a1)). simpl in *. lia.
 Qed.
 
-Definition c_split : Coalg (TreeF (list nat) unit) (list nat) :=
+Definition c_split : Coalg (TreeF (list int) unit) (list int) :=
   ltac:(|{ x ~> match x with
              | nil | cons _ nil => a_leaf x
              | _ => let (l, r) := splitL x nil nil in
@@ -64,7 +67,7 @@ Definition c_split : Coalg (TreeF (list nat) unit) (list nat) :=
  * UPDATE 12/09/2023 by DC: what's the nonsense above???
  *)
 
-Lemma split_fin : respects_relation c_split (@length nat) lt.
+Lemma split_fin : respects_relation c_split (@length int) lt.
 Proof.
   intros [|h [|h' t]] p; simpl in *; try apply (dom_leaf _ p).
   revert p; rewrite (eta_pair (splitL _ _ _)). simpl; intros p.
@@ -72,7 +75,7 @@ Proof.
   destruct p as [[|] V]; rewrite PeanoNat.Nat.lt_succ_r; trivial.
 Qed.
 
-Definition tsplit : RCoalg (TreeF (list nat) unit) (list nat)
+Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
   := mk_wf_coalg wf_lt split_fin.
 
 
@@ -91,7 +94,7 @@ Defined.
 
 Module Tests.
   Import List.
-  Definition test := 1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil.
+  Definition test := (1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil)%sint63.
   Fixpoint cycle n :=
     match n with
     | 0 => test
@@ -102,7 +105,7 @@ Module Tests.
 End Tests.
 
 
-From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
+From Coq Require Extraction ExtrOcamlBasic ExtrOCamlInt63.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
 Extraction Inline val.

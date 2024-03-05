@@ -6,6 +6,7 @@
 -docroot coq-hylomorphisms
 
 util/Cofix.v
+util/Utils.v
 theories/Equivalence.v
 theories/Morphism.v
 theories/Container.v

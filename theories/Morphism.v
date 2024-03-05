@@ -254,3 +254,11 @@ Section PredSubty.
 End PredSubty.
 
 Arguments liftP {A}%type_scope {eA} {B}%type_scope {eB} f {P} Pf%function_scope.
+
+Tactic Notation "|{" ident(x) ":" uconstr(A) "~>" uconstr(T) "}|" :=
+  refine {| app := fun x : A => T |};
+  try (intros ??->; reflexivity);
+  try (let H := fresh "H" in intros ?? H; simpl in H; subst; reflexivity);
+  try (intros [??] [??] [E1 E2]; simpl in *;  subst; auto with ffix).
+
+Tactic Notation "|{" ident(x)  "~>" uconstr(T) "}|" := |{ x : _ ~> T }|.
