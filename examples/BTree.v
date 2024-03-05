@@ -12,13 +12,6 @@ Require Import HYLO.Hylo.
 
 Require List.
 
-Tactic Notation "|{" ident(x)  "~>" uconstr(T) "}|" :=
-  refine {| app := fun x => T |};
-  try (intros ??->; reflexivity);
-  try (let H := fresh "H" in intros ?? H; simpl in H; subst; reflexivity);
-  try (intros [??] [??] [E1 E2]; simpl in *;  subst; auto with ffix).
-
-
 (* Defining a tree *)
 Unset Auto Template Polymorphism.
 
@@ -156,19 +149,3 @@ Lemma tree_itree_iso2 {L A}
   : tree_to_itree \o itree_to_tree =e id (A:=itree L A).
   exact tree_itree_iso2_.
 Qed.
-
-(* TODO: refactor into Utilities *)
-
-Lemma eta_pair A B (p : A * B) : p = (fst p, snd p).
-Proof. destruct p; trivial. Qed.
-
-Lemma wf_lt : well_founded lt.
-Proof.
-  cut (forall x y, y < x -> Acc lt y).
-  - intros H x. apply (H (S x) x), PeanoNat.Nat.lt_succ_diag_r.
-  - fix Ih 1. intros [|x] y LT.
-    + destruct (PeanoNat.Nat.nlt_0_r _ LT).
-    + constructor. intros y' LT'. apply (Ih x). Guarded.
-      rewrite PeanoNat.Nat.lt_succ_r in LT.
-      apply (PeanoNat.Nat.lt_le_trans _ _ _ LT' LT).
-Defined.
