@@ -1258,61 +1258,105 @@ unique \coq{F}-coalgebra homomorphism, that is a map of the following type
 Coalg F A ~> A ~> GFix
 \end{coqcode}
 
-\subsubsection{On Equality}
-This definition highlights why we cannot define equality of the positions and
-the contained elements generically (recall Section~\ref{sec:TODO}): the
-contained types may not have (yet) an associated equivalence. In other words, we
-would need to provide an equivalence for \coq{LFix}, but the only way to do this
-is to define such equivalence simultaneously to the definition for  \coq{LFix}.
-Such definition would be rejected by Coq. There are other approaches that can
-circumvent this problem, by separating the definition of least fixed points from
-the proofs that the functions that get the contained elements are proper
-morphisms. But this leads to longer, unnecessarily complicated proofs.
-Furthermore, this extra layer interferes with code extraction, in that it
-requires destructing/constructing subsequent \coq{LFix} and \coq{App}, and Coq
-may not always able to inline them.
-
-\mpav{Dumped here}
-We define the equality of initial algebras of container extensions recursively,
-by traversing the structure and equating the shapes and positions. This
-definition is equivalent to taking the fixpoint of \coq{AppR} in
-Section~\ref{sec:TODO}, where the shapes must be equivalent and, for equal
-positions, the contents must be related by \coq{LFixR}.
-\begin{coqcode}
-Fixpoint LFixR (x y : LFix) : Prop :=
-  let f_x := LFix_out x in
-  let f_y := LFix_out y in
-  shape f_x =e shape f_y /\
-    (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
-\end{coqcode}
-
-\begin{coqcode}
-Definition GFixR : GFix -> GFix -> Prop :=...
-Instance GFix_setoid : setoid GFix := ...GFixR...
-\end{coqcode}
-
-
-
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
+Hylomorphism capture the concept of \emph{divide-and-conquer} algorithms.  First
+the input is destructured (\emph{divide}) in smaller parts. This operation may or may not be
+structural. Next the results from the subparts are computed recursively and
+finally the results are composed together (\emph{conquer}) by means of an algebra.
 
-Hylomorphism are more general recursion schemes capturing the
-\emph{divide-and-conquer} idea. In short, the input is destructured by its not
-structurally. In the example, we gave in the introduction the destructuring
-program is given by \coq{divide} which is not an isomorphism.  The question the
-hylomorphism satisfies is more general than the catamorphism in that the
-destructing map \coq{InOp} is generalised to a \emph{recursive
-coalgebra}~\cite{AdamekMM19,CaprettaUV04}, that is intuitively a coalgebra that
-can be applied only a finite amount of times.  In fact, in the case
-of \coq{divide} this is a recursive coalgebra because the size of the list is
-getting smaller.
+A catamorphism is a special kind of hylomorphism where the coalgebra
+map \coq{InOp} only destructures the input structurally, for example,
+decomposing a list into its head and tail. A \emph{recursive
+coalgebra}~\cite{AdamekMM19,CaprettaUV04} is a coalgebra which does not
+necessarily decompose the input structurally, still maintaining the size of the
+input smaller. This is what, for example, happens in quicksort where the
+partition function, given a list, returns two smaller sublists and a pivot
+element.
 
-% This program is formed of essentially two parts. The first one is what is
-% commonly thought as the \emph{partition} function destructuring the input list
-% in three parts, the pivot and the other two sublists, and the second part
-% recursing over the sublists and composing the results back together.
+Thus, in general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the unique solution to the equation
+\begin{equation}
+  \label{eq:hylo}
+  f = a \circ F\; f \circ c
+\end{equation}
+However this solution does not necessarily exists for an arbitrary pair of
+algebras and coalgebras.  In fact, this definition cannot be accepted by Coq,
+since there is no structurally smaller argument to do recursion on and there is
+no corecursive definition that is guaranteed to be syntactically guarded -- as
+required by Coq -- due to the use of an arbitrary algebra $a$. Furthermore,
+solutions to the hylomorphism equation are \emph{not} guaranteed to be unique,
+or to even exist. To address these issues, we mechanise \textbf{recursive
+hylomorphisms} which are guaranteed to have a unique solution to the
+hylomorphism equation.
 
+If $c$ is a recursive coalgebra, then the equation (\ref{eq:hylo}) has a unique
+solution. We show this by first providing the definition for recursive
+hylomorphisms in Coq, and then proving that any function satisfying this
+equation is a hylomorphism.
+\begin{coqcode}
+Definition hylo_def (a : Alg F B) (c : Coalg F A)
+  : forall (x : A), RecF c x -> B := fix f x H
+  := match c x as h0 return
+       (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
+     with
+     | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
+     end (RecF_inv H).
+\end{coqcode}
+The definition of recursive hylomorphisms is recursive on the proof that the
+anamorphism can only be applied finitely many times on any input. We again use
+\coq{RecF_inv} to obtain the structurally smaller proof to use in
+the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
+we prove that \coq{hylo_def} is respectful, and use this proof to
+built the corresponding higher-order proper morphism:
+\begin{coqcode}
+Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
+\end{coqcode}
+Finally, we show that recursive hylomorphisms are the unique solution to
+the hylomorphism equation.
+\begin{coqcode}
+Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
+    : f =e hylo g h <-> f =e g \o fmap f \o h.
+\end{coqcode}
+This result can be used to prove hylomorphism laws in a way that is analogous
+to pen-and-paper program calculation techniques. We show the rule for
+hylomorphism fusion as an example:
+\begin{coqcode}
+Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
+  (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2) : f2 \o hylo g1 h1 =e hylo g2 h1.
 
+  rewrite hylo_univ, fmap_comp, compA, <- E2,
+          <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
+Qed.
+  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
+  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
+  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
+  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
+  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
+  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
+  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
+  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
+  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
+\end{coqcode}
+Using the hylo fusion law, we can prove the well-known \emph{deforestation
+optimisation}, where two consecutive recursive computations, one that builds a
+data structure, and another one that consumes it, can be fused together into a
+single recursive definition. This, in turn, allows us to prove that a recursive
+hylomorphism is the composition of a catamorphism and a recursive anamorphism.
+\begin{coqcode}
+Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
+  (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
+  : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
+
+Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
+  (g : Alg F B) (h : RCoalg F A)
+: cata g \o rana h =e hylo g h.
+\end{coqcode}
+This result will allow us to \emph{calculate} programs by providing small, easy
+to verify implementations, and combining them into efficient recursive
+functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
+passes}.
+
+\mpav{Moved here}
 In particular, we show that the terminal coalgebras
 for $F$, coupled with a proof that they are finite are also initial
 $F$-algebras:
@@ -1331,13 +1375,13 @@ Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
 Using this new initial algebra, we can compose catamorphisms and anamorphisms,
 \emph{as long as the anamorphisms produce finite trees}. We refer the reader to
 the supplementary material and Coq code to see how we encode this. In this
-paper, however, we focus on the fact that, if anamorphisms produce finite
-trees, then their return type can also be the \emph{least} fixed point of the
-container extension. We encode in Coq the notion of \emph{recursive
-anamorphisms} and \emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  Recursive
-coalgebras are coalgebras whose anamorphism produces finite trees.  The
-following predicate captures this fact, \coq{h} is recursive if
-\coq{h} can only be applied finitely many times:
+paper, however, we focus on the fact that, if anamorphisms produce finite trees,
+then their return type can also be the \emph{least} fixed point of the container
+extension. We encode in Coq the notion of \emph{recursive anamorphisms} and
+\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}. Recursive
+coalgebras are coalgebras whose anamorphism produces finite trees. The
+following predicate captures this fact, \coq{h} is recursive if \coq{h} can only
+be applied finitely many times:
 \begin{coqcode}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
@@ -1407,86 +1451,6 @@ Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F :=...
 Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
     : f =e rana h <-> f =e l_in \o fmap f \o h.
 \end{coqcode}
-
-\subsubsection{Hylomorphisms}
-
-Given an $F$-algebra and $F$-coalgebra, a solution to the equation
-$f = a \circ F\; f \circ c$ is known as a hylomorphism. Unfortunately, this
-definition cannot be accepted by Coq, since there is no structurally smaller
-argument to do recursion, and there is no corecursive definition that is
-guaranteed to be syntactically guarded (as required by Coq), due to the use of
-an arbitrary algebra $a$. Furthermore, solutions to the hylomorphism equation
-are \emph{not} guaranteed to be unique, or to even exist. To address these
-issues, we mechanise \textbf{recursive hylomorphisms} which are guaranteed to
-have a unique solution to the hylomorphism equation.
-
-If $c$ is a recursive coalgebra, then the equation $f = a \circ F\; f \circ c$
-does have a unique solution.  We show this by first providing the definition for
-recursive hylomorphisms in Coq, and then proving that any function satisfying
-this equation is a hylomorphism. We call these hylomorphisms with a recursive
-coalgebra, \textbf{recursive hylomorphisms}.
-\begin{coqcode}
-Definition hylo_def (a : Alg F B) (c : Coalg F A)
-  : forall (x : A), RecF c x -> B := fix f x H
-  := match c x as h0 return
-       (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
-     with
-     | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
-     end (RecF_inv H).
-\end{coqcode}
-The definition of recursive hylomorphisms is recursive on the proof that the
-anamorphism can only be applied finitely many times on any input. We again use
-\coq{RecF_inv} to obtain the structurally smaller proof to use in
-the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
-we prove that \coq{hylo_def} is respectful, and use this proof to
-built the corresponding higher-order proper morphism:
-\begin{coqcode}
-Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
-\end{coqcode}
-Finally, we show that recursive hylomorphisms are the unique solution to
-the hylomorphism equation.
-\begin{coqcode}
-Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
-    : f =e hylo g h <-> f =e g \o fmap f \o h.
-\end{coqcode}
-This result can be used to prove hylomorphism laws in a way that is analogous
-to pen-and-paper program calculation techniques. We show the rule for
-hylomorphism fusion as an example:
-\begin{coqcode}
-Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
-  (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2) : f2 \o hylo g1 h1 =e hylo g2 h1.
-
-  rewrite hylo_univ, fmap_comp, compA, <- E2,
-          <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
-Qed.
-  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
-  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
-  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
-  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
-  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
-  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
-  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
-  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
-  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
-\end{coqcode}
-Using the hylo fusion law, we can prove the well-known \emph{deforestation
-optimisation}, where two consecutive recursive computations, one that builds a
-data structure, and another one that consumes it, can be fused together into a
-single recursive definition. This, in turn, allows us to prove that a recursive
-hylomorphism is the composition of a catamorphism and a recursive anamorphism.
-\begin{coqcode}
-Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
-  (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
-  : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
-
-Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
-  (g : Alg F B) (h : RCoalg F A)
-: cata g \o rana h =e hylo g h.
-\end{coqcode}
-This result will allow us to \emph{calculate} programs by providing small, easy
-to verify implementations, and combining them into efficient recursive
-functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
-passes}.
 
 
 \section{Extraction}
@@ -1776,6 +1740,40 @@ Instance Comp : Cont Cs Cp :=
   (L33-44).}
   \label{fig:poly}
 \end{figure}
+
+
+\section{On Equality}
+This definition highlights why we cannot define equality of the positions and
+the contained elements generically (recall Section~\ref{sec:TODO}): the
+contained types may not have (yet) an associated equivalence. In other words, we
+would need to provide an equivalence for \coq{LFix}, but the only way to do this
+is to define such equivalence simultaneously to the definition for  \coq{LFix}.
+Such definition would be rejected by Coq. There are other approaches that can
+circumvent this problem, by separating the definition of least fixed points from
+the proofs that the functions that get the contained elements are proper
+morphisms. But this leads to longer, unnecessarily complicated proofs.
+Furthermore, this extra layer interferes with code extraction, in that it
+requires destructing/constructing subsequent \coq{LFix} and \coq{App}, and Coq
+may not always able to inline them.
+
+\mpav{Dumped here}
+We define the equality of initial algebras of container extensions recursively,
+by traversing the structure and equating the shapes and positions. This
+definition is equivalent to taking the fixpoint of \coq{AppR} in
+Section~\ref{sec:TODO}, where the shapes must be equivalent and, for equal
+positions, the contents must be related by \coq{LFixR}.
+\begin{coqcode}
+Fixpoint LFixR (x y : LFix) : Prop :=
+  let f_x := LFix_out x in
+  let f_y := LFix_out y in
+  shape f_x =e shape f_y /\
+    (forall e1 e2, val e1 = val e2 -> LFixR (cont f_x e1) (cont f_y e2)).
+\end{coqcode}
+
+\begin{coqcode}
+Definition GFixR : GFix -> GFix -> Prop :=...
+Instance GFix_setoid : setoid GFix := ...GFixR...
+\end{coqcode}
 
 
 
