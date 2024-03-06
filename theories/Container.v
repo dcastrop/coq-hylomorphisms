@@ -369,6 +369,11 @@ Proof.
   reflexivity.
 Qed.
 
+  Lemma natural_fmap `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
+    `{setoid X} `{setoid Y} (m : naturalM F G) (f : X ~> Y)
+    : natural m \o fmap f =e fmap f \o natural m.
+  Proof. unfold natural; rewrite eta_is_natural. reflexivity. Qed.
+
 
 Section EtaMap.
   Context `{setoid Sf} {Pf Pg} {F : Cont Sf Pf} {G : Cont Sf Pg}.

@@ -14,16 +14,20 @@ Require Import Util.Utils.
 
 Require Import Examples.BTree.
 
-Require List.
-Require Import Coq.Numbers.Cyclic.Int63.Sint63.
+Require Import List.
+Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 
-Definition merge : App (TreeF unit int) (list int) ~> list int:=
-  ltac:(|{ x ~> match a_out x with
-             | leaf _ => nil
-             | node h l r => List.app l (h :: r)
-             end}|).
+Definition merge : App (TreeF unit int) (list int) ~> list int.
+|{ x : (App (TreeF unit int) (list int)) ~> (
+           let (s, k) := x in
+           match s as s' return s = s' -> list int with
+           | Leaf _ _ => fun _ => nil
+           | Node _ h => fun E => List.app (e_lbranch k E) (h :: e_rbranch k E)
+           end eq_refl
+)}|.
+Defined.
 
-Open Scope sint63_scope.
+Open Scope uint63_scope.
 Definition c_split : Coalg (TreeF unit int) (list int) :=
   ltac:(|{ x ~> match x with
              | nil => a_leaf tt
@@ -31,7 +35,7 @@ Definition c_split : Coalg (TreeF unit int) (list int) :=
                  let (l, r) := List.partition (fun x => x <=? h) t in
                  a_node h l r
              end}|).
-Close Scope sint63_scope.
+Close Scope uint63_scope.
 
 (* Needs to be defined, otherwise qsort does not reduce!
  * UPDATE 12/09/2023: what's the nonsense above???
@@ -49,6 +53,19 @@ Qed.
 Definition tsplit : RCoalg (TreeF unit int) (list int)
   := mk_wf_coalg wf_lt split_fin.
 
+Definition Lmap {A B} (f : A ~> B) : list A ~> list B.
+|{ x ~> (List.map f x) }|.
+Defined.
+
+Lemma Lmap_merge (f : int ~> int)
+  : Lmap f \o merge =e merge \o natural (nt_shape id f) \o fmap (Lmap f).
+Proof.
+  intros [[n|n] kx]; simpl in *; auto with *.
+  rewrite map_app; simpl.
+  rewrite (bool_irrelevance (nt_shape_is_nat _) (lnode_valid eq_refl)).
+  rewrite (bool_irrelevance (nt_shape_is_nat _) (rnode_valid eq_refl)).
+  reflexivity.
+Qed.
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
 (* UPDATE 12/09/2023 by DC: this used to be mergesort, and at some
@@ -63,29 +80,32 @@ Definition qsort : Ext (cata merge \o rana tsplit).
   reflexivity.
 Defined.
 
-Open Scope sint63_scope.
+Open Scope uint63_scope.
 Definition times_two : int ~> int.
-  refine {| app:= fun x => 2 * x |}.
-  intros ??->. reflexivity.
+|{ x ~> (2 * x) }|.
 Defined.
-Close Scope sint63_scope.
+Close Scope uint63_scope.
 
 Definition qsort_times_two
-  : Ext (cata merge \o everywhere (nt_shape (L:=unit) id times_two) \o rana tsplit).
+  : Ext (Lmap times_two \o cata merge \o rana tsplit).
   calculate.
-  unfold everywhere.
-  rewrite hylo_cata.
-  rewrite hylo_ana.
-  rewrite hylo_map_fusion.
-  rewrite deforest; last (rewrite l_out_in; reflexivity).
-  unfold natural, eta, merge, tsplit, hylo, times_two, natT, app, mk_wf_coalg.
-  Opaque wf_lt mult. simpl. Transparent wf_lt.
+  assert (RW1 : Lmap times_two \o cata merge
+                =e hylo (merge \o natural (nt_shape id times_two)) l_out).
+  {
+    apply hylo_univ.
+    rewrite fmap_comp, <- !compA. rewrite compA, compA.
+    rewrite <- Lmap_merge, <- !compA, (compA merge), <- cata_unfold.
+    reflexivity.
+  }
+  rewrite RW1, hylo_ana, deforest.
+  2:{ apply l_out_in. }
+  Opaque wf_lt. simpl. Transparent wf_lt.
   reflexivity.
 Defined.
 
 Module Tests.
   Import List.
-  Definition test := (1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil)%sint63.
+  Definition test := (1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil)%uint63.
   Fixpoint cycle n :=
     match n with
     | 0 => test

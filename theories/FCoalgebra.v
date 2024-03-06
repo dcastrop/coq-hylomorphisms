@@ -15,6 +15,7 @@ Section FCoalgDef.
 
   Inductive RecF `{setoid A} (h : Coalg F A) : A -> Prop :=
   | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
+  Hint Constructors RecF : ffix.
 
   Lemma RecF_inv `{eA : setoid A} (h : Coalg F A) x
     : RecF h x -> forall e, RecF h (cont (h x) e).
@@ -126,7 +127,7 @@ Section FCoalgDef.
   Proof. apply ana_rcoalg_fin. destruct h; trivial. Qed.
 
   Lemma fin_out : forall x, RecF l_out x.
-  Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
+  Proof. induction x as [s Ih]. constructor. apply Ih. Defined.
 
   Canonical Structure f_out : RCoalg (LFix F) := Rec _ fin_out.
 
