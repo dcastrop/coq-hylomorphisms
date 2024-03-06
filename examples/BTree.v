@@ -81,6 +81,12 @@ Notation e_rbranch k H := (k (MkElem Rbranch (rnode_valid H))).
 Notation leftB  k := (e_lbranch k eq_refl).
 Notation rightB k := (e_rbranch k eq_refl).
 
+Definition posL {A} (h : A) : Pos (Node unit h) :=
+  MkElem Lbranch eq_refl.
+Definition posR {A} (h : A) : Pos (Node unit h) :=
+
+  MkElem Rbranch eq_refl.
+
 Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
 |{ x : (App (TreeF L A) X) ~> (
                let (s, k) := x in
