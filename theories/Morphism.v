@@ -11,6 +11,7 @@ Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
 Section Defn.
   Context `{eA : setoid A} `{eB : setoid B}.
 
+  (* TODO: use canonical structures, handle inlining when extracting code *)
   Structure morph :=
     MkMorph
       { app :> A -> B;
@@ -255,10 +256,27 @@ End PredSubty.
 
 Arguments liftP {A}%type_scope {eA} {B}%type_scope {eB} f {P} Pf%function_scope.
 
+(* Solves stuff of the shape App F X =e App F X where (=e) for shapes of F is
+Coq's [=].
+ TODO: generalise *)
+Ltac auto_proper_app :=
+  let sx := fresh "sx" in
+  let sy := fresh "sy" in
+  let kx := fresh "kx" in
+  let ky := fresh "ky" in
+  let E1 := fresh "E1" in
+  let E2 := fresh "E2" in
+  intros [sx kx] [sy ky] [E1 E2];
+  simpl in *;
+  subst;
+  destruct sy;
+  auto with ffix;
+  repeat (f_equal; auto with ffix; try apply E2; auto with ffix).
+
 Tactic Notation "|{" ident(x) ":" uconstr(A) "~>" uconstr(T) "}|" :=
   refine {| app := fun x : A => T |};
-  try (intros ??->; reflexivity);
+  try auto_proper_app;
   try (let H := fresh "H" in intros ?? H; simpl in H; subst; reflexivity);
-  try (intros [??] [??] [E1 E2]; simpl in *;  subst; auto with ffix).
+  try (intros ??->; reflexivity).
 
 Tactic Notation "|{" ident(x)  "~>" uconstr(T) "}|" := |{ x : _ ~> T }|.

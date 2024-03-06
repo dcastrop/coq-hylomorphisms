@@ -49,9 +49,13 @@ Lemma nt_shape_is_nat {L L' A A'} (f : L ~> L') (g : A ~> A')
   : NaturalIn (TreeF L A) (TreeF L' A') (nt_shape f g).
 Proof. intros [l|n] p; trivial. Qed.
 
-Canonical Structure natural_shape {L L' A A'} (f : L ~> L') (g : A ~> A')
+Canonical Structure nt_tree {L L' A A'} (f : L ~> L') (g : A ~> A')
   : naturalM (TreeF L A) (TreeF L' A')
   := {| natT := nt_shape f g; natC := @nt_shape_is_nat _ _ _ _ f g |}.
+
+Definition map_tree {L L' A A'} (f : L ~> L') (g : A ~> A')
+  : LFix (TreeF L A) ~> LFix (TreeF L' A') :=
+  everywhere (nt_shape f g).
 
 Lemma dom_leaf_false L A (x : L) : Pos (F:=TreeF L A) (Leaf A x) -> False.
 Proof. intros []. simpl in *. discriminate. Qed.
@@ -72,24 +76,20 @@ Definition rnode_valid {L A} (x : Ts L A)
   : forall (n : A), x = Node L n -> valid (x, Rbranch) = true.
 Proof. intros n ->. reflexivity. Qed.
 
-Notation e_lbranch H := (MkElem Lbranch (lnode_valid H)).
-Notation e_rbranch H := (MkElem Rbranch (rnode_valid H)).
-Notation leftB  := (e_lbranch eq_refl).
-Notation rightB := (e_rbranch eq_refl).
+Notation e_lbranch k H := (k (MkElem Lbranch (lnode_valid H))).
+Notation e_rbranch k H := (k (MkElem Rbranch (rnode_valid H))).
+Notation leftB  k := (e_lbranch k eq_refl).
+Notation rightB k := (e_rbranch k eq_refl).
 
 Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
-  refine {|
-      app := fun (x : App (TreeF L A) X) =>
+|{ x : (App (TreeF L A) X) ~> (
                let (s, k) := x in
                match s as s' return s = s' -> ITreeF L A X with
                | Leaf _ x => fun _ => leaf x
-               | Node _ n => fun E => node n (k (e_lbranch E)) (k (e_rbranch E))
+               | Node _ n => fun E => node n (e_lbranch k E) (e_rbranch k E)
                end eq_refl
-    |}.
-  intros [x Fx] [y Fy] [Sxy Kxy]. simpl in *. subst.
-  destruct y; trivial; simpl.
-  rewrite (Kxy leftB leftB); trivial.
-  rewrite (Kxy rightB rightB); trivial.
+         )
+}|.
 Defined.
 
 Inductive itree L A := | i_leaf (l : L) | i_node (x : A) (l r : itree L A).
@@ -122,8 +122,7 @@ Definition to_itree {L A} : App (TreeF L A) (itree L A) ~> itree L A.
      end
   }|.
 Defined.
-Definition tree_to_itree {L A} : Tree L A ~> itree L A
-  := cata to_itree.
+Definition tree_to_itree {L A} : Tree L A ~> itree L A := cata to_itree.
 
 Lemma tree_itree_iso1 {L A} : itree_to_tree (L:=L) (A:=A) \o tree_to_itree =e id.
   Opaque to_tree_rec.
@@ -133,19 +132,13 @@ Lemma tree_itree_iso1 {L A} : itree_to_tree (L:=L) (A:=A) \o tree_to_itree =e id
   induction x as [[[|n] kx] Ih]; rewrite cata_unfold, rana_unfold; simpl in *.
   - split; trivial. intros e. apply (dom_leaf _ e).
   - split; trivial. intros [[|] V1] [v2 V2]; simpl.
-    + intros <-. rewrite elem_val_eq with (e1:=leftB) (e2:= {|val := Lbranch; Valid := V2|}); trivial.
-    + intros <-. rewrite elem_val_eq with (e1:=rightB) (e2:= {|val := Rbranch; Valid := V2|}); trivial.
+    + intros <-. rewrite (bool_irrelevance V2 (lnode_valid eq_refl)). trivial.
+    + intros <-. rewrite (bool_irrelevance V2 (rnode_valid eq_refl)). trivial.
 Qed.
 
-Lemma tree_itree_iso2_ {L A}
-  : cata to_itree \o rana fto_tree =e id (A:=itree L A).
-  rewrite cata_ana_hylo. Opaque hylo. simpl. intros x.
-  induction x as [l|n l Ihl r Ihr]; rewrite hylo_unr; simpl; trivial.
-  rewrite Ihl, Ihr. reflexivity.
-Qed.
-
-(* For some reason unfolding does not work ...? *)
+(* For some reason [Tree] needs unfolding ... *)
 Lemma tree_itree_iso2 {L A}
   : tree_to_itree \o itree_to_tree =e id (A:=itree L A).
-  exact tree_itree_iso2_.
+  unfold tree_to_itree, itree_to_tree, Tree. rewrite cata_ana_hylo.
+  symmetry. rewrite hylo_univ, fmap_id, idKr. intros[]; simpl; trivial.
 Qed.
