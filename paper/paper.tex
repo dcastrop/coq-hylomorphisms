@@ -1228,6 +1228,10 @@ where \coq{l : L} is the observable action and \coq{x2 : X} is the next state.
 Note that for a generic functor \coq{F} an \coq{F}-coalgebra on the
 carrier \coq{X} is a map \coq{X -> FX}. In the previous example \coq{c} is
 an \coq{F}-coalgebra on the carrier \coq{X} with \coq{FX = L * X}.
+In our development we use the following notation for coalgebras:
+\begin{coqcode}
+Notation Coalg F A := (A ~> App F A) (only parsing).
+\end{coqcode}
 
 Now an anamorphism takes such a seed function and runs it while collecting all
 the observable behaviours. In order to do so we define the type of infinite
@@ -1261,9 +1265,10 @@ Coalg F A ~> A ~> GFix
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
 Hylomorphism capture the concept of \emph{divide-and-conquer} algorithms.  First
-the input is destructured (\emph{divide}) in smaller parts. This operation may or may not be
-structural. Next the results from the subparts are computed recursively and
-finally the results are composed together (\emph{conquer}) by means of an algebra.
+the input is destructured (\emph{divide}) in smaller parts. This operation may
+or may not be structural. Next the results from the subparts are computed
+recursively and finally the results are composed together (\emph{conquer}) by
+means of an algebra.
 
 A catamorphism is a special kind of hylomorphism where the coalgebra
 map \coq{InOp} only destructures the input structurally, for example,
@@ -1274,25 +1279,32 @@ input smaller. This is what, for example, happens in quicksort where the
 partition function, given a list, returns two smaller sublists and a pivot
 element.
 
-Thus, in general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the unique solution to the equation
+Thus, in general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
+unique solution to the equation
 \begin{equation}
   \label{eq:hylo}
   f = a \circ F\; f \circ c
 \end{equation}
+
 However this solution does not necessarily exists for an arbitrary pair of
-algebras and coalgebras.  In fact, this definition cannot be accepted by Coq,
+algebras and coalgebras. In fact, this definition cannot be accepted by Coq,
 since there is no structurally smaller argument to do recursion on and there is
 no corecursive definition that is guaranteed to be syntactically guarded -- as
-required by Coq -- due to the use of an arbitrary algebra $a$. Furthermore,
+required by Coq -- due to the use of an arbitrary algebra $a$.  Furthermore,
 solutions to the hylomorphism equation are \emph{not} guaranteed to be unique,
-or to even exist. To address these issues, we mechanise \textbf{recursive
+or to even exist. To address these issues, we mechanise \emph{recursive
 hylomorphisms} which are guaranteed to have a unique solution to the
-hylomorphism equation.
+hylomorphism equation. These are hylomoprhisms where the coalgebra is
+\emph{recursive}.
 
-If $c$ is a recursive coalgebra, then the equation (\ref{eq:hylo}) has a unique
-solution. We show this by first providing the definition for recursive
-hylomorphisms in Coq, and then proving that any function satisfying this
-equation is a hylomorphism.
+Recursive coalgebras are coalgebras whose anamorphism produces finite data which
+what the following predicate captures:
+\begin{coqcode}
+Inductive RecF (h : Coalg F A) : A -> Prop :=
+| RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
+\end{coqcode}
+Recursive anamorphisms are implemented in Coq recursively on the structure of
+the proof for the type (\coq{RecF}) as follows:
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A)
   : forall (x : A), RecF c x -> B := fix f x H
@@ -1302,72 +1314,70 @@ Definition hylo_def (a : Alg F B) (c : Coalg F A)
      | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
      end (RecF_inv H).
 \end{coqcode}
-The definition of recursive hylomorphisms is recursive on the proof that the
-anamorphism can only be applied finitely many times on any input. We again use
-\coq{RecF_inv} to obtain the structurally smaller proof to use in
-the recursive calls.  As we did with catamorphisms and recursive anamorphisms,
-we prove that \coq{hylo_def} is respectful, and use this proof to
-built the corresponding higher-order proper morphism:
+We again use \coq{RecF_inv} to obtain the structurally smaller proof to use in
+the recursive calls. As we did with catamorphisms and recursive anamorphisms, we
+prove that \coq{hylo_def} is respectful, and use this proof to built the
+corresponding higher-order proper morphism:
 \begin{coqcode}
-Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B := ...
+Alg F B ~> RCoalg F A ~> A ~> B
 \end{coqcode}
-Finally, we show that recursive hylomorphisms are the unique solution to
-the hylomorphism equation.
+Finally, we show that recursive hylomorphisms are the unique solution to the
+hylomorphism equation.
 \begin{coqcode}
 Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
 \end{coqcode}
-This result can be used to prove hylomorphism laws in a way that is analogous
-to pen-and-paper program calculation techniques. We show the rule for
-hylomorphism fusion as an example:
+Hylomorphisms fusion falls out from the universal property:
 \begin{coqcode}
 Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
   (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2) : f2 \o hylo g1 h1 =e hylo g2 h1.
-
-  rewrite hylo_univ, fmap_comp, compA, <- E2,
-          <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
-Qed.
-  (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
-  (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
-  (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
-  (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
-  (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
-  (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
-  (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
-  (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
-  (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
 \end{coqcode}
+% Qed.
+%   rewrite hylo_univ, fmap_comp, compA, <- E2,
+%           <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
+
+  % rewrite hylo_univ, fmap_comp, compA, <- E2,
+  %         <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
+
+  % (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
+  % (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
+  % (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
+  % (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
+  % (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
+  % (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
+  % (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
+  % (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
+  % (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
 Using the hylo fusion law, we can prove the well-known \emph{deforestation
-optimisation}, where two consecutive recursive computations, one that builds a
-data structure, and another one that consumes it, can be fused together into a
-single recursive definition. This, in turn, allows us to prove that a recursive
-hylomorphism is the composition of a catamorphism and a recursive anamorphism.
+optimisation}. This is when two consecutive recursive computations, one that
+builds a data structure, and another one that consumes it, can be fused together
+into a single recursive definition. This, in turn, allows us to prove that a
+recursive hylomorphism is the composition of a catamorphism and a recursive
+anamorphism.
 \begin{coqcode}
 Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
   (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
   : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
-
-Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
-  (g : Alg F B) (h : RCoalg F A)
-: cata g \o rana h =e hylo g h.
 \end{coqcode}
-This result will allow us to \emph{calculate} programs by providing small, easy
-to verify implementations, and combining them into efficient recursive
-functions by \emph{using Coq's proofs of hylomorphism laws as optimisation
-passes}.
 
-\mpav{Moved here}
-In particular, we show that the terminal coalgebras
-for $F$, coupled with a proof that they are finite are also initial
-$F$-algebras:
+\subsection{Recursive Anamorphisms}
+Anamorphisms specialise to an hylomorphism into an inductive data type.
+Intuitively, this is because a recursive coalgebra can be applied only finitely
+many times, so when this is applied to an anamorphism the only possible traces
+it can produce are the finite ones.  We show then that an anamorphisms applied
+to a recursive coalgebra is in one-to-one correspondence with an hylomorphism
+applied to the same recursive coalgebra and the \coq{In} map which is a map into
+the inductive data type defined by \coq{In}.
+
+To do this we first define a predicate which holds if and only if the element of
+a coinductive data type is finite:
 \begin{coqcode}
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{coqcode}
-Catamorphisms from this initial algebra are denoted by \coq{ccata},
-and they can be used to define the isomorphism between
-\coq{{x : GFix F | FinF x}} and
-\coq{LFix F}. In particular:
+Catamorphisms from this initial algebra are denoted by \coq{ccata}, and they can
+be used to define the isomorphism between \coq{{x : GFix F | FinF x}}
+and \coq{LFix F}. In particular:
 \begin{coqcode}
 Lemma cata_ccata `{setoid A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
 Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
@@ -1378,23 +1388,27 @@ the supplementary material and Coq code to see how we encode this. In this
 paper, however, we focus on the fact that, if anamorphisms produce finite trees,
 then their return type can also be the \emph{least} fixed point of the container
 extension. We encode in Coq the notion of \emph{recursive anamorphisms} and
-\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}. Recursive
-coalgebras are coalgebras whose anamorphism produces finite trees. The
-following predicate captures this fact, \coq{h} is recursive if \coq{h} can only
-be applied finitely many times:
+\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.
+
 \begin{coqcode}
-Inductive RecF (h : Coalg F A) : A -> Prop :=
-| RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
+Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
+  (g : Alg F B) (h : RCoalg F A)
+: cata g \o rana h =e hylo g h.
 \end{coqcode}
+This result will allow us to \emph{calculate} programs by providing small, easy
+to verify implementations, and combining them into efficient recursive functions
+by \emph{using Coq's proofs of hylomorphism laws as optimisation passes}.
+
 This predicate is equivalent to the proposition that the anamorphism of such
 coalgebras produce only finite trees:
 \begin{coqcode}
 Lemma ana_rec_term `{setoid A} (h : Coalg F A)
   : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
 \end{coqcode}
-Recursive anamorphisms are implemented in Coq recursively on the structure of
-the proof that they can only be applied finitely many times (\coq{RecF}).  Note
-that such proofs will be erased when extracting code to OCaml, and this is
+
+\mpav{Moved here}
+
+Note that such proofs will be erased when extracting code to OCaml, and this is
 standard practice when building general recursive functions in
 Coq\footnote{\dcas{This technique had a name in the community, but I cannot
 remember. Something predicates}}. The core definitions are the following:
