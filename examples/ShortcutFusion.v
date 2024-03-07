@@ -139,16 +139,15 @@ Definition example2 {A} : Ext (hylo len_alg ilist_coalg \o @reverse A).
         with
         ((hylo len_alg ilist_coalg \o hylo (tau_alg (h :: nil) ilist_alg) ilist_coalg) (kx {| val := tt; Valid := tt_cons h |}))by reflexivity.
       rewrite <- tau_fusion. simpl.
-      2: {
-        intros [[|h'] k]; simpl; constructor; simpl; auto with ffix.
-        - intros e. destruct (dom_nil_false e).
-        - intros [[] V1] [[] V2] _. simpl in *.
-          rewrite (bool_irrelevance (p_cons eq_refl) V2). reflexivity.
-      }.
       induction (kx _) as [|x t Ih]; rewrite hylo_unr; simpl.
       rewrite hylo_unr; simpl. rewrite hylo_unr. simpl. reflexivity.
       rewrite Ih.
       rewrite hylo_unr at 2. simpl. reflexivity.
+
+      intros [[|h'] k]; simpl; constructor; simpl; auto with ffix.
+      + intros e. destruct (dom_nil_false e).
+      + intros [[] V1] [[] V2] _. simpl in *.
+        rewrite (bool_irrelevance (p_cons eq_refl) V2). reflexivity.
   }
   Transparent hylo.
   unfold len_alg. simpl.
