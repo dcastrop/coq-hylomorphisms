@@ -1290,7 +1290,7 @@ However this solution does not necessarily exists for an arbitrary pair of
 algebras and coalgebras. In fact, this definition cannot be accepted by Coq,
 since there is no structurally smaller argument to do recursion on and there is
 no corecursive definition that is guaranteed to be syntactically guarded -- as
-required by Coq -- due to the use of an arbitrary algebra $a$.  Furthermore,
+required by Coq -- due to the use of an arbitrary algebra $a$. Furthermore,
 solutions to the hylomorphism equation are \emph{not} guaranteed to be unique,
 or to even exist. To address these issues, we mechanise \emph{recursive
 hylomorphisms} which are guaranteed to have a unique solution to the
@@ -1361,22 +1361,58 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
 \end{coqcode}
 
 \subsection{Recursive Anamorphisms}
-Anamorphisms specialise to an hylomorphism into an inductive data type.
-Intuitively, this is because a recursive coalgebra can be applied only finitely
-many times, so when this is applied to an anamorphism the only possible traces
-it can produce are the finite ones.  In particular, we can show that
-anamorphisms of type \coq{X -> GFix F} applied to a recursive \coq{F}-coalgebra
-on \coq{X} are in one-to-one correspondence with hylomorphisms of
-type \coq{X -> LFix F} on the same recursive \coq{F}-coalgebra and the
-algebra \coq{In} for the inductive data type \coq{LFix F}.
+Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
+inductive data type in the following way.  Intuitively, a recursive coalgebra
+can be applied only finitely many times, therefore when this is applied to an
+anamorphism the only possible traces it can produce from the seed function are
+the finite ones. We denote this special kind of recursion scheme \emph{recursive
+anamorphism}.  We can show that recursive anamorphisms of type \coq{X -> GFix F}
+can also be given the type \coq{X -> LFix F}. Moreover, these anamorphisms are
+exactly hylomorphisms on the recursive \coq{F}-coalgebra and the
+algebra \coq{In} for the inductive data type \coq{LFix F}. This fact falls out
+from the universality property of the hylomorphism and the fact that recursive
+anamorphisms satisfy the same equation.
 
-To do this we first define a predicate on elements of coinductive data
-structures which holds if and only if the element is finite:
+We now show how this is proven in the Coq development. First we define a
+recursive anamorphism as a function into \coq{LFix F}:
+\begin{coqcode}
+Definition rana_f__ `{setoid A} (c : Coalg F A)
+  : forall x : A, RecF c x -> LFix F
+  := fix f (x : A) (H : RecF c x) :=
+       let hx := c x in
+       LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
+
+Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F := ...
+\end{coqcode}
+We omit the boilerplate details to obtain the setoid morphism.
+The recursive anamorphism has the following universality property:
+\begin{coqcode}
+Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
+    : f =e rana h <-> f =e l_in \o fmap f \o h.
+\end{coqcode}
+We can now show that every hylomorphism is composed by a recursive anamorphism
+followed by a catamorphism:
+\begin{coqcode}
+Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
+  (g : Alg F B) (h : RCoalg F A)
+: cata g \o rana h =e hylo g h.
+\end{coqcode}
+This result will allow us to \emph{calculate} programs by providing small, easy
+to verify implementations, and combining them into efficient recursive functions
+by using Coq's proofs of hylomorphism laws as optimisation passes.
+
+\subsubsection{On the subtype of finite elements}
+In this development we have defined recursive anamorphisms on inductive data
+types.  We might have as well defined them on the subtype of finite elements of
+coinductive data types using a predicate which states when an element of a
+coinductive data type is finite:
 \begin{coqcode}
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{coqcode}
-We can now define catamorphisms denoted by \coq{ccata_f_} from the
+Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
+is isomorphic its corresponding the inductive data type \coq{LFix F}. This is
+easy to see. We first define a catamorphism \coq{ccata_f_} from the
 subtype \coq{{x : GFix F | FinF x}} of finitary elements of \coq{GFix F} to
 any \coq{F}-algebra.
 \begin{coqcode}
@@ -1385,48 +1421,21 @@ Definition ccata_f_ `{eA : setoid A} (g : Alg F A)
     let hx := g_out x in
       g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
 \end{coqcode}
-In particular, we can take a catamorphism from the finitary elements
-of \coq{GFix F} to the inductive data type \coq{LFix F} using
-the \coq{F}-algebra \coq{l_in} and viceversa using catamorphism on the
-restriction of \coq{g_in} to the finite elements of \coq{GFix}, which we denote
-by \coq{lg_in}.
+We now prove this is isomorphic to the least fixed-point of the functor \coq{F}
+We take the catamorphism from the finite elements of \coq{GFix F} to the
+inductive data type \coq{LFix F} using the \coq{F}-algebra \coq{l_in}. Its inverse is the catamorphism on the restriction of \coq{g_in} to the finite elements of \coq{GFix}, which we denote by \coq{lg_in}.
+The following lemmas prove the isomorphism:
+\mpav{David, check this code works}
 \begin{coqcode}
-Lemma cata_ccata `{setoid A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
-Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata f \o cata lg_in =e cata f.
+Lemma cata_ccata `{setoid A} : cata lg_in \o ccata l_in =e id.
+Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata l_in \o cata lg_in =e id.
 \end{coqcode}
-Moreover, using this new initial algebra, we can compose catamorphisms and
-recursive anamorphisms.
-
-\begin{coqcode}
-Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
-  (g : Alg F B) (h : RCoalg F A)
-: cata g \o rana h =e hylo g h.
-\end{coqcode}
-This result will allow us to \emph{calculate} programs by providing small, easy
-to verify implementations, and combining them into efficient recursive functions
-by \emph{using Coq's proofs of hylomorphism laws as optimisation passes}.
-
-This predicate is equivalent to the proposition that the anamorphism of such
-coalgebras produce only finite trees:
-\begin{coqcode}
-Lemma ana_rec_term `{setoid A} (h : Coalg F A)
-  : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
-\end{coqcode}
-
-\begin{coqcode}
-Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F :=...
-
-Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
-    : f =e rana h <-> f =e l_in \o fmap f \o h.
-\end{coqcode}
-
-\begin{coqcode}
-Definition rana_f__ `{setoid A} (c : Coalg F A)
-  : forall x : A, RecF c x -> LFix F
-  := fix f (x : A) (H : RecF c x) :=
-       let hx := c x in
-       LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
-\end{coqcode}
+% This predicate is equivalent to the proposition that
+% the anamorphism of such coalgebras produce only finite trees:
+% \begin{coqcode}
+% Lemma ana_rec_term `{setoid A} (h : Coalg F A)
+%   : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
+% \end{coqcode}
 
 % \mpav{Moved here}
 
