@@ -19,12 +19,14 @@ Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 
 Definition merge : App (TreeF unit int) (list int) ~> list int.
 |{ x : (App (TreeF unit int) (list int)) ~> (
-           let (s, k) := x in
-           match s as s' return s = s' -> list int with
-           | Leaf _ _ => fun _ => nil
-           | Node _ h => fun E => List.app (e_lbranch k E) (h :: e_rbranch k E)
-           end eq_refl
-)}|.
+           match x with
+           | MkCont sx kx =>
+               match sx return (Container.Pos sx -> _) -> _ with
+               | Leaf _ _ => fun _ => nil
+               | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
+               end kx
+           end
+  )}|.
 Defined.
 
 Open Scope uint63_scope.
@@ -57,14 +59,15 @@ Definition Lmap {A B} (f : A ~> B) : list A ~> list B.
 |{ x ~> (List.map f x) }|.
 Defined.
 
+Ltac eq_args :=
+  repeat (f_equal; auto with ffix; try apply bool_irrelevance).
+
 Lemma Lmap_merge (f : int ~> int)
   : Lmap f \o merge =e merge \o natural (nt_shape id f) \o fmap (Lmap f).
 Proof.
   intros [[n|n] kx]; simpl in *; auto with *.
-  rewrite map_app; simpl.
-  rewrite (bool_irrelevance (nt_shape_is_nat _) (lnode_valid eq_refl)).
-  rewrite (bool_irrelevance (nt_shape_is_nat _) (rnode_valid eq_refl)).
-  reflexivity.
+  rewrite map_app; simpl. unfold posL, posR.
+  eq_args.
 Qed.
 
 (* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
@@ -119,6 +122,8 @@ End Tests.
 From Coq Require Extraction ExtrOcamlBasic ExtrOCamlInt63.
 Set Extraction TypeExpand.
 Extraction Inline val.
+Extraction Inline posL.
+Extraction Inline posR.
 Set Extraction Flag 2047.
 Recursive Extraction qsort.
 Recursive Extraction qsort_times_two.

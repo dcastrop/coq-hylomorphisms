@@ -289,8 +289,10 @@ Section NaturalTransformation.
     := fun _ p => {| val := eta_P (val p); Valid := eta_C (Valid p) |}.
 
   Definition eta_ {X} : App F X -> App G X :=
-    fun x => let (sx, kx) := x in
-             {| shape := eta_S sx; cont := fun p => kx (eta_Pos p) |}.
+    fun x =>
+      match x with
+      | MkCont sx kx => {| shape := eta_S sx; cont := fun p => kx (eta_Pos p) |}
+      end.
   Lemma eta_morph `{setoid X} : forall x y, x =e y -> @eta_ X x =e @eta_ X y.
   Proof.
     intros [sx kx] [sy ky] [Es Ek]. unfold eta_. simpl in *.
