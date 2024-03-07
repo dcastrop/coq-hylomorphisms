@@ -19,3 +19,4 @@ examples/CList.v
 examples/QSort.v
 examples/MSort.v
 examples/ShortcutFusion.v
+examples/Knapsack.v
