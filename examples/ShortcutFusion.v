@@ -9,6 +9,7 @@ Require Import HYLO.Algebra.
 Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
+Require Import HYLO.Extraction.
 
 Require Import Util.Utils.
 
@@ -159,8 +160,5 @@ Module ToExtract.
   Definition ex2 := Eval unfold example2 in @example2.
 End ToExtract.
 
-From Coq Require Extraction ExtrOcamlBasic ExtrOCamlInt63.
-Set Extraction TypeExpand.
-Extraction Inline val.
 Set Extraction Flag 2047.
 Recursive Extraction ToExtract.
