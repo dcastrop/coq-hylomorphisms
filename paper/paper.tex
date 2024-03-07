@@ -173,7 +173,31 @@
 
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
+  Generic programming and recursion schemes provide powerful abstractions for
+reasoning about program equivalences and deriving optimisations. However,
+formalizing such abstractions in Coq often requires compromises, such as
+imposing performance penalties, requiring the assumption of additional axioms,
+or introducing unsafe casts into extracted code (for example, \ocaml{Obj.magic}
+in OCaml). This paper presents a fully axiom-free formalization of hylomorphisms
+(a recursion scheme capturing divide-and-conquer algorithms) in Coq, along with
+their algebraic laws. The formalization allows for the extraction of clean,
+natural-looking OCaml code for a variety of recursive programs.
+% while enabling
+% formal reasoning about program equivalences using the laws of hylomorphisms.
 
+  The key contribution of this paper is an axiom-free framework for generic
+programming with recursion schemes in Coq, focusing on proving algebraic laws,
+reasoning about program equivalences, and extracting safe, idiomatic code. With
+this framework, we formalize a series of divide-and conquer, dynamic
+programming, and mutual recursion programs as hylomorphisms. We demonstrate that
+the extracted OCaml code for the programs formalized in our framework is
+efficient, resembles code that a human programmer might write, and contains no
+uses of \ocaml{Obj.magic}. We also present a machine-checked proof of the
+well-known short-cut fusion optimsation.
+
+  By avoiding undafe coersions in the extracted code, this work provides a solid
+foundation for developing efficient, verified recursive programs with strong
+guarantees about the safety and interoperability of the generated OCaml code.
 \end{abstract}
 
 \section{Introduction}
