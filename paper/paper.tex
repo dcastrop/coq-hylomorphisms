@@ -115,6 +115,7 @@
 \newmintinline[coq]{coq}{fontsize=\small}
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
+\newminted{ocaml}{fontsize=\small}
 
 \title{A Mechanised Library for Generic (Co)Programming}
 
@@ -1530,10 +1531,92 @@ these steps, we provide the following helper type:
 \end{coqcode}
 Note that \coq{tgt_eq} will be erased when extracting \coq{Ext f} to OCaml,
 since it is in \coq{Prop}. This implies that the code extracted for \coq{Ext f}
-will be the function \coq{target} that is extensionally equal to \coq{f}.
+will be the function \coq{target} that is extensionally equal to \coq{f}.  We
+use a shortcut tactic, \coq{calculate}, that is a synonym to 
+\coq{eapply MkExt}. As a result of this tactic, we will be given the goal 
+\coq{f =e ?Goal0}. We can rewrite \coq{f}, unfold definitions, etc, and
+complete the definition with \coq{reflexivity}, and this will instantiate the
+metavariable \coq{?Goal0} to our desired function. We will use this extensively
+in our examples.
+
+\subsection{Shortcut Deforestation}
+
+\subsubsection{Example 1}
+Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
+their laws~\cite{TakanoM95}. In particular, given a function:
+\begin{coqcode}
+  s  : forall A. (App F A -> A) -> (App F A -> A)
+\end{coqcode}
+We can conclude, by parametricity, that
+\begin{coqcode}
+  hylo a l_out \o hylo (sigma l_in) c =e hylo (s a) c
+\end{coqcode}
+This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
+\textbf{not} provable in Coq if we want to remain axiom-free, since we would
+need to add the necessary parametricity
+axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}. 
+
+However, we prove a specific version of this theorem for the list generating
+container (i.e.\ the container whose least fixed point is a list), and use it
+to encode the example from Takano and Meijer~\cite{TakanoM95}:
+\begin{coqcode}
+Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
+\end{coqcode}
+Here, we are defining function \coq{sf1} as the composition of \coq{length},
+\coq{Lmap f} and \coq{append ys}. Functions \coq{length} and \coq{Lmap} are
+catamorphisms. Function \coq{append ys} is also a catamorphism that
+appends \coq{ys} to an input list. It is defined by applying an algebra to
+every cons node of a list, and applying a catamorphism with the input algebra
+to \coq{ys} in the nil case:
+\begin{coqcode}
+Definition tau (l : list A) (a : Alg (ListF A) B) : App (ListF A) B -> B :=
+  fun x => match x with | MkCont sx kx => match sx with
+  | s_nil => fun _ => (hylo a ilist_coalg) l
+  | s_cons h => fun kx => a (MkCont (s_cons h) kx)
+  end kx end.
+Definition append (l : list A) := hylo (tau l l_in) ilist_coalg.
+\end{coqcode}
+Here, \coq{ilist_coalg} is a recursive coalgebra from Coq lists to the
+\coq{ListF} container. We apply the hylo fusion law repeatedly, unfold
+definitions, and simplify in our specification for \coq{sf1}: 
+\begin{coqcode}
+Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
+  rewrite hylo_map_fusion, <- acid_rain.
+  simpl; reflexivity.
+Defined.
+\end{coqcode}
+From this, we extract the following OCaml code:
+\begin{ocamlcode}
+let rec sf1 f ys = function | [] -> let rec f0 = function
+                                      | [] -> (Uint63.of_int (0))
+                                      | _ :: t -> add (Uint63.of_int (1)) (f0 t)
+                                    in f0 ys
+                            | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
+\end{ocamlcode}
+
+\subsubsection{Example 2} We then prove that the length function fuses with
+the naive quadratic \emph{reverse} function:
+\begin{coqcode}
+Definition sf2 : Ext (length \o reverse). 
+  calculate.  unfold length, reverse. rewrite hylo_fusion_l. 
+  2:{ (* Rewrite into the fused version *) }
+  simpl; reflexivity.
+Defined.
+\end{coqcode}
+This code extracts to the optimised length function on the input list:
+\begin{ocamlcode}
+let rec ex2 = function | [] -> (Uint63.of_int (0))
+                       | _ :: t -> add (Uint63.of_int (1)) (ex2 t)
+\end{ocamlcode}
+
 
 \subsection{Sorting Algorithms}
-\dcas{Talk About this}
+
+So far, our examples could be modelled exclusively using catamorphisms. Here,
+we show examples that require recursive hylomorphisms and termination proofs.
+
+\subsubsection{Mergesort}
+
 \begin{minted}{OCaml}
   let rec msort x = match x with
 | [] -> x | _ :: l -> (match l with | [] -> x | _ :: _ ->
@@ -1542,13 +1625,12 @@ will be the function \coq{target} that is extensionally equal to \coq{f}.
      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
 \end{minted}
 
+
+\subsubsection{Quicksort}
+
+\subsubsection{Fusing a divide-and-conquer computation}
+
 \subsection{Knapsack}
-
-\subsection{Harper's Regular-Expression Matcher}
-
-\subsection{Shortcut Deforestation}
-
-\dcas{foldr/build examples from original paper (or hylo papers)}
 
 \section{Related Work}
 
