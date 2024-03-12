@@ -1614,23 +1614,252 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 
 So far, our examples could be modelled exclusively using catamorphisms. Here,
 we show examples that require recursive hylomorphisms and termination proofs.
+We complete the sorting algorithm examples by applying fusion optimisation.
+
+\subsubsection{Binary Trees}
+
+Both Mergesort and Quicksort are hylomorphisms whose recursive structure is
+described by a binary tree. In particular, the container used in their
+definition is isomorphic to \coq{TreeF (list nat) unit} and 
+\coq{TreeF unit nat} respectively, where \coq{TreeF} is defined as follows:
+\begin{coqcode}
+Inductive ITreeF L N X := i_leaf (l : L) | i_node (n : N) (l r : X)
+\end{coqcode}
+The definition as a container uses the following shapes and positions:
+\begin{coqcode}
+Inductive Tshape L A := | Leaf (ELEM : L) | Node (ELEM : A).
+Inductive Tpos := | Lbranch | Rbranch. 
+\end{coqcode}
+We define the tree container, \coq{TreeF}, in a straightforward way, by making
+the positions of type \coq{Tpos} only valid in \coq{Node}.
+We define a series of definitions for tree container constructors and 
+destructors:
+\begin{coqcode}
+Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
+(* Converting TreeF to ITreeF *)
+Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
+Notation a_node x l r := (MkCont (Node _ x)
+  (fun p => match val p with | Lbranch => l | Rbranch => r end)).
+\end{coqcode}
 
 \subsubsection{Mergesort}
 
-\begin{minted}{OCaml}
-  let rec msort x = match x with
+Mergesort is a hylomorphism with the recursive structure defined by the
+container \coq{(TreeF (list int) unit)}. 
+The computationally expensive part of the Mergesort implementation is the
+algebra, since this is where most of the comparisons happen. The recursive
+coalgebra for Mergesort is defined as the following Coq functions:
+\begin{coqcode}
+Fixpoint splitL (x : list int) (accL accR : list int) :=
+  match x with
+  | nil => (accL, accR)
+  | cons x xs => splitL xs accR (cons x accL)
+  end.
+
+Definition c_split : Coalg (TreeF (list int) unit) (list int) :=
+|{ x ~> match x with
+        | nil | cons _ nil => a_leaf x
+        | _ => let (l, r) := splitL x nil nil in
+               a_node tt l r
+        end
+ }|.
+Defined.
+\end{coqcode}
+Here, the notation \coq{|{ x ~> E }|} defines the morphism \coq{fun x => E},
+and uses a custom tactic to prove that it is respectful. The recursive
+coalgebra \coq{c_split} takes a list, and it returns a leaf with the input
+list, if its size is less or equal than 1. Otherwise, it applies the function
+\coq{splitL}, and divides the list in two halves.
+
+It is easy to prove that this coalgebra is recursive, by showing that
+it respects the relation \coq{<} on the length of the lists:
+\begin{coqcode}
+Lemma split_fin : respects_relation c_split (@length int) lt.
+  Proof. (* *) Qed.
+
+Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
+  := mk_wf_coalg wf_lt split_fin.
+\end{coqcode}
+
+The algebra simply applies the \coq{mergeL} function in order to the sublists
+in every node:
+\begin{coqcode}
+Fixpoint mergeL l1 l2 {struct l1}  : list int := (* *)
+
+Definition merge : App (TreeF (list int) unit) (list int) ~> list int.
+|{ x ~> match a_out x with | node _ l r => mergeL l r | leaf e => e end }|.
+Defined.
+\end{coqcode}
+
+Putting everything together, Mergesort is defined as the following
+hylomorphism:
+\begin{coqcode}
+Definition msort := hylo merge tsplit.
+\end{coqcode}
+Note, however, that we could have composed the catamorphism and anamorphism,
+and used the deforestation result to optimise the intermediate binary tree
+away:
+\begin{coqcode}
+Definition msort : Ext (cata merge \o rana tsplit).
+calculate. rewrite (deforest l_in_out). simpl. reflexivity. Defined.
+\end{coqcode}
+In both cases, the result is the same, and it extracts to the usual divide and
+conquer definition of Mergesort in OCaml:
+\begin{ocamlcode}
+let rec msort x = match x with
 | [] -> x | _ :: l -> (match l with | [] -> x | _ :: _ ->
      let (l0, r) = splitL x [] [] in
      let cx = fun p -> match p with | Lbranch -> l0 | Rbranch -> r in
      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
-\end{minted}
-
+\end{ocamlcode}
 
 \subsubsection{Quicksort}
 
+The container for the Quicksort hylomorphism is \coq{TreeF unit int}, with
+the following algebra and coalgebra.
+\begin{coqcode}
+  Definition merge : App (TreeF unit int) (list int) ~> list int.
+|{ x : (App (TreeF unit int) (list int)) ~> (
+           match x with
+           | MkCont sx kx =>
+               match sx return (Container.Pos sx -> _) -> _ with
+               | Leaf _ _ => fun _ => nil
+               | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
+               end kx
+           end
+  )}|.
+Defined.
+
+Definition c_split : Coalg (TreeF unit int) (list int).
+|{ x ~> match x with
+        | nil => a_leaf tt
+        | cons h t => let (l, r) := List.partition (fun x => x <=? h) t in
+                      a_node h l r
+        end}|.
+Defined.
+\end{coqcode}
+As with the Mergesort case, we prove that the coalgebra is recursive by showing
+that it respects the ``less-than'' relation on the length of the lists.
+We then define, and extract, the hylomorphism \coq{hylo merge r_split}, which
+extracts to the following OCaml code:
+\begin{ocamlcode}
+let rec qsort = function
+| [] -> [] | h :: t ->
+  let (l, r) = partition (fun x0 -> leb x0 h) t in
+  let x0 = fun e -> qsort (match e with | Lbranch -> l | Rbranch -> r) in 
+  app (x0 Lbranch) (h :: (x0 Rbranch))
+\end{ocamlcode}
+Note that Coq's code extraction is unable to inline \coq{x0}, but the resulting
+code is similar to a hand-written \coq{qsort}.
+
 \subsubsection{Fusing a divide-and-conquer computation}
 
+Suppose that we map a function to the result of sorting the list. We can
+use our framework to fuse both computations. In particular, consider
+the following definition:
+\begin{coqcode}
+Definition qsort_times_two : Ext (Lmap times_two \o hylo merge tsplit).
+  calculate.  apply hylo_fusion_l. 
+  (* calculate the fused stage *)
+Defined.
+\end{coqcode}
+Here, \coq{Lmap times_two} is a list map function defined as a hylomorphism,
+and \coq{times_two} multiplies every element of the list by two.
+After applying hylo fusion and the necessary rewrites, the hylomorphism that we
+extract is 
+\coq{hylo (merge \o natural times_two) tsplit}. Here, \coq{natural} defines
+a natural transformation between container extensions by applying a function
+to the shapes that preserves the validity of the positions. In this case,
+the function is \coq{times_two} that multiplies every pivot in the Quicksort
+tree by two. The extracted OCaml code is a single recursive traversal:
+\begin{ocamlcode}
+let rec qsort_times_two = function
+| [] -> []
+| h :: t ->
+  let (l, r) = partition (fun x0 -> leb x0 h) t in
+  let x0 = fun p -> qsort_times_two (match p with
+                                     | Lbranch -> l
+                                     | Rbranch -> r) in
+  app (x0 Lbranch) ((mul (Uint63.of_int (2)) h) :: (x0 Rbranch))
+\end{ocamlcode}
+
 \subsection{Knapsack}
+
+To close this section, we show how our framework can represent more advanced
+recursion schemes, such as \emph{dynamorphisms} for dynamic programming, by
+using their encoding as a hylomorphism. We use the knapsack example
+from~\cite{HinzeWG15}. First, we define memoisation tables in terms
+of containers. 
+\begin{coqcode}
+Definition MemoShape : Type := A * Sg.
+Definition MemoPos := Pg.
+Instance Memo : Cont MemoShape MemoPos := { valid := valid \o pair (snd \o fst) snd }.
+
+Definition Table := LFix Memo.
+\end{coqcode}
+Memoisation tables are the least fixed point of the container defined by shapes
+\coq{A * Sg} and positions \coq{Pg}, given a a container \coq{G : Cont Sg Pg}.
+We define a function to insert elements into the memoisation tables:
+\begin{coqcode}
+  Definition Cons : A * App G Table ~> App Memo Table := (* *)
+\end{coqcode}
+And two functions to inspect the head of a memoisation table, and remove an
+element from it:
+\begin{coqcode}
+Definition headT : Table ~> A := (* *)
+Definition tailT : Table ~> App G Table := (* *)
+\end{coqcode}
+Using these definitions, a dynamorphism is defined as follows:
+\begin{coqcode}
+Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
+:= headT \o hylo (l_in \o Cons \o pair a id) c.
+\end{coqcode}
+Note how, instead of an algebra \coq{App G A ~> A}, the algebra takes a
+memoisation table. The definition of the algebra can use this table to lookup
+elements, instead of triggering a further recursive call. Elements are inserted
+into the memoisation table by the use of \coq{Cons} to the result of applying
+the algebra. The algebra for the dynamorphism looks up the previously computed
+elements to produce the result, thus saving the corresponding recursive calls:
+\begin{coqcode}
+Fixpoint memo_knap table wvs :=
+  match wvs with | nil => nil | h :: t =>
+      match lookupT (Nat.pred (fst h)) table with
+      | Some u => (u + snd h)%sint63 :: memo_knapsack table t
+      | None => memo_knapsack table t
+      end
+  end.
+
+Definition knapsack_alg (wvs : list (nat * int))
+  (x : App NatF (Table NatF int)) : int :=
+  match x with | MkCont sx kx => match sx with
+  | inl tt => fun kx => 0%sint63
+  | inr tt => fun kx => let tbl := kx next_elem in max_int 0 (memo_knap tbl wvs)
+  end kx end.
+Definition knapsackA wvs : App NatF (Table NatF int) ~> int := 
+  (* [knapsack_alg wvs] as a respecful morphism *)
+\end{coqcode}
+The hylomorphism for knapsack is as follows, where \coq{out_nat} is the
+recursive coalgebra for \coq{nat}.
+\begin{coqcode}
+Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
+\end{coqcode}
+Coq's code extraction mechanism is unable to inline several definitions in
+this case, but the extracted code can be trivially inlined to produce the
+following:
+\begin{ocamlcode}
+let knapsack wvs x =
+  let (y, _) =
+    (let rec f x0 =
+      if x0=0 then Uint63.of_int (0)
+      else let fn := f (x0-1) in { lFix_out = { 
+           shape = (max_int (Uint63.of_int (0)) (memo_knap fn wvs), sx);
+           cont = fun _ -> fn } }
+     in f x).lFix_out.shape
+  in y
+\end{ocamlcode}
+Note how the recursive calls of \ocaml{f} build the memoisation table, and how
+this memoisation table is used to compute the intermediate results in
+\ocaml{memo_knap}, which is finally discarded to produce the final result.
 
 \section{Related Work}
 
