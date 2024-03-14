@@ -102,6 +102,7 @@ Arguments Table {Sg}%type_scope {Esh} {Pg}%type_scope G A%type_scope {H}.
 Arguments Cons & {Sg}%type_scope {Esh} {Pg}%type_scope {G} {A}%type_scope {_}.
 Arguments headT {Sg}%type_scope {Esh} {Pg}%type_scope {G} {A}%type_scope {H}.
 Arguments tailT {Sg}%type_scope {Esh} {Pg}%type_scope {G} {A}%type_scope {H}.
+About tailT.
 
 Definition dyna `{setoid A} `{setoid B} `{C : Cont Sc Pc}
   (a : App C (Table C A) ~> A) (c : RCoalg C B) : B ~> A
