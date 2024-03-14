@@ -1511,8 +1511,8 @@ Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata l_in \o cata lg_in =e id.
 % \coq{f =e l_in \o fmap f \o h},
 % where \coq{h} is a recursive coalgebra.
 \section{Extraction}
-This section covers how to use our approach to calculate recursive programs
-from simple, non-recursive specifications. The steps are the following:
+We now proceed to calculate recursive programs from simple, non-recursive specifications.
+The steps are the following:
 \begin{enumerate}
   \item Write a specification as a morphism \coq{f : A ~> B}.
   \item Use Coq's generalised rewriting and the laws of morphisms to 
