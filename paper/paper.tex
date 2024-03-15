@@ -695,15 +695,15 @@ custom equivalence relation on types (Section~\ref{sec:types-morphisms}).
 
 \subsection{Functors and Containers}
 \label{sec:containers}
-Functors are functions \coq{F : Type -> Type} which additionally have a map
-\coq{fmap : forall A B, (A -> B) -> F A -> F B} witnessing the idea that a
-functor represents a container for abstract data that can be manipulated
-without changing the outer structure. For example, the type 
-\coq{List : Type -> Type} is a functor and \coq{List A} is the type of lists
-over elements of type \coq{A} with the obvious \coq{fmap} function recursive
-over a list and applying the function \coq{A -> B} for each element of the
-list. Additionally, the type of lists \coq{List A} arises as the least
-fixed-point of the functor \coq{F X = unit + (A * X) }.
+Functors are functions \coq{F : Type -> Type} which additionally have a
+map \coq{fmap : forall A B, (A -> B) -> F A -> F B} witnessing the idea that a
+functor represents a container for abstract data that can be manipulated without
+changing the outer structure. For example, the type \coq{List : Type -> Type} is
+a functor and \coq{List A} is the type of lists over elements of type \coq{A}
+with the obvious \coq{fmap} function recursively traversing a list and applying
+the function \coq{A -> B} for each element. Additionally, the type of
+lists \coq{List A} arises as the least fixed-point of the
+functor \coq{F X = unit + (A * X) }.
 
 In general not every functor has a fixed-point, and it is not possible to build
 the fixed-point of a functor such as \coq{F} in Coq due to not being strictly
@@ -827,17 +827,17 @@ forall (x y : X), R x y -> R' (f x) (f y)
 
 \subsection{Types and Morphisms}
 \label{sec:types-morphisms}
-We address the different forms of equality by defining a class of setoids,
-i.e.\ types with na associated equivalence relation, and considering only
-functions that respect the associated equivalences, i.e. \emph{proper}
-morphisms with respect to the function \emph{respectfulness} relation.  We use
+We address the different forms of equality by defining a class of
+\emph{setoids}, types with an associated equivalence relation, and considering
+only functions that respect the associated equivalences, or \emph{proper}
+morphisms with respect to the function \emph{respectfulness} relation. We use
 the type-class mechanism, instead of setoids in Coq's standard library, to help
 Coq's code extraction mechanism remove any occurence of custom equivalence
-relations in the extracted OCaml code.  We use \coq{=e} to denote
-the equivalence relation of a setoid. By default, we associate every Coq type
-with the standard propositional equality, unless a different equivalence is
-specified (i.e.\ we allow overlapping instances, and Coq's propositional
-equality takes the lowest priority). 
+relations in the extracted OCaml code. We use \coq{=e} to denote the equivalence
+relation of a setoid. By default, we associate every Coq type with the standard
+propositional equality, unless a different equivalence is specified (we allow
+overlapping instances, and Coq's propositional equality takes the lowest
+priority).
 \begin{coqcode}
 Reserved Notation "f =e g" (at level 70, no associativity).
 Class setoid A : Type :=
@@ -859,10 +859,10 @@ Structure morph A {eA : setoid A} B {eB : setoid B} :=
   MkMorph { app :> A -> B; app_eq : forall x y, x =e y -> app x =e app y }.
 Notation "A ~> B" := (@morph A _ B _).
 \end{coqcode}
-Note that we leverage on Coq's type class mechanism to fill in the necessary
-equivalence relations. Since Coq's code extraction mechanism will erase any
-occurrence of \coq{Prop} in the code, so objects of type \coq{A ~> B} will be
-extracted to the OCaml equivalent to \coq{A -> B}. Note the implicit coercion
+We rely on Coq's type class mechanism to fill in the necessary equivalence
+relations. Coq's code extraction mechanism will erase any occurrence
+of \coq{Prop} in the code, so objects of type \coq{A ~> B} will be extracted to
+the OCaml equivalent to \coq{A -> B}. Note the implicit coercion
 from \coq{A ~> B} to \coq{A -> B}.
 On top of this, we define basic function composition and identity functions:
 \begin{coqcode}
@@ -894,17 +894,17 @@ This definition leads to the well-known ``setoid hell'', which we mitigate by
 providing tactics and notations to automatically discharge proofs of
 \coq{app_eq} for morphisms, whenever the types use the standard propositional
 equality, or a combination of propositional and extensional equality. However,
-our compositional approach allows to build morphisms by plugging in other
-morphisms to our combinator, In our framework, our goal is that the
+our compositional approach allows us to build morphisms by plugging in other
+morphisms to our combinator. In our framework, our expectation is that the
 user-provided functions remain small, with relatively straightforward proofs of
 \coq{app_eq}.
 
 However, by using this mechanisation, we gain simplified proofs via the use of
-Coq's \emph{Generalised Rewriting}.  Since every morphism \coq{f : A ~> B}
-satisfies that if \coq{x =e y}, then \coq{f x =e f y}, we can add every
-morphism as a proper element of Coq's respectfulness relation. In practice,
-this means that we can use the \coq{rewrite} tactic on proofs of type 
-\coq{A =e B}, for arbitrary \coq{A} and \coq{B}, whenever they are used as
+Coq's \emph{Generalised Rewriting}. Since every morphism \coq{f : A ~> B}
+satisfies the property that if \coq{x =e y}, then \coq{f x =e f y}, we can add
+every morphism as a proper element of Coq's respectfulness relation. In
+practice, this means that we can use the \coq{rewrite} tactic on proofs of
+type \coq{A =e B}, for arbitrary \coq{A} and \coq{B}, whenever they are used as
 arguments of morphisms, as well as Coq's \coq{reflexivity}, \coq{symmmetry},
 and \coq{transitivity} tactics. For example:
 \begin{coqcode}
