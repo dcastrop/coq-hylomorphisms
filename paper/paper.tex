@@ -1404,7 +1404,6 @@ in our examples.
 
 \subsection{Shortcut Deforestation}
 
-\subsubsection{Example 1}
 Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
 their laws~\cite{TakanoM95}. In particular, given a function:
 \begin{coqcode}
@@ -1457,7 +1456,7 @@ let rec sf1 f ys = function | [] -> let rec f0 = function
                             | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
 \end{ocamlcode}
 
-\subsubsection{Example 2} We then prove that the length function fuses with
+We then prove that the length function fuses with
 the naive quadratic \emph{reverse} function:
 \begin{coqcode}
 Definition sf2 : Ext (length \o reverse). 
