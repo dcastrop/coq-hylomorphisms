@@ -683,109 +683,108 @@ The contributions we make in this paper are as follows:
 % % % % \end{align*}
 
 \section{Mechanising Extractable Container Functors}
-\dcas{Subsections are tentative topics to remember what I need to fill in here,
-but these are not final}
-
 In order to abstract recursion patters we need to be able to abstract away from
 the particular shape of the data.  This is achieved by introducing the concept
-of \emph{functors} which have the suitable fixed-point properties, i.e. those
+of \emph{functors} which have the suitable fixed-point properties, i.e.\ those
 who have a initial algebras. A common approach to construct such functors is to
-use \emph{container}~\cite{AbbottAG05} which is what we introduce in this
-Section~\ref{sec:containers}.  However, reasoning about containers equality will
-require us to consider both functional extensionality and heterogeneous
-equality. To avoid this in Section~\ref{sec:types-morphisms} we introduce a
-custom equivalence relation on types.
+use \emph{containers}~\cite{AbbottAG05} (Section~\ref{sec:containers}).
+However, reasoning about container equality
+will require us to consider both functional extensionality and heterogeneous
+equality. We avoid these axioms by introducing a
+custom equivalence relation on types (Section~\ref{sec:types-morphisms}).
 
 \subsection{Functors and Containers}
 \label{sec:containers}
-To abstract away the shape of a particular data structure we use functors.
-These are functions \coq{F : Type -> Type} which additionally have a
+Functors are functions \coq{F : Type -> Type} which additionally have a
 map \coq{fmap : forall A B, (A -> B) -> F A -> F B} witnessing the idea that a
 functor represents a container for abstract data that can be manipulated without
 changing the outer structure. For example, the type \coq{List : Type -> Type} is
 a functor and \coq{List A} is the type of lists over elements of type \coq{A}
-with the obvious \coq{fmap} function recursive over a list and applying the
-function \coq{A -> B} for each element of the list.
-Additionally the type of lists arises as the least fixed-point for the
+with the obvious \coq{fmap} function recursively traversing a list and applying
+the function \coq{A -> B} for each element. Additionally, the type of
+lists \coq{List A} arises as the least fixed-point of the
 functor \coq{F X = unit + (A * X) }.
 
-In general not every functor has a fixed-point, so we are going to restrict
-ourselves to \emph{polynomial functors} as represented by containers.  A
-container is defined by a type of \emph{shapes} and a \emph{family of position
-types} indexed by shapes.
+In general not every functor has a fixed-point, and it is not possible to build
+the fixed-point of a functor such as \coq{F} in Coq due to not being strictly
+positive.  Due to this, we are going to restrict to \emph{polynomial functors}
+as represented by containers.  A container is defined by a type of
+\emph{shapes} and a \emph{family of position types} indexed by shapes.
 \begin{coqcode}
 Context (Shape : Type) (Pos : Shape -> Type).
 \end{coqcode}
-For the functor \coq{F} we introduced in the previous paragraph we would
-define \coq{Shape} as \coq{unit + A} indicating there are two constructors in
-the data type and one of these contains a piece of data of type \coq{A}.
-Moreover, we would define the positions as \coq{Pos (inl tt) = Empty_set}
-and \coq{Pos (inr a) = unit} indicating that the first constructor does not have
-any recursive type variables and the second constructor has one type variable.
+For the functor \coq{F} we introduced in the previous paragraph we would define
+\coq{Shape} as \coq{unit + A} indicating there are two constructors in the data
+type and one of these contains a piece of data of type \coq{A}.  Moreover, we
+would define the positions as \coq{Pos (inl tt) = Empty_set} and 
+\coq{Pos (inr a) = unit} indicating that the first constructor does not have
+any type variables and the second constructor has one type variable.
 
 At this point an \emph{extension} of this container is a functor defined as
 follows:
 \begin{coqcode}
-Record App (X : Type) := { shape : Shape; contents : Pos shape -> X }.
+Record App (X : Type) := MkApp { shape : Shape; contents : Pos shape -> X }.
 \end{coqcode}
 with the obvious action on morphisms given by post-composition
-with \coq{contents}.  In our running example, the type \coq{App X}, for
+with \coq{contents}.
+\begin{coqcode}
+Definition fmap (f : A -> B) (x : App C A) : App C B
+  := {| shape := shape x; contents := fun e => f (contents x e) |}
+\end{coqcode}
+In our running example, the type \coq{App X}, for
 some \coq{X} has two inhabitants.  The first is a pair composed
 by \coq{inl tt : Shape} and a function \coq{Pos (inl tt) -> X}. This latter is
-in fact a function of type we \coq{Empty_set -> X}  by definitions which in turn
-is isomorphic to the type \coq{unit}, the type with only one inhabitant.  The
+in fact a function of type \coq{Empty_set -> X}. This pair is, therefore
+isomorphic to the type \coq{unit}, the type with only one inhabitant.  The
 second inhabitant is the pair composed by \coq{inr a : Shape}, for
 some \coq{a : A}, and a function \coq{Pos (inr a) -> X}.  This latter type is
 equal to \coq{unit -> X} which represents the elements of \coq{X} and therefore
-is isomorphic to \coq{X}.  This particular pair of shapes and positions is
-isomorphic to the type \coq{unit + A * X}.
+is isomorphic to \coq{X}.  This particular pair of shapes and positions is 
+therefore isomorphic to the type \coq{unit + A * X}.
 
 The correspondence between containers and polynomial functors has been
-formalised in this work and has been moved to the
-Appendix~\ref{sec:pol-containers} for space reasons. Generally, any functor that
-is isomorphic to a container extension is called a \emph{container functor}.
-Here we will call \emph{container functor} the functors defined by a specific
-container extension.
+formalised in this work and can be found in the accompanying code (file
+Container.v). 
+% 
+%Generally, any functor that
+%is isomorphic to a container extension is called a \emph{container functor}.
+%Here we will call \emph{container functor} the functors defined by a specific
+%container extension.
 
 \subsection{Extractable Containers}
 In the previous section we defined containers using dependent types.  However,
-Ocaml's type system is not equipped to handle these and to solve this problem
+Ocaml's type system is not equipped to handle these. To solve this problem
 Coq's code extraction mechanism will insert unsafe casts.
 
-Here consider instead representing the positions of a container using a validity
-predicate \coq{Valid : Shape -> Pos -> bool} which assigns shapes to positions.
-Moreover, it is crucial for our purposes of remaining axiom-free that this
-predicate is \emph{decidable} in order to be able to reason about equality of
-container extensions and, as a result, the contents of the container extensions
-need to be accessed via a function \coq{contents} whose domain depends on the
-shape of the container.  This means that for a given type of shapes and
-positions, the equality of two objects of a container extension will need to
-deal with heterogeneous equality.
-\mpav{This part needs more explanation.}
-
+Consider instead representing the positions of a container using a decidable
+validity predicate (\coq{valid}) which assigns shapes to positions. We use
+boolean functions and coercions from \coq{bool} to \coq{Prop} to represent
+decidable predicates, similarly to SSReflect~\cite{GonthierL09}. The family of
+positions for a given shape in a container can be recovered by defining:
 \begin{coqcode}
-Class Cont (Shape : Type) (Pos : Type) := { valid : Shape -> Pos -> bool }.
-Coercion is_true (b : bool) : Prop := b = true.
-Record PosOf `(C : Cont Shape Pos) (shape : Shape) :=
-  ValidPos { val : Pos; IsValid : valid shape pos }.
+Class Cont (Shape : Type) (APos : Type) := { valid : Shape -> APos -> bool }.
+Record Pos `(C : Cont Shape APos) (shape : Shape) :=
+  ValidPos { val : APos; IsValid : valid shape pos }.
 \end{coqcode}
-where \coq{valid} is the \emph{decidable} validity predicate. Note that booleans
-can be lifted to propositions similarly to the implementation provided by
-SSReflect~\cite{GonthierL09}. This allows us to define the dependent pair of
-valid positions as a record which will be extracted to a singleton type since
-the validity proof is erased by Coq's code extraction mechanism.
-
-We now define \emph{container extensions} as follows:
+Coq's code extraction will now be able to erase the validity predicate, and
+generate OCaml code that is free of unsafe casts. The OCaml code extracted for
+\coq{Pos} will now be exactly the code extracted for \coq{APos}.
+The decidability of the validity predicate is crucial for our purposes of 
+remaining axiom-free. To illustrate this, suppose that we need to show
+the equality of two container extensions. We will need to show that, for
+the same positions, they will produce the same result. In Coq, the goal
+would look as follows: 
 \begin{coqcode}
-Record App `(C : Cont Shape Pos) (X : Type) :=
-  MkApp { shape : Shape; contents : PosOf C shape -> X }.
+ k : Pos C s -> X
+ P1, P2 : valid s p
+ ---------------------------
+ k (ValidPos p P1) = k (ValidPos p P2)
 \end{coqcode}
-The functorial action for container extensions on morphisms boils down to
-function composition, which trivially preserves identity and composition.
-\begin{coqcode}
-Definition fmap `(C : Cont Shape Pos) `(f : A -> B) (x : App C A) : App C B
-  := {| shape := shape x; contents := fun e => f (contents x e) |}
-\end{coqcode}
+If \coq{valid} was a regular proposition in \coq{Prop}, it would not possible
+to prove the equality of \coq{P1} and \coq{P2}. However, by using a decidable
+predicate, if we know that \coq{P1} and \coq{P2} are of type 
+\coq{valid s p = true}, then we can prove without any axioms that 
+\coq{P1 = P2 = eq_refl}.
 
 
 % A container extension is then defined as follows:
@@ -798,16 +797,13 @@ Definition fmap `(C : Cont Shape Pos) `(f : A -> B) (x : App C A) : App C B
 % for \coq{{p | Valid shape pos}} will be an OCaml singleton type defined as the
 % OCaml equivalent to \coq{Pos}.
 
-
-Finally we can define the type of containers as follows:
-
 \subsubsection{Equality of Container Extensions}
-The equality of container extensions needs to be extensional, since the
-contents are obtained by applying a function. We want to equate container
-extensions that have the same shape, and that, for equal shape and position,
-they return the same element. To avoid the use of functional extensionality
-axioms, we capture this relation with the following inductive proposition in
-Coq:
+Reasoning about the equality of container extensions is not entirely solved by
+using decidable validity predicates to define the families of positions. In
+general, we want to equate container extensions that have the same shape, and
+that, for equal shape and position, they return the same element. To avoid the
+use of the functional extensionality axiom, we capture this relation with the
+following inductive proposition in Coq:
 \begin{coqcode}
 Inductive AppR `{F : Cont Sh P} {X} (x y : App F X) : Prop :=
 | AppR_ext (Es : shape x = shape y)
@@ -831,101 +827,96 @@ forall (x y : X), R x y -> R' (f x) (f y)
 
 \subsection{Types and Morphisms}
 \label{sec:types-morphisms}
-We address the different forms of equality by defining a class of setoids,
-i.e.\ types with na associated equivalence relation, and considering only
-functions that respect the associated equivalences, i.e. \emph{proper}
-morphisms with respect to the function \emph{respectfulness} relation.  We use
+We address the different forms of equality by defining a class of
+\emph{setoids}, types with an associated equivalence relation, and considering
+only functions that respect the associated equivalences, or \emph{proper}
+morphisms with respect to the function \emph{respectfulness} relation. We use
 the type-class mechanism, instead of setoids in Coq's standard library, to help
 Coq's code extraction mechanism remove any occurence of custom equivalence
-relations in the extracted OCaml code.  We use \coq{=e} to denote
-the equivalence relation of a setoid. By default, we associate every Coq type
-with the standard propositional equality, unless a different equivalence is
-specified (i.e.\ we allow overlapping instances, and Coq's propositional
-equality takes the lowest priority). 
-\begin{coqcode}
-Reserved Notation "f =e g" (at level 70, no associativity).
-Class setoid A : Type :=
-  MkEquiv
-    { eqRel : A -> A -> Prop;
-      e_refl : forall x, eqRel x x;
-      e_sym : forall x y, eqRel x y -> eqRel y x;
-      e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
-    }.
-Notation "f =e g" := (eqRel f g).
-\end{coqcode}
+relations in the extracted OCaml code. We use \coq{=e} to denote the equivalence
+relation of a setoid. By default, we associate every Coq type with the standard
+propositional equality, unless a different equivalence is specified (we allow
+overlapping instances, and Coq's propositional equality takes the lowest
+priority).
+%\begin{coqcode}
+%Reserved Notation "f =e g" (at level 70, no associativity).
+%Class setoid A : Type :=
+%  MkEquiv
+%    { eqRel : A -> A -> Prop;
+%      e_refl : forall x, eqRel x x;
+%      e_sym : forall x y, eqRel x y -> eqRel y x;
+%      e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
+%    }.
+%Notation "f =e g" := (eqRel f g).
+%\end{coqcode}
 Given types \coq{A} and  \coq{B}, with their respective
 equivalence relations \coq{eA : A -> A -> Prop} and
 \coq{eB : B -> B -> Prop}, the we define the type
-\coq{A ~> B} to represents \emph{proper} morphisms of the
+\coq{A ~> B} to represent \emph{proper} morphisms of the
 respectfulness relation of \coq{R} to \coq{R'}.
 \begin{coqcode}
 Structure morph A {eA : setoid A} B {eB : setoid B} :=
-  MkMorph
-    { app :> A -> B;
-      app_eq : forall x y, x =e y -> app x =e app y
-    }.
+  MkMorph { app :> A -> B; app_eq : forall x y, x =e y -> app x =e app y }.
 Notation "A ~> B" := (@morph A _ B _).
 \end{coqcode}
-Note that we leverage on Coq's type class mechanism to fill in the necessary
-equivalence relations. Since Coq's code extraction mechanism will erase any
-occurrence of \coq{Prop} in the code, so objects of type
-\coq{A ~> B} will be extracted to the OCaml equivalent to
-\coq{A -> B}. Furthermore, we add a coercion from \coq{A ~> B} to \coq{A -> B}.
+We rely on Coq's type class mechanism to fill in the necessary equivalence
+relations. Coq's code extraction mechanism will erase any occurrence
+of \coq{Prop} in the code, so objects of type \coq{A ~> B} will be extracted to
+the OCaml equivalent to \coq{A -> B}. Note the implicit coercion
+from \coq{A ~> B} to \coq{A -> B}.
 On top of this, we define basic function composition and identity functions:
 \begin{coqcode}
 Notation "f \o g" = (comp f g).
 Definition comp : (B ~> C) ~> (A ~> B) ~> A ~> C := ...
 Definition id : A ~> A := ...
 \end{coqcode}
-
 Using custom equivalences and proper morphisms, we redefine the definitions of
 container extensions and container equality. In particular, container
 extensions require a proper morphism to check the validity of positions in
 shapes, and container equality now uses equivalences of shapes and contained
 elements: 
 \begin{coqcode}
-Class Cont (Shape : Type) (Pos : Type) := { valid : Shape * Pos ~> bool }.
-Inductive AppR `{e : setoid X} (x y : App F X) : Prop :=
+Class Cont `{setoid Shape} (Pos : Type) := { valid : Shape * Pos ~> bool }.
+Inductive AppR `{F : Cont Sf Pf} `{setoid X} (x y : App F X) : Prop :=
   | AppR_ext (Es : shape x =e shape y)
              (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
 \end{coqcode}
 Note the use of \coq{=e} instead of Coq's standard equality.  For positions,
 however, we chose to use Coq's propositional equality, since these would leads
-to simpler code. We explain why in Section~\ref{sec:cata}, and the
-mechanisation of initial algebras of container extensions. The definitions in
-Figure~\ref{fig:poly} are redefined to account for these changes in a
-straightforward way, i.e. we prove that validity predicates are indeed proper
-morphisms.  \dcas{Should we show, instead, the actual full definition? It
-becomes a bit more complicated ...}
+to simpler code. We explain why in Section~\ref{sec:algebras}, and the
+mechanisation of initial algebras of container extensions.
+%The definitions in
+%Figure~\ref{fig:poly} are redefined to account for these changes in a
+%straightforward way, i.e. we prove that validity predicates are indeed proper
+%morphisms. 
 
 This definition leads to the well-known ``setoid hell'', which we mitigate by
 providing tactics and notations to automatically discharge proofs of
 \coq{app_eq} for morphisms, whenever the types use the standard propositional
 equality, or a combination of propositional and extensional equality. However,
-our compositional approach allows to build morphisms by plugging in other
-morphisms to our combinator, In our framework, our goal is that the
+our compositional approach allows us to build morphisms by plugging in other
+morphisms to our combinators. In our framework, our expectation is that the
 user-provided functions remain small, with relatively straightforward proofs of
 \coq{app_eq}.
 
 However, by using this mechanisation, we gain simplified proofs via the use of
-Coq's \emph{Generalised Rewriting}.  Since every morphism \coq{f : A ~> B}
-satisfies that if \coq{x =e y}, then \coq{f x =e f y}, we can add every
-morphism as a proper element of Coq's respectfulness relation. In practice,
-this means that we can use the \coq{rewrite} tactic on proofs of type 
-\coq{A =e B}, for arbitrary \coq{A} and \coq{B}, whenever they are used as
+Coq's \emph{Generalised Rewriting}. Since every morphism \coq{f : A ~> B}
+satisfies the property that if \coq{x =e y}, then \coq{f x =e f y}, we can add
+every morphism as a proper element of Coq's respectfulness relation. In
+practice, this means that we can use the \coq{rewrite} tactic on proofs of
+type \coq{A =e B}, for arbitrary \coq{A} and \coq{B}, whenever they are used as
 arguments of morphisms, as well as Coq's \coq{reflexivity}, \coq{symmmetry},
 and \coq{transitivity} tactics. For example:
 \begin{coqcode}
-Goal forall `(f : A ~> B) `(g : B ~> C) `(h : C ~> D), 
-  h \o g =e id -> h \o (g \o f) =e f.
-Proof.
-  intros H.  rewrite compA H.  reflexivity.
-Qed.
+Goal forall `(f : A ~> B) `(g : B ~> C) `(h : C ~> D) (H : h \o g =e id), 
+  h \o (g \o f) =e f.
+Proof.  rewrite compA, H.  reflexivity. Qed.
 \end{coqcode}
 
 \subsubsection{Polynomial Types}
-We define a number of equivalences for polynomial types. These equivalences are
-be used when building proper morphisms that manipulate their respective types.
+We define a number of equivalences for polynomial types.
+%These equivalences are
+%be used when building proper morphisms that manipulate their respective types.
 \begin{coqcode}
 Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
 Instance pair_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A * B).
@@ -933,7 +924,6 @@ Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
 Instance prop_eq : setoid Prop.
 Instance pred_sub `{eA : setoid A} {P : A -> Prop} : setoid {a : A | P a}.
 \end{coqcode}
-
 Most of the definitions that involve functions and polynomial types are
 straightworward.  Identity and composition are defined as 
 \coq{fun x => x} and \coq{fun f g x => f (g x)} 
@@ -946,11 +936,12 @@ Coq's \coq{inl} and \coq{inr} constructors, and
 pattern matching on them uses the function 
 \coq{fun f g x => match x with | inl y => f y | inr y => g y end}.
 The proofs that these morphisms are proper are straightforward.  Finally, we
-also provide functions for currying/uncurrying, and partially applying a proper
-morphism. We avoid using definitions, or unfold them, to help Coq's code
-extraction mechanism to inline as many of these small definitions as possible.
+also provide functions for currying/uncurrying, and  flipping the arguments of
+a proper morphism. We force most of our definitions to be inlined, to help
+Coq's code extraction mechanism to inline as many of these combinators as
+possible.
 
-We prove the isomorphisms of polynomial types and the equivalent (redefined)
+We prove the isomorphisms of polynomial types and the equivalent 
 container extensions. As an example, we discuss (informally) the isomorphisms
 of pairs with their equivalent container extensions. Suppose that we
 know that \coq{App F X} is isomorphic to \coq{A}, and
@@ -968,52 +959,56 @@ we can first use the isomorphisms of
 \coq{A} and
 \coq{B} to obtain
 \coq{App F X * App G X}, and then construct the necessary container
-extension. Given \coq{p_inl}/\coq{p_inr} that act as
-\coq{inl/inr} on valid product positions, the relevant
-functions that define the isomorphism are:
+extension. Given \coq{p_inl : Pos l -> Pos (l * r)} (resp. \coq{p_inr}) that
+act as \coq{inl} (resp.\ \coq{inr}) on product positions, and
+\coq{case_pos : (Pos l -> X) -> (Pos r -> X) -> Pos (l * r) -> X} that pattern
+matches on the product positions, the functions that witness the isomorphism
+are:
 \begin{coqcode}
 Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
-  ({| shape := shape (fst x); cont := fun e => cont x (e_inl e) |}, 
-   {| shape := shape (snd x); cont := fun e => cont x (e_inr e) |}).
+  ({| shape := shape (fst x); cont := fun e => cont x (p_inl e) |}, 
+   {| shape := shape (snd x); cont := fun e => cont x (p_inr e) |}).
 Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
 {| shape := (shape (fst x), shape (snd x));
-   cont := fun e => match val e with 
-                    | inl p => fun H => cont (fst x) (ValidPos p H)
-                    | inr p => fun H => cont (snd x) (ValidPos p H)
-                    end (IsValid e)
-|}.
+   cont := case_pos (cont (fst x)) (cont (snd x)) |}.
 \end{coqcode}
-Proving that these functions indeed form an isomorphism is straightforward,
-using the fact that \coq{Prod} containers only have two valid positions.
+Proving that the composition of these functions is the identity is
+straightforward using the fact that \coq{Prod} containers only have two valid
+positions.
 
 \section{Formalising Recursion Schemes}
 Recursion schemes provide an abstract way to consume and generate data. We know
 proceed onto describing how to formalise hylomorphisms in Coq. We first
 formalise algebras for container extensions (Section~\ref{sec:algebras}), then
-we formalise recursive coalgebras (Section~\ref{sec:rec-coalgebras}) and then we
-put together these notions to formalise hylomorphisms (Section~\ref{sec:hylo}).
+we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together
+these notions to formalise recursive coalgebras and hylomorphisms
+(Section~\ref{sec:rec-coalgebras}).
 
 \subsection{Algebras and Catamorphisms}
-\label{sec:algebras} An algebra is a set \coq{X} together with some operations
-on it\footnote[1]{Sometimes and algebra comes equipped with an equational
-theory, e.g. the theory of monoids, but here we focus on algerbraically free
-algebras}.  For example, give such a type \coq{X} we can define the monoid
-operations as \coq{u : unit -> X} for unit and \coq{m : X * X -> X} for
-multiplication. Notice that \coq{FX = unit + X * X} is a functor on \coq{X}
-which means we can equivalently describe these two maps as a single one of
-type \coq{F X -> X} which we call an algebra for the functor \coq{F}
-satisfying the unit and associative laws of the monoid.  In this work we will be
-using algebras to describe the operations of a data type and so we will not be
-needing additional equations on these operations.
+\label{sec:algebras} An algebra is a set \coq{X} (the \emph{carrier} of the
+algebra) together with some operations on it\footnote[1]{Sometimes and algebra
+comes equipped with an equational theory, e.g. the theory of monoids, but here
+we focus on algebraically free algebras}.  For example, given such a type
+\coq{X} we can define the monoid operations as \coq{u : unit -> X} for unit and
+\coq{m : X * X -> X} for multiplication. Notice that \coq{F X = unit + X * X}
+is a functor on \coq{X} which means we can equivalently describe these two maps
+as a single one of type \coq{F X -> X} which we call an algebra for the functor
+\coq{F} satisfying the unit and associative laws of the monoid.  In this work
+we will be using algebras to describe the operations of a data type and so we
+will not be needing additional equations on these operations.
 
 Since in this work we will be considering only polynomial functors we need to
 formalise algebras in terms of containers and containers extensions. Given a
-type `\coq{A}` and a container \coq{F} an algebra for \coq{F} over the carrier
-`\coq{A}` is a map of the following type:
+type \coq{A} and a container \coq{F} an algebra for \coq{F} over the carrier
+\coq{A} is a map of the following type:
 \begin{coqcode}
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
 
+\dcas{The writing below is confusing, but I am not sure how to fix it ... Can't
+we start with the list-generating functor? The monoid example is great, but as 
+soon as we move to talking about least-fixed points, it feels as if we'd better
+go straight into F X = unit + A * X}
 Now, the \emph{easiest} and most effective way to turn any type $A$ into a
 monoid is to define it as the least solution to the equation
 \begin{coqcode}
@@ -1040,7 +1035,7 @@ Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 % cata alg = alg . fmap (cata alg) . InOp
 % \end{minted}
 % which does precisely what we described in the previous paragraph.
-
+%
 % where $F$ is a \emph{base functor}, $Ff$ is the \emph{functorial action} which
 % can be thought of the program $\operator{fmap}\; f$, $a$ is a program of type
 % $F A \to A$ (an $F$-algebra),  $c$ is a program of type $C \to FC$ (a
@@ -1049,8 +1044,7 @@ Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 % greatest fixed-point of $F$, namely $F \nu F \to \nu F$. When the unique
 % solutions to the above equations exist we denote them as $\cata{a}$ and
 % $\ana{c}$ respectively.
-
-
+%
 %%\dcas{Boring stuff}
 %The definition of \coq{LFix} in terms of \coq{App} requires us to define our
 %own custom induction scheme for initial algebras:
@@ -1061,11 +1055,11 @@ Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 %        P (LFix_in x))
 %    -> forall l : LFix, P l.
 %\end{coqcode}
-We define smart constructors for the isomorphism of least fixed points
-\coq{LFix_out}.
+We define \coq{LFix} as a setoid, where its equivalence relation can be
+described as the least fixed point of \coq{AppR}.  We define smart constructors
+for the isomorphism of least fixed points as respectful morphisms.
 \begin{coqcode}
-l_in : App F (LFix F) ~> LFix F
-l_out : LFix F ~> App F (LFix F)
+l_in : App F (LFix F) ~> LFix F                l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
 
 The most simple and well-known recursion scheme is the \emph{fold} or
@@ -1073,20 +1067,16 @@ The most simple and well-known recursion scheme is the \emph{fold} or
 type using \coq{LFix_out}, then calls itself recursively and then folds the
 results of the recursive call using an \coq{F}-algebra.
 \begin{coqcode}
-Definition cata_f (alg : Alg F A) : LFix -> A
-:= fix f (x : LFix) :=
-  match x with
-  | LFix_in ax =>
-      let (sx, kx) := ax in
-      alg (MkApp sx (fun e => f (kx e)))
-  end.
+  Definition cata_f `{F : Cont Sh P} (alg : Alg F A) : LFix -> A
+:= fix f (x : LFix) := match x with
+  | LFix_in ax => let (sx, kx) := ax in alg (MkApp sx (fun e => f (kx e))) end.
 \end{coqcode}
-It is easy to show that this function is a morphism of \coq{F}-algebras. In fact,
-it is possible to define it as a map of the following type:
+It is easy to show that this function is a respectful morphism of
+\coq{F}-algebras. In fact, it is possible to define it as a map of the
+following type:
 \begin{coqcode}
-Alg F A ~> LFix ~> A
+  cata : forall `{F : Cont Sh P} `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
-
 We prove that catamorphisms satisfy the universal law, that is that there is a
 unique morphism of \coq{F}-algebras from the least fixed-point of \coq{F}:
 \begin{coqcode}
@@ -1095,10 +1085,10 @@ Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
 \end{coqcode}
 
 \subsection{Coalgebras and Anamorphisms}
+\label{sec:coalg}
 While folds \emph{destruct} data, their dual, the unfolds, \emph{construct}
 data. In particular, given a seed value and an \emph{observation}, the unfold
 corecursively  ``runs'' the observations starting from the initial seed.
-
 % Consider the transition system below composed by three states \coq{x1}, \coq{x2}
 % and \coq{x3} with the transitions labelled by the set of labels \coq{\{a, b\}} and define the map \coq{c} such that it implements the transition system below
 % \[\begin{tikzcd}
@@ -1106,7 +1096,6 @@ corecursively  ``runs'' the observations starting from the initial seed.
 % 	\arrow["a", from=1-1, to=1-2]
 % 	\arrow["b", from=1-2, to=1-3]
 % \end{tikzcd}\]
-
 The seed function can be modelled by a coalgebra. For example, for a type of
 states \coq{X} and an alphabet type \coq{L} we can define a (labelled)
 transition system (LTS) on \coq{X} as a function \coq{c : X -> L * X}
@@ -1114,13 +1103,12 @@ implementing the \emph{transition} map. In particular, for a
 state \coq{x1 : X}, \coq{c x1} returns a pair \coq{(l, x2) : L * X}
 where \coq{l : L} is the observable action and \coq{x2 : X} is the next state.
 Note that for a generic functor \coq{F} an \coq{F}-coalgebra on the
-carrier \coq{X} is a map \coq{X -> FX}. In the previous example \coq{c} is
-an \coq{F}-coalgebra on the carrier \coq{X} with \coq{FX = L * X}.
+carrier \coq{X} is a map \coq{X -> F X}. In the previous example \coq{c} is
+an \coq{F}-coalgebra on the carrier \coq{X} with \coq{F X = L * X}.
 In our development we use the following notation for coalgebras:
 \begin{coqcode}
-Notation Coalg F A := (A ~> App F A) (only parsing).
+Notation Coalg F A := (A ~> App F A).
 \end{coqcode}
-
 Now an anamorphism takes such a seed function and runs it while collecting all
 the observable behaviours. In order to do so we define the type of infinite
 streams of labels which is the greatest fixed-point for the functor \coq{A * X}.
@@ -1129,34 +1117,35 @@ We define this in Coq as follows:
 CoInductive GFix `(F : Cont Sh Po) : Type := GFix_in { GFix_out : App F GFix }.
 \end{coqcode}
 where \coq{GFix_in}  and \coq{GFix_out} are the two inverses witnessing the
-isomorphism. Additionally, we define smart constructors for the isomorphism of greatest fixed points
+isomorphism. Similarly to \coq{LFix}, \coq{GFix} is defined as a setoid, with
+an equivalence relation that is the greatest fixpoint of \coq{AppR}.
+Additionally, we define smart constructors for the isomorphism of greatest
+fixed points
 \begin{coqcode}
-g_in : App F GFix ~> GFix
-g_out : GFix ~> App F GFix
+g_in : App F (GFix F) ~> GFix F                g_out : GFix F ~> App F (GFix F)
 \end{coqcode}
-
+\dcas{The explanation below is weird ... We have not defined 'ana', but state
+their universal property?}
 What witnesses the fact that this is the greatest fixed-point is the universal
 property of the anamorphism. For a given \coq{F}-coalgebra this is the unique
 map that runs the seed function and composes the information from the first step
-the result
-
 \begin{coqcode}
 Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix)
 : f =e ana h <-> f =e g_in \o fmap f \o h.
 \end{coqcode}
-Equivalently, we could have define an anamorphism as the
-unique \coq{F}-coalgebra homomorphism, that is a map of the following type
+In our Coq formalisation, we define anamorphisms as the
+unique \coq{F}-coalgebra homomorphisms, that are maps of the following type:
 \begin{coqcode}
-Coalg F A ~> A ~> GFix
+ana : forall `{F : Cont Sh P} `{setoid A}, Coalg F A ~> A ~> GFix F
 \end{coqcode}
 
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
-Hylomorphism capture the concept of \emph{divide-and-conquer} algorithms.  First
-the input is destructured (\emph{divide}) in smaller parts. This operation may
-or may not be structural. Next the results from the subparts are computed
-recursively and finally the results are composed together (\emph{conquer}) by
-means of an algebra.
+Hylomorphisms capture the concept of \emph{divide-and-conquer} algorithms.
+First the input is destructured (\emph{divide}) in smaller parts. This
+operation may or may not be structural. Next the results from the subparts are
+computed recursively and finally the results are composed together
+(\emph{conquer}) by means of an algebra.
 
 A catamorphism is a special kind of hylomorphism where the coalgebra
 map \coq{InOp} only destructures the input structurally, for example,
@@ -1167,14 +1156,19 @@ input smaller. This is what, for example, happens in quicksort where the
 partition function, given a list, returns two smaller sublists and a pivot
 element.
 
+\dcas{Marco, shouldn't the below be "given an F-algebra and a recursive
+F-coalgebra"? We contradict ourselves below where we say that the hylomorphism
+equation does not necessarily have unique solutions, or solutions at all. As
+far as I understand, these are also called hylomorphisms. E.g. one can define a
+general fixpoint combinator as a hylomorphism, which does not have a unique
+solution}
 Thus, in general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
 unique solution to the equation
 \begin{equation}
   \label{eq:hylo}
   f = a \circ F\; f \circ c
 \end{equation}
-
-However this solution does not necessarily exists for an arbitrary pair of
+However this solution does not necessarily exist for an arbitrary pair of
 algebras and coalgebras. In fact, this definition cannot be accepted by Coq,
 since there is no structurally smaller argument to do recursion on and there is
 no corecursive definition that is guaranteed to be syntactically guarded -- as
@@ -1183,31 +1177,30 @@ solutions to the hylomorphism equation are \emph{not} guaranteed to be unique,
 or to even exist. To address these issues, we mechanise \emph{recursive
 hylomorphisms} which are guaranteed to have a unique solution to the
 hylomorphism equation. These are hylomoprhisms where the coalgebra is
-\emph{recursive}.
-
-Recursive coalgebras are coalgebras whose anamorphism produces finite data which
-what the following predicate captures:
+\emph{recursive}, i.e. coalgebras that terminate on all inputs. The following
+predicate captures that a coalgebra terminates on an input: 
 \begin{coqcode}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
-Recursive anamorphisms are implemented in Coq recursively on the structure of
+A recursive coalgebra of type \coq{RCoalg F A} is a coalgebra 
+\coq{c : Coalg F A} such that \coq{forall x, RecF c x}.
+Recursive hylomorphisms are implemented in Coq recursively on the structure of
 the proof for the type (\coq{RecF}) as follows:
 \begin{coqcode}
-Definition hylo_def (a : Alg F B) (c : Coalg F A)
+Definition hylo_def (a : Alg F B) (c : Coalg F A) 
   : forall (x : A), RecF c x -> B := fix f x H
-  := match c x as h0 return
-       (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
-     with
-     | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
+  := match c x as h0 return (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
+     with | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
      end (RecF_inv H).
 \end{coqcode}
-We again use \coq{RecF_inv} to obtain the structurally smaller proof to use in
-the recursive calls. As we did with catamorphisms and recursive anamorphisms, we
-prove that \coq{hylo_def} is respectful, and use this proof to built the
+We use \coq{RecF_inv} to obtain the structurally smaller proof to use in
+the recursive calls. As we did with catamorphisms and anamorphisms, we
+prove that \coq{hylo_def} is respectful, and use this proof to build the
 corresponding higher-order proper morphism:
 \begin{coqcode}
-Alg F B ~> RCoalg F A ~> A ~> B
+  hylo : forall `{F : Cont Sh P} `{setoid A} `{setoid B}, 
+    Alg F B ~> RCoalg F A ~> A ~> B
 \end{coqcode}
 Finally, we show that recursive hylomorphisms are the unique solution to the
 hylomorphism equation.
@@ -1313,7 +1306,6 @@ We now prove this is isomorphic to the least fixed-point of the functor \coq{F}
 We take the catamorphism from the finite elements of \coq{GFix F} to the
 inductive data type \coq{LFix F} using the \coq{F}-algebra \coq{l_in}. Its inverse is the catamorphism on the restriction of \coq{g_in} to the finite elements of \coq{GFix}, which we denote by \coq{lg_in}.
 The following lemmas prove the isomorphism:
-\mpav{David, check this code works}
 \begin{coqcode}
 Lemma cata_ccata `{setoid A} : cata lg_in \o ccata l_in =e id.
 Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata l_in \o cata lg_in =e id.
