@@ -1,4 +1,4 @@
-\documentclass[anonymous, a4paper, UKenglish, cleveref, autoref, thm-restate]{lipics-v2021}
+\documentclass[ a4paper, UKenglish, cleveref, autoref, thm-restate]{lipics-v2021}
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
 % \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
@@ -206,7 +206,7 @@ call appears directly under a constructor to make sure that this function
 always produces at least one element after each recursive step.
 This implies that some functions, though well-defined, cannot be accepted by
 the proof assistant. Examples of this include common sorting algorithms, such
-as Quicksort and Mergesort.
+as quicksort and mergesort.
 %One example is Quicksort, written in OCaml
 %below:
 \begin{minted}{OCaml}
@@ -262,7 +262,7 @@ safety guarantees, and will allow the safe interoperation with other OCaml
 code.
 
 This work presents the first formalisation in Coq of \emph{hylomorphisms}, as
-well as their algebraic laws that: (1) is \textbf{fully axiom-free}; and (2)
+well as their algebraic laws that: (1) is \emph{axiom-free}; and (2)
 allows the extraction of naturally-looking, clean OCaml code. While programmers
 still need to reason about the termination of their programs, our mechanisation
 will allow the use of the algebraic laws of hylomorphisms for program
@@ -1156,14 +1156,8 @@ input smaller. This is what, for example, happens in quicksort where the
 partition function, given a list, returns two smaller sublists and a pivot
 element.
 
-\dcas{Marco, shouldn't the below be "given an F-algebra and a recursive
-F-coalgebra"? We contradict ourselves below where we say that the hylomorphism
-equation does not necessarily have unique solutions, or solutions at all. As
-far as I understand, these are also called hylomorphisms. E.g. one can define a
-general fixpoint combinator as a hylomorphism, which does not have a unique
-solution}
 Thus, in general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
-unique solution to the equation
+unique solution (when it exists) to the equation
 \begin{equation}
   \label{eq:hylo}
   f = a \circ F\; f \circ c
@@ -1172,9 +1166,8 @@ However this solution does not necessarily exist for an arbitrary pair of
 algebras and coalgebras. In fact, this definition cannot be accepted by Coq,
 since there is no structurally smaller argument to do recursion on and there is
 no corecursive definition that is guaranteed to be syntactically guarded -- as
-required by Coq -- due to the use of an arbitrary algebra $a$. Furthermore,
-solutions to the hylomorphism equation are \emph{not} guaranteed to be unique,
-or to even exist. To address these issues, we mechanise \emph{recursive
+required by Coq -- due to the use of an arbitrary algebra $a$.
+To address these issues, we mechanise \emph{recursive
 hylomorphisms} which are guaranteed to have a unique solution to the
 hylomorphism equation. These are hylomoprhisms where the coalgebra is
 \emph{recursive}, i.e. coalgebras that terminate on all inputs. The following
@@ -1365,8 +1358,8 @@ Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata l_in \o cata lg_in =e id.
 % the unique solution to the equation
 % \coq{f =e l_in \o fmap f \o h},
 % where \coq{h} is a recursive coalgebra.
+
 \section{Extraction}
-We now proceed to calculate recursive programs from simple, non-recursive specifications.
 The steps are the following:
 \begin{enumerate}
   \item Write a specification as a morphism \coq{f : A ~> B}.
@@ -1394,92 +1387,20 @@ complete the definition with \coq{reflexivity}, and this will instantiate the
 metavariable \coq{?Goal0} to our desired function. We will use this extensively
 in our examples.
 
-\subsection{Shortcut Deforestation}
-
-Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
-their laws~\cite{TakanoM95}. In particular, given a function:
-\begin{coqcode}
-  s  : forall A. (App F A -> A) -> (App F A -> A)
-\end{coqcode}
-We can conclude, by parametricity, that
-\begin{coqcode}
-  hylo a l_out \o hylo (sigma l_in) c =e hylo (s a) c
-\end{coqcode}
-This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
-\textbf{not} provable in Coq if we want to remain axiom-free, since we would
-need to add the necessary parametricity
-axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}. 
-
-However, we prove a specific version of this theorem for the list generating
-container (i.e.\ the container whose least fixed point is a list), and use it
-to encode the example from Takano and Meijer~\cite{TakanoM95}:
-\begin{coqcode}
-Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
-\end{coqcode}
-Here, we are defining function \coq{sf1} as the composition of \coq{length},
-\coq{Lmap f} and \coq{append ys}. Functions \coq{length} and \coq{Lmap} are
-catamorphisms. Function \coq{append ys} is also a catamorphism that
-appends \coq{ys} to an input list. It is defined by applying an algebra to
-every cons node of a list, and applying a catamorphism with the input algebra
-to \coq{ys} in the nil case:
-\begin{coqcode}
-Definition tau (l : list A) (a : Alg (ListF A) B) : App (ListF A) B -> B :=
-  fun x => match x with | MkCont sx kx => match sx with
-  | s_nil => fun _ => (hylo a ilist_coalg) l
-  | s_cons h => fun kx => a (MkCont (s_cons h) kx)
-  end kx end.
-Definition append (l : list A) := hylo (tau l l_in) ilist_coalg.
-\end{coqcode}
-Here, \coq{ilist_coalg} is a recursive coalgebra from Coq lists to the
-\coq{ListF} container. We apply the hylo fusion law repeatedly, unfold
-definitions, and simplify in our specification for \coq{sf1}: 
-\begin{coqcode}
-Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
-  rewrite hylo_map_fusion, <- acid_rain.
-  simpl; reflexivity.
-Defined.
-\end{coqcode}
-From this, we extract the following OCaml code:
-\begin{ocamlcode}
-let rec sf1 f ys = function | [] -> let rec f0 = function
-                                      | [] -> (Uint63.of_int (0))
-                                      | _ :: t -> add (Uint63.of_int (1)) (f0 t)
-                                    in f0 ys
-                            | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
-\end{ocamlcode}
-
-We then prove that the length function fuses with
-the naive quadratic \emph{reverse} function:
-\begin{coqcode}
-Definition sf2 : Ext (length \o reverse). 
-  calculate.  unfold length, reverse. rewrite hylo_fusion_l. 
-  2:{ (* Rewrite into the fused version *) }
-  simpl; reflexivity.
-Defined.
-\end{coqcode}
-This code extracts to the optimised length function on the input list:
-\begin{ocamlcode}
-let rec ex2 = function | [] -> (Uint63.of_int (0))
-                       | _ :: t -> add (Uint63.of_int (1)) (ex2 t)
-\end{ocamlcode}
-
-
 \subsection{Sorting Algorithms}
+So far, our examples could be modelled exclusively using catamorphisms. Here, we
+show examples that require recursive hylomorphisms and termination proofs.  We
+complete the sorting algorithm examples by applying fusion optimisation.
 
-So far, our examples could be modelled exclusively using catamorphisms. Here,
-we show examples that require recursive hylomorphisms and termination proofs.
-We complete the sorting algorithm examples by applying fusion optimisation.
-
-\subsubsection{Binary Trees}
-
-Both Mergesort and Quicksort are hylomorphisms whose recursive structure is
-described by a binary tree. In particular, the container used in their
-definition is isomorphic to \coq{TreeF (list nat) unit} and 
-\coq{TreeF unit nat} respectively, where \coq{TreeF} is defined as follows:
+Both mergesort and quicksort are divide-and-conquer algorithms that can be
+captured by the structure of an hylomorphisms. The structure of the recursion
+that of a binary tree.  For example, in the case of quicksort, a list is split
+into a pivot, the label of the node, and two sublists. We define the data
+functor of trees as follows:
 \begin{coqcode}
 Inductive ITreeF L N X := i_leaf (l : L) | i_node (n : N) (l r : X)
 \end{coqcode}
-The definition as a container uses the following shapes and positions:
+We define the functor as a container using the following shapes and positions:
 \begin{coqcode}
 Inductive Tshape L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
@@ -1488,86 +1409,17 @@ We define the tree container, \coq{TreeF}, in a straightforward way, by making
 the positions of type \coq{Tpos} only valid in \coq{Node}.
 We define a series of definitions for tree container constructors and 
 destructors:
+\mpav{The following algebra should be called a\_in or l\_in whatever}
 \begin{coqcode}
 Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
+
 (* Converting TreeF to ITreeF *)
 Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
 Notation a_node x l r := (MkCont (Node _ x)
   (fun p => match val p with | Lbranch => l | Rbranch => r end)).
 \end{coqcode}
 
-\subsubsection{Mergesort}
-
-Mergesort is a hylomorphism with the recursive structure defined by the
-container \coq{(TreeF (list int) unit)}. 
-The computationally expensive part of the Mergesort implementation is the
-algebra, since this is where most of the comparisons happen. The recursive
-coalgebra for Mergesort is defined as the following Coq functions:
-\begin{coqcode}
-Fixpoint splitL (x : list int) (accL accR : list int) :=
-  match x with
-  | nil => (accL, accR)
-  | cons x xs => splitL xs accR (cons x accL)
-  end.
-
-Definition c_split : Coalg (TreeF (list int) unit) (list int) :=
-|{ x ~> match x with
-        | nil | cons _ nil => a_leaf x
-        | _ => let (l, r) := splitL x nil nil in
-               a_node tt l r
-        end
- }|.
-Defined.
-\end{coqcode}
-Here, the notation \coq{|{ x ~> E }|} defines the morphism \coq{fun x => E},
-and uses a custom tactic to prove that it is respectful. The recursive
-coalgebra \coq{c_split} takes a list, and it returns a leaf with the input
-list, if its size is less or equal than 1. Otherwise, it applies the function
-\coq{splitL}, and divides the list in two halves.
-
-It is easy to prove that this coalgebra is recursive, by showing that
-it respects the relation \coq{<} on the length of the lists:
-\begin{coqcode}
-Lemma split_fin : respects_relation c_split (@length int) lt.
-  Proof. (* *) Qed.
-
-Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
-  := mk_wf_coalg wf_lt split_fin.
-\end{coqcode}
-
-The algebra simply applies the \coq{mergeL} function in order to the sublists
-in every node:
-\begin{coqcode}
-Fixpoint mergeL l1 l2 {struct l1}  : list int := (* *)
-
-Definition merge : App (TreeF (list int) unit) (list int) ~> list int.
-|{ x ~> match a_out x with | node _ l r => mergeL l r | leaf e => e end }|.
-Defined.
-\end{coqcode}
-
-Putting everything together, Mergesort is defined as the following
-hylomorphism:
-\begin{coqcode}
-Definition msort := hylo merge tsplit.
-\end{coqcode}
-Note, however, that we could have composed the catamorphism and anamorphism,
-and used the deforestation result to optimise the intermediate binary tree
-away:
-\begin{coqcode}
-Definition msort : Ext (cata merge \o rana tsplit).
-calculate. rewrite (deforest l_in_out). simpl. reflexivity. Defined.
-\end{coqcode}
-In both cases, the result is the same, and it extracts to the usual divide and
-conquer definition of Mergesort in OCaml:
-\begin{ocamlcode}
-let rec msort x = match x with
-| [] -> x | _ :: l -> (match l with | [] -> x | _ :: _ ->
-     let (l0, r) = splitL x [] [] in
-     let cx = fun p -> match p with | Lbranch -> l0 | Rbranch -> r in
-     mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
-\end{ocamlcode}
-
-\subsubsection{Quicksort}
+% \subsubsection{Quicksort}
 
 The container for the Quicksort hylomorphism is \coq{TreeF unit int}, with
 the following algebra and coalgebra.
@@ -1592,7 +1444,7 @@ Definition c_split : Coalg (TreeF unit int) (list int).
         end}|.
 Defined.
 \end{coqcode}
-As with the Mergesort case, we prove that the coalgebra is recursive by showing
+We prove that the coalgebra \coq{c_split} is recursive by showing
 that it respects the ``less-than'' relation on the length of the lists.
 We then define, and extract, the hylomorphism \coq{hylo merge r_split}, which
 extracts to the following OCaml code:
@@ -1600,12 +1452,84 @@ extracts to the following OCaml code:
 let rec qsort = function
 | [] -> [] | h :: t ->
   let (l, r) = partition (fun x0 -> leb x0 h) t in
-  let x0 = fun e -> qsort (match e with | Lbranch -> l | Rbranch -> r) in 
+  let x0 = fun e -> qsort (match e with | Lbranch -> l | Rbranch -> r) in
   app (x0 Lbranch) (h :: (x0 Rbranch))
 \end{ocamlcode}
 Note that Coq's code extraction is unable to inline \coq{x0}, but the resulting
 code is similar to a hand-written \coq{qsort}.
 
+The mergesort algorithm can be defined analogously and can be found in the formalisation. [REF LINK].
+
+% \subsubsection{Mergesort}
+
+% Mergesort is a hylomorphism with the recursive structure defined by the
+% container \coq{(TreeF (list int) unit)}.
+% The computationally expensive part of the Mergesort implementation is the
+% algebra, since this is where most of the comparisons happen. The recursive
+% coalgebra for Mergesort is defined as the following Coq functions:
+% \begin{coqcode}
+% Fixpoint splitL (x : list int) (accL accR : list int) :=
+%   match x with
+%   | nil => (accL, accR)
+%   | cons x xs => splitL xs accR (cons x accL)
+%   end.
+
+% Definition c_split : Coalg (TreeF (list int) unit) (list int) :=
+% |{ x ~> match x with
+%         | nil | cons _ nil => a_leaf x
+%         | _ => let (l, r) := splitL x nil nil in
+%                a_node tt l r
+%         end
+%  }|.
+% Defined.
+% \end{coqcode}
+% Here, the notation \coq{|{ x ~> E }|} defines the morphism \coq{fun x => E},
+% and uses a custom tactic to prove that it is respectful. The recursive
+% coalgebra \coq{c_split} takes a list, and it returns a leaf with the input
+% list, if its size is less or equal than 1. Otherwise, it applies the function
+% \coq{splitL}, and divides the list in two halves.
+
+% It is easy to prove that this coalgebra is recursive, by showing that
+% it respects the relation \coq{<} on the length of the lists:
+% \begin{coqcode}
+% Lemma split_fin : respects_relation c_split (@length int) lt.
+%   Proof. (* *) Qed.
+
+% Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
+%   := mk_wf_coalg wf_lt split_fin.
+% \end{coqcode}
+
+% The algebra simply applies the \coq{mergeL} function in order to the sublists
+% in every node:
+% \begin{coqcode}
+% Fixpoint mergeL l1 l2 {struct l1}  : list int := (* *)
+
+% Definition merge : App (TreeF (list int) unit) (list int) ~> list int.
+% |{ x ~> match a_out x with | node _ l r => mergeL l r | leaf e => e end }|.
+% Defined.
+% \end{coqcode}
+
+% Putting everything together, Mergesort is defined as the following
+% hylomorphism:
+% \begin{coqcode}
+% Definition msort := hylo merge tsplit.
+% \end{coqcode}
+% Note, however, that we could have composed the catamorphism and anamorphism,
+% and used the deforestation result to optimise the intermediate binary tree
+% away:
+% \begin{coqcode}
+% Definition msort : Ext (cata merge \o rana tsplit).
+% calculate. rewrite (deforest l_in_out). simpl. reflexivity. Defined.
+% \end{coqcode}
+% In both cases, the result is the same, and it extracts to the usual divide and
+% conquer definition of Mergesort in OCaml:
+% \begin{ocamlcode}
+% let rec msort x = match x with
+% | [] -> x | _ :: l -> (match l with | [] -> x | _ :: _ ->
+%      let (l0, r) = splitL x [] [] in
+%      let cx = fun p -> match p with | Lbranch -> l0 | Rbranch -> r in
+%      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
+% \end{ocamlcode}
 \subsubsection{Fusing a divide-and-conquer computation}
 
 Suppose that we map a function to the result of sorting the list. We can
@@ -1714,6 +1638,77 @@ let knapsack wvs x =
 Note how the recursive calls of \ocaml{f} build the memoisation table, and how
 this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
+
+\subsection{Shortcut Deforestation}
+
+Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
+their laws~\cite{TakanoM95}. In particular, given a function:
+\begin{coqcode}
+  s  : forall A. (App F A -> A) -> (App F A -> A)
+\end{coqcode}
+We can conclude, by parametricity, that
+\begin{coqcode}
+  hylo a l_out \o hylo (sigma l_in) c =e hylo (s a) c
+\end{coqcode}
+This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
+\textbf{not} provable in Coq if we want to remain axiom-free, since we would
+need to add the necessary parametricity
+axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}.
+
+However, we prove a specific version of this theorem for the list generating
+container (i.e.\ the container whose least fixed point is a list), and use it
+to encode the example from Takano and Meijer~\cite{TakanoM95}:
+\begin{coqcode}
+Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
+\end{coqcode}
+Here, we are defining function \coq{sf1} as the composition of \coq{length},
+\coq{Lmap f} and \coq{append ys}. Functions \coq{length} and \coq{Lmap} are
+catamorphisms. Function \coq{append ys} is also a catamorphism that
+appends \coq{ys} to an input list. It is defined by applying an algebra to
+every cons node of a list, and applying a catamorphism with the input algebra
+to \coq{ys} in the nil case:
+\begin{coqcode}
+Definition tau (l : list A) (a : Alg (ListF A) B) : App (ListF A) B -> B :=
+  fun x => match x with | MkCont sx kx => match sx with
+  | s_nil => fun _ => (hylo a ilist_coalg) l
+  | s_cons h => fun kx => a (MkCont (s_cons h) kx)
+  end kx end.
+Definition append (l : list A) := hylo (tau l l_in) ilist_coalg.
+\end{coqcode}
+Here, \coq{ilist_coalg} is a recursive coalgebra from Coq lists to the
+\coq{ListF} container. We apply the hylo fusion law repeatedly, unfold
+definitions, and simplify in our specification for \coq{sf1}:
+\begin{coqcode}
+Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
+  rewrite hylo_map_fusion, <- acid_rain.
+  simpl; reflexivity.
+Defined.
+\end{coqcode}
+From this, we extract the following OCaml code:
+\begin{ocamlcode}
+let rec sf1 f ys = function | [] -> let rec f0 = function
+                                      | [] -> (Uint63.of_int (0))
+                                      | _ :: t -> add (Uint63.of_int (1)) (f0 t)
+                                    in f0 ys
+                            | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
+\end{ocamlcode}
+
+We then prove that the length function fuses with
+the naive quadratic \emph{reverse} function:
+\begin{coqcode}
+Definition sf2 : Ext (length \o reverse).
+  calculate.  unfold length, reverse. rewrite hylo_fusion_l.
+  2:{ (* Rewrite into the fused version *) }
+  simpl; reflexivity.
+Defined.
+\end{coqcode}
+This code extracts to the optimised length function on the input list:
+\begin{ocamlcode}
+let rec ex2 = function | [] -> (Uint63.of_int (0))
+                       | _ :: t -> add (Uint63.of_int (1)) (ex2 t)
+\end{ocamlcode}
+
+
 
 \section{Related Work}
 
