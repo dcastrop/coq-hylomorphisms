@@ -1401,7 +1401,7 @@ optimisation in our framework (Section~\ref{sec:shortcut}).
 %  a sentence at the beginning of each section re-iterating this to make the whole thing
 %  flow more smoothly.}
 
-\subsection{Sorting Algorithms}
+\subsection{Sorting Algorithms}\label{sec:sorting}
 Our first case study is divide-and-conquer sorting algorithms.  Encoding them
 in our framework will require the use of recursive hylomorphisms and
 termination proofs.  We complete the sorting algorithm examples by applying
@@ -1583,7 +1583,7 @@ let rec qsort_times_two = function
   app (x0 Lbranch) ((mul (Uint63.of_int (2)) h) :: (x0 Rbranch))
 \end{ocamlcode}
 
-\subsection{Knapsack}
+\subsection{Knapsack}\label{sec:knap}
 We focus now on the formalisation and extraction of \emph{dynamorphisms} for
 dynamic programming, by using their encoding as a hylomorphism. We use the
 knapsack example from~\cite{HinzeWG15}. Dynamorphisms build a memoisation table
@@ -1666,7 +1666,7 @@ Note how the recursive calls of \ocaml{f} build the memoisation table, and how
 this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
 
-\subsection{Shortcut Deforestation}
+\subsection{Shortcut Deforestation}\label{sec:shortcut}
 The final case study we consider is shortcut deforestation on lists.  Shortcut
 deforestation can be expressed succintly in terms of hylomorphisms and their
 laws~\cite{TakanoM95}. In particular, given a function:
