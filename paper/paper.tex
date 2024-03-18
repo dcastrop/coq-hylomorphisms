@@ -1351,51 +1351,58 @@ Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata l_in \o cata lg_in =e id.
 % where \coq{h} is a recursive coalgebra.
 
 \section{Extraction}
-The steps are the following:
-\begin{enumerate}
-  \item Write a specification as a morphism \coq{f : A ~> B}.
-  \item Use Coq's generalised rewriting and the laws of morphisms to 
-    rewrite it to some \coq{g : A ~> B} such that \coq{f =e g}.
-  \item Project the function \coq{h : A -> B} from \coq{g}
-    (i.e. \coq{h = app g}).
-  \item Extract \coq{h} to OCaml.
-\end{enumerate}
-Note that steps 2 and 3 are \emph{proofs} that \coq{f} and \coq{h} are
-\emph{extensionally equal}. Then, Coq's extraction mechanism will erase any
-proofs from the code, and inline our definitions. To ease the application of
-these steps, we provide the following helper type:
-\begin{coqcode}
-  Record Ext (f : A ~> B) := 
-    MkExt { target :> A -> B; tgt_eq : app f =e target; }.
-\end{coqcode}
-Note that \coq{tgt_eq} will be erased when extracting \coq{Ext f} to OCaml,
-since it is in \coq{Prop}. This implies that the code extracted for \coq{Ext f}
-will be the function \coq{target} that is extensionally equal to \coq{f}.  We
-use a shortcut tactic, \coq{calculate}, that is a synonym to 
-\coq{eapply MkExt}. As a result of this tactic, we will be given the goal 
-\coq{f =e ?Goal0}. We can rewrite \coq{f}, unfold definitions, etc, and
-complete the definition with \coq{reflexivity}, and this will instantiate the
-metavariable \coq{?Goal0} to our desired function. We will use this extensively
-in our examples.\mvol{This is a very dry overview that doesn't need to be here. We can just jump
-  right into the examples.}
-
-\mvol{Instead of explaining what types, tactics, etc., will be used, this space should
-  be used for a little overview of the rest of the section, like: ``We will go over a series
-  of case studies of various recursive algorithms, showing how they can be encoded
-  in our framework and extracted to idiomatic OCaml code.''}
-
-\mvol{There are three sub-sections: divide-and-conquer, dynamic programming, and deforestation.
-  Each of these is written like a case study, with a particular program worked out all the way
-  to extracted OCaml code. The sub-section titles should reflect this, and there needs to be
-  a sentence at the beginning of each section re-iterating this to make the whole thing
-  flow more smoothly.}
+We go in this section through a series of case studies of various recursive
+algorithms.  We show how they can be encoded in our framework, how can we do
+program calculation techniques for optimisation, and how can they be extracted
+to idiomatic OCaml code. Our examples are the Quicksort and Mergesort
+algorithms (Section~\ref{sec:sorting}), dynammic programming and Knapsack
+(Section~\ref{sec:knap}), and examples of the shortcut deforestation
+optimisation in our framework (Section~\ref{sec:shortcut}).
+%The steps are the following:
+%\begin{enumerate}
+%  \item Write a specification as a morphism \coq{f : A ~> B}.
+%  \item Use Coq's generalised rewriting and the laws of morphisms to 
+%    rewrite it to some \coq{g : A ~> B} such that \coq{f =e g}.
+%  \item Project the function \coq{h : A -> B} from \coq{g}
+%    (i.e. \coq{h = app g}).
+%  \item Extract \coq{h} to OCaml.
+%\end{enumerate}
+%Note that steps 2 and 3 are \emph{proofs} that \coq{f} and \coq{h} are
+%\emph{extensionally equal}. Then, Coq's extraction mechanism will erase any
+%proofs from the code, and inline our definitions. To ease the application of
+%these steps, we provide the following helper type:
+%\begin{coqcode}
+%  Record Ext (f : A ~> B) := 
+%    MkExt { target :> A -> B; tgt_eq : app f =e target; }.
+%\end{coqcode}
+%Note that \coq{tgt_eq} will be erased when extracting \coq{Ext f} to OCaml,
+%since it is in \coq{Prop}. This implies that the code extracted for \coq{Ext f}
+%will be the function \coq{target} that is extensionally equal to \coq{f}.  We
+%use a shortcut tactic, \coq{calculate}, that is a synonym to 
+%\coq{eapply MkExt}. As a result of this tactic, we will be given the goal 
+%\coq{f =e ?Goal0}. We can rewrite \coq{f}, unfold definitions, etc, and
+%complete the definition with \coq{reflexivity}, and this will instantiate the
+%metavariable \coq{?Goal0} to our desired function. We will use this extensively
+%in our examples.
+%\mvol{This is a very dry overview that doesn't need to be here. We can just jump
+%  right into the examples.}
+%
+%\mvol{Instead of explaining what types, tactics, etc., will be used, this space should
+%  be used for a little overview of the rest of the section, like: ``We will go over a series
+%  of case studies of various recursive algorithms, showing how they can be encoded
+%  in our framework and extracted to idiomatic OCaml code.''}
+%
+%\mvol{There are three sub-sections: divide-and-conquer, dynamic programming, and deforestation.
+%  Each of these is written like a case study, with a particular program worked out all the way
+%  to extracted OCaml code. The sub-section titles should reflect this, and there needs to be
+%  a sentence at the beginning of each section re-iterating this to make the whole thing
+%  flow more smoothly.}
 
 \subsection{Sorting Algorithms}
-\mvol{Some glue text here, like: ``our first case study is divide-and-conquer sorting
-  algorithms''.}
-So far, our examples could be modelled exclusively using catamorphisms. Here, we
-show examples that require recursive hylomorphisms and termination proofs.  We
-complete the sorting algorithm examples by applying fusion optimisation.
+Our first case study is divide-and-conquer sorting algorithms.  Encoding them in
+our framework will require the use of recursive hylomorphisms and termination
+proofs.  We complete the sorting algorithm examples by applying fusion
+optimisation.
 
 Both mergesort and quicksort are divide-and-conquer algorithms that can be
 captured by the structure of an hylomorphisms. The structure of the recursion
