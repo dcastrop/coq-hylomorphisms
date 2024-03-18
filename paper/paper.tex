@@ -689,10 +689,10 @@ the particular shape of the data.  This is achieved by introducing the concept
 of \emph{functors} which have the suitable fixed-point properties, i.e.\ those
 who have a initial algebras. A common approach to construct such functors is to
 use \emph{containers}~\cite{AbbottAG05} (Section~\ref{sec:containers}).
-However, reasoning about container equality
-will require us to consider both functional extensionality and heterogeneous
-equality. We avoid these axioms by introducing a
-custom equivalence relation on types (Section~\ref{sec:types-morphisms}).
+However, reasoning about container equality will require us to consider both
+functional extensionality and heterogeneous equality. We avoid these axioms by
+introducing a custom equivalence relation on types
+(Section~\ref{sec:types-morphisms}).
 
 \subsection{Functors and Containers}
 \label{sec:containers}
@@ -709,17 +709,17 @@ functor \coq{F X = unit + (A * X) }.
 In general not every functor has a fixed-point, and it is not possible to build
 the fixed-point of a functor such as \coq{F} in Coq due to not being strictly
 positive.  Due to this, we are going to restrict to \emph{polynomial functors}
-as represented by containers.  A container is defined by a type of
-\emph{shapes} and a \emph{family of position types} indexed by shapes.
+as represented by containers. A container is defined by a type of \emph{shapes}
+and a \emph{family of position types} indexed by shapes.
 \begin{coqcode}
 Context (Shape : Type) (Pos : Shape -> Type).
 \end{coqcode}
-For the functor \coq{F} we introduced in the previous paragraph we would define
-\coq{Shape} as \coq{unit + A} indicating there are two constructors in the data
-type and one of these contains a piece of data of type \coq{A}.  Moreover, we
-would define the positions as \coq{Pos (inl tt) = Empty_set} and 
-\coq{Pos (inr a) = unit} indicating that the first constructor does not have
-any type variables and the second constructor has one type variable.
+For the functor \coq{F} we introduced in the previous paragraph we would
+define \coq{Shape} as \coq{unit + A} indicating there are two constructors in
+the data type and one of these contains a piece of data of type \coq{A}.
+Moreover, we would define the positions as \coq{Pos (inl tt) = Empty_set}
+and  \coq{Pos (inr a) = unit} indicating that the first constructor does not
+have any type variables and the second constructor has one type variable.
 
 At this point an \emph{extension} of this container is a functor defined as
 follows:
@@ -732,16 +732,16 @@ with \coq{contents}.
 Definition fmap (f : A -> B) (x : App C A) : App C B
   := {| shape := shape x; contents := fun e => f (contents x e) |}
 \end{coqcode}
-In our running example, the type \coq{App X}, for
-some \coq{X} has two inhabitants.  The first is a pair composed
-by \coq{inl tt : Shape} and a function \coq{Pos (inl tt) -> X}. This latter is
-in fact a function of type \coq{Empty_set -> X}. This pair is, therefore
-isomorphic to the type \coq{unit}, the type with only one inhabitant.  The
-second inhabitant is the pair composed by \coq{inr a : Shape}, for
-some \coq{a : A}, and a function \coq{Pos (inr a) -> X}.  This latter type is
-equal to \coq{unit -> X} which represents the elements of \coq{X} and therefore
-is isomorphic to \coq{X}.  This particular pair of shapes and positions is 
-therefore isomorphic to the type \coq{unit + A * X}.
+In our running example, the type \coq{App X}, for some \coq{X} has two
+inhabitants.  The first is a pair composed by \coq{inl tt : Shape} and a
+function \coq{Pos (inl tt) -> X}. This latter is in fact a function of
+type \coq{Empty_set -> X}. This pair is, therefore isomorphic to the
+type \coq{unit}, the type with only one inhabitant.  The second inhabitant is
+the pair composed by \coq{inr a : Shape}, for some \coq{a : A}, and a
+function \coq{Pos (inr a) -> X}.  This latter type is equal to \coq{unit -> X}
+which represents the elements of \coq{X} and therefore is isomorphic to \coq{X}.
+This particular pair of shapes and positions is  therefore isomorphic to the
+type \coq{unit + A * X}.
 
 The correspondence between containers and polynomial functors has been
 formalised in this work and can be found in the accompanying code (file
@@ -986,87 +986,55 @@ these notions to formalise recursive coalgebras and hylomorphisms
 (Section~\ref{sec:rec-coalgebras}).
 
 \subsection{Algebras and Catamorphisms}
-\label{sec:algebras} An algebra is a set \coq{X} (the \emph{carrier} of the
-algebra) together with some operations on it\footnote[1]{Sometimes and algebra
-comes equipped with an equational theory, e.g. the theory of monoids, but here
-we focus on algebraically free algebras}.  For example, given such a type
-\coq{X} we can define the monoid operations as \coq{u : unit -> X} for unit and
-\coq{m : X * X -> X} for multiplication. Notice that \coq{F X = unit + X * X}
-is a functor on \coq{X} which means we can equivalently describe these two maps
-as a single one of type \coq{F X -> X} which we call an algebra for the functor
-\coq{F} satisfying the unit and associative laws of the monoid.  In this work
-we will be using algebras to describe the operations of a data type and so we
-will not be needing additional equations on these operations.
+\label{sec:algebras} An algebra is a set \coq{A} (the
+\emph{carrier} of the algebra) together with some operations on it sometimes
+subject to some equational laws. For example, given such a type \coq{A} we can
+define the monoid operations as \coq{u : unit -> A} for unit
+and \coq{m : A * A -> A} for multiplication. Notice
+that \coq{F X = unit + X * X} is a functor on \coq{X} which means we can
+equivalently describe these two maps as a single one of type \coq{F X -> X}
+which we call the algebra for the functor \coq{F} satisfying the unit and
+associative laws of the monoid. In this work we will be using algebras to
+describe the operations of a data type and so we will not be needing additional
+equations on these operations.
 
-Since in this work we will be considering only polynomial functors we need to
-formalise algebras in terms of containers and containers extensions. Given a
-type \coq{A} and a container \coq{F} an algebra for \coq{F} over the carrier
-\coq{A} is a map of the following type:
+Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
+by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of
+type \coq{App F A ~> A}:
 \begin{coqcode}
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
-
-\dcas{The writing below is confusing, but I am not sure how to fix it ... Can't
-we start with the list-generating functor? The monoid example is great, but as 
-soon as we move to talking about least-fixed points, it feels as if we'd better
-go straight into F X = unit + A * X}
-Now, the \emph{easiest} and most effective way to turn any type $A$ into a
-monoid is to define it as the least solution to the equation
-\begin{coqcode}
-Free A = A + unit + Free A * Free A
-\end{coqcode}
-with \coq{Free : Type -> Type}. In Coq, this is the least fixed-point of the
-functor \coq{unit + A + X * X} on \coq{X}.  This is isomorphic to the type of
-lists over \coq{A} hence it is the least fixed-point for the
-functor \coq{unit + A * X} as well. This is the least ``set'' generated by the
-constructors \coq{Empty : unit -> List A} and \coq{Cons : A * List A -> List A}.
-These constructors give an algebra \coq{LFix_in : unit + A * List A -> List A}
-which has and inverse which we call \coq{LFix_out}.
-
-We now formalise this idea using container extensions.  For a container
-extension a data type is formalised as an inductive data type parametrised by
-the functor represented by \coq{F}:
+The least fixed-point for a functor \coq{F} is an instance of an \coq{F}-algebra
+where the structure map is an isomorphism. This is sometimes referred to as the
+\emph{initial algebra} for a functor \coq{F}. We will explain the reason behind this name shortly. \footnote[1]{To be more precise,
+initial algebras are isomorphisms by Lambek's lemma, but isomorphisms of
+functors do not necessarily correspond to initial algebras.}  We define the
+least fixed-point of \coq{F} as an inductive type:
 \begin{coqcode}
 Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
-% To generalise recursion schemes we abstract the shape of the data using functors.
-% Assuming a base functor \coq{F} a catamorphism is then the unique
-% solution to the equation
-% \begin{minted}{coq}
-% cata alg = alg . fmap (cata alg) . InOp
-% \end{minted}
-% which does precisely what we described in the previous paragraph.
-%
-% where $F$ is a \emph{base functor}, $Ff$ is the \emph{functorial action} which
-% can be thought of the program $\operator{fmap}\; f$, $a$ is a program of type
-% $F A \to A$ (an $F$-algebra),  $c$ is a program of type $C \to FC$ (a
-% $F$-coalgebra), $\InOp$ is the isomoprhism on the least fixed-point of $F$,
-% namely $\InOp : \mu F \to F\mu F$, and $\OutOp$ is the isomorphism on the
-% greatest fixed-point of $F$, namely $F \nu F \to \nu F$. When the unique
-% solutions to the above equations exist we denote them as $\cata{a}$ and
-% $\ana{c}$ respectively.
-%
-%%\dcas{Boring stuff}
-%The definition of \coq{LFix} in terms of \coq{App} requires us to define our
-%own custom induction scheme for initial algebras:
-%\begin{coqcode}
-%Lemma LFix_ind [P : LFix -> Prop]
-%  : (forall x : App F LFix,
-%        (forall e : Pos (shape x), P (cont x e)) ->
-%        P (LFix_in x))
-%    -> forall l : LFix, P l.
-%\end{coqcode}
+\mpav{David, make it more Coq syntax like}
+where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
+As an example, the initial \coq{F}-algebra for the
+functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
+being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
+operation \coq{Cons : A * LFix F -> LFix F}.
+
 We define \coq{LFix} as a setoid, where its equivalence relation can be
-described as the least fixed point of \coq{AppR}.  We define smart constructors
-for the isomorphism of least fixed points as respectful morphisms.
+described as the least fixed point of \coq{AppR} and we define smart
+constructors for the isomorphism of least fixed points as respectful morphisms:
 \begin{coqcode}
 l_in : App F (LFix F) ~> LFix F                l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
 
-The most simple and well-known recursion scheme is the \emph{fold} or
-\emph{catamorphism} which consumes data. First a fold \emph{destructs} a data
-type using \coq{LFix_out}, then calls itself recursively and then folds the
-results of the recursive call using an \coq{F}-algebra.
+The least fixed-point for \coq{F} is the initial \coq{F}-algebra in the sense
+that it gives rise to an inductive recursion scheme.  Specifically, for any
+other \coq{F}-algebra there exists a \emph{unique} map, known as a \emph{fold} or
+\emph{catamorphism}, such that it structurally deconstructs the data type
+using \coq{LFix_out}, calls itself recursively and then composes the result of
+the recursive call using the given an \coq{F}-algebra. In other words, for any
+give \coq{F}-algebra there exists a unique \coq{F}-algebra homomorphism from the
+initial one. We define it in Coq as follows:
 \begin{coqcode}
   Definition cata_f `{F : Cont Sh P} (alg : Alg F A) : LFix -> A
 := fix f (x : LFix) := match x with
@@ -1078,12 +1046,14 @@ following type:
 \begin{coqcode}
   cata : forall `{F : Cont Sh P} `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
-We prove that catamorphisms satisfy the universal law, that is that there is a
-unique morphism of \coq{F}-algebras from the least fixed-point of \coq{F}:
+We prove that catamorphisms satisfy the universality property we explained previously:
 \begin{coqcode}
 Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
     : f =e cata alg <-> f =e alg \o fmap f \o l_out.
 \end{coqcode}
+In other words, if there is any other \coq{f} with the same structural recursive
+shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
+catamorphism.
 
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
