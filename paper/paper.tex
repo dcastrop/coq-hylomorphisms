@@ -186,7 +186,7 @@ Coq}
   This paper presents a formalisation of hylomorphisms (a recursion scheme
   capturing divide-and-conquer algorithms) in Coq, along with their algebraic
   laws. The key contribution of this paper is that this formalisation is fully
-  axiom-free, and it allows for the extraction of safe, clean, idiomatic OCaml
+  axiom-free, and it allows for the extraction of safe, idiomatic OCaml
   code for a variety of recursive programs. We formalise a series of divide-and
   conquer, dynamic programming, and mutual recursion programs and demonstrate
   that the extracted OCaml code for the programs formalised in our framework is
@@ -250,7 +250,7 @@ an algebraic approach to divide-and-conquer computations, in which termination
 is entirely enforced by the typing discipline of the recursion scheme. However,
 although their approach solves the problem of termination proofs, as well as
 the performance of the code that is run \emph{within Coq}, it no longer allows
-the extraction of clean, naturally-looking code.  By this, we refer to code
+the extraction of idiomatic OCaml code.  By this, we refer to code
 that (1) does not preserve the recursive structure of common implementations;
 and (2) lead to unsafe casts \ocaml{Obj.magic} in the generated code. 
 In OCaml, \ocaml{Obj.magic} allows for unsafe casts between types.
@@ -260,14 +260,23 @@ interoperations can lead to incorrect behaviour or even
 segfaults~\cite{forster:hal-04329663}. Therefore, the avoidance of axioms and
 \ocaml{Obj.magic} means that the extracted code will have stronger
 safety guarantees, and will allow the safe interoperation with other OCaml
-code.
+code. The absence of \ocaml{Obj.magic} provides even stronger guarantees to the
+extracted code. In particular, since the code that we extract from Coq is
+implemented in a total language, we know that there can be no $\bot$ in its
+definition. This allows the programmer to use ``fast-and-loose'' reasoning on
+the extracted code~\cite{DanielssonHJG06}, which would otherwise be unsafe if
+the code contained \ocaml{Obj.magic}. For example, the programmer would need to
+manually check that the inputs satisfy the necessary assumptions which would be
+impossible to enforce in the presence of unsafe casts. Overall, the absence of
+\ocaml{Obj.magic} makes it easer to reason about, and interoperate with
+extracted code. 
 
 This work presents the first formalisation in Coq of \emph{hylomorphisms}, as
 well as their algebraic laws that: (1) is \emph{axiom-free}; and (2)
-allows the extraction of naturally-looking, clean OCaml code. While programmers
+allows the extraction of idiomatic OCaml code. While programmers
 still need to reason about the termination of their programs, our mechanisation
 will allow the use of the algebraic laws of hylomorphisms for program
-reasoning, as well as extracting to clean, naturally-looking code. As an
+reasoning, as well as extracting to idiomatic code. As an
 example our mechanisation of \ocaml{qsort} as a hylomorphism will produce
 the following code:
 \begin{coqcode}
@@ -1356,16 +1365,30 @@ use a shortcut tactic, \coq{calculate}, that is a synonym to
 \coq{f =e ?Goal0}. We can rewrite \coq{f}, unfold definitions, etc, and
 complete the definition with \coq{reflexivity}, and this will instantiate the
 metavariable \coq{?Goal0} to our desired function. We will use this extensively
-in our examples.
+in our examples.\mvol{This is a very dry overview that doesn't need to be here. We can just jump
+  right into the examples.}
+
+\mvol{Instead of explaining what types, tactics, etc., will be used, this space should
+  be used for a little overview of the rest of the section, like: ``We will go over a series
+  of case studies of various recursive algorithms, showing how they can be encoded
+  in our framework and extracted to idiomatic OCaml code.''}
+
+\mvol{There are three sub-sections: divide-and-conquer, dynamic programming, and deforestation.
+  Each of these is written like a case study, with a particular program worked out all the way
+  to extracted OCaml code. The sub-section titles should reflect this, and there needs to be
+  a sentence at the beginning of each section re-iterating this to make the whole thing
+  flow more smoothly.}
 
 \subsection{Sorting Algorithms}
+\mvol{Some glue text here, like: ``our first case study is divide-and-conquer sorting
+  algorithms''.}
 So far, our examples could be modelled exclusively using catamorphisms. Here, we
 show examples that require recursive hylomorphisms and termination proofs.  We
 complete the sorting algorithm examples by applying fusion optimisation.
 
 Both mergesort and quicksort are divide-and-conquer algorithms that can be
 captured by the structure of an hylomorphisms. The structure of the recursion
-that of a binary tree.  For example, in the case of quicksort, a list is split
+is that of a binary tree.  For example, in the case of quicksort, a list is split
 into a pivot, the label of the node, and two sublists. We define the data
 functor of trees as follows:
 \begin{coqcode}
@@ -1502,7 +1525,9 @@ The mergesort algorithm can be defined analogously and can be found in the forma
 %      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
 % \end{ocamlcode}
 \subsubsection{Fusing a divide-and-conquer computation}
-
+\mvol{This is good, but it needs some text to connect it to the parent sub-section,
+  like: ``As an aside, we can show how aonther traversal can be fused into the divide-and-conquer
+  algorithm.''}
 Suppose that we map a function to the result of sorting the list. We can
 use our framework to fuse both computations. In particular, consider
 the following definition:
@@ -1533,7 +1558,7 @@ let rec qsort_times_two = function
 \end{ocamlcode}
 
 \subsection{Knapsack}
-
+\mvol{Don't say ``to close this section'' if it is not the last sub-section!}
 To close this section, we show how our framework can represent more advanced
 recursion schemes, such as \emph{dynamorphisms} for dynamic programming, by
 using their encoding as a hylomorphism. We use the knapsack example
@@ -1611,7 +1636,7 @@ this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
 
 \subsection{Shortcut Deforestation}
-
+\mvol{Again, this needs a glue sentence, like: ``The final case study we consider is shortcut deforestation on lists.''}
 Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
 their laws~\cite{TakanoM95}. In particular, given a function:
 \begin{coqcode}
@@ -1694,8 +1719,16 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 %  \item Not that related: extraction for mutable arrays~\cite{SAKAGUCHI2020102372}
 %        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 %\end{itemize}
+Encoding recursion schemes in Coq is not new. We compare our work with other
+encodings of program calculation techniques in Coq (Section~\ref{sec:calccoq}),
+recursion schemes in Coq (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}).
+Finally, we compare our encoding of recursion schemes to other forms of
+termination checking (Section~\ref{sec:termcheck}, and sized types
+(Section~\ref{sec:sizedT}), as a way to guarantee termination of nonstructural
+recursion.
 
-\subsection{Program Calculation}
+
+\subsection{Program Calculation}\label{sec:calccoq}
 
 Within the domain of program optimization, program calculation serves as a
 well-established programming technique aimed at deriving efficient programs
@@ -1712,7 +1745,7 @@ coinductive datatype that they use. They do not discuss the extracted OCaml
 code from their formalisation.  Larchey-Wendling and Monin encode recursion
 schemes in Coq, by formalising computational graphs of
 algorithms~\cite{larchey2022braga}. Their work does not focus on encoding
-generic recursion schemes, and proving their algebraic laws.  Castro et
+generic recursion schemes, and proving their algebraic laws.  Castro-Perez et
 al.~\cite{farmsCastro} encode the laws of hylomorphisms as part of the type
 system of a functional language to calculate parallel programs from
 specifications. Their work focuses on parallelism, and they do not formalise
@@ -1721,7 +1754,7 @@ in their system.
 
 %\mvol{Need more general citations for program calculation.}
 
-\subsection{Termination Checking}
+\subsection{Termination Checking}\label{sec:termcheck}
 
 Termination and productivity are non-trivial properties of programs, and various
 methods have been proposed for checking that these properties hold. A common
@@ -1751,8 +1784,29 @@ library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
 mergesort''~\cite{AbreuDHJMS23}.
+ 
+\subsubsection{Divide and Conquer Recursion}\label{sec:reccoq}
 
-\subsubsection{Sized Types}
+Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
+using a recursion scheme in which termination is entirely enforced by its
+typing.  This is a significant advance, since it avoids \emph{completely} the
+need for termination proofs. Their work differs from ours in that they require
+the functional extensionality axiom, and the use of impredicative \coq{Set}.
+The authors justify well the use of impredicative \coq{Set} and its
+compatibility with the functional extensionality axiom. In contrast, our
+development remains entirely \emph{axiom-free}. Another key difference with our
+approach is that they do not discuss what the resulting extracted code
+\emph{looks like} (that is, whether the extracted OCaml code resembles the
+natural formulation of the recursive function). Through experiments, we found
+that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
+structure that may be hard to understand or interface with other OCaml code.
+Due to the great benefit of entirely avoiding termination proofs, it would be
+interesting to extend their approach to improve code extraction.
+
+
+
+
+\subsubsection{Sized Types}\label{sec:sizedT}
 
 Another approach to certifying termination of recursive functions is the use of
 \emph{sized types}. Sized types were introduced by Hughes et al.\ as a way to
@@ -1772,24 +1826,6 @@ algorithms in Agda: Copello et al.\ used sized types in a straightforward
 formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
 in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
 Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
-
-\subsubsection{Divide and Conquer Recursion}
-
-Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
-using a recursion scheme in which termination is entirely enforced by its
-typing.  This is a significant advance, since it avoids \emph{completely} the
-need for termination proofs. Their work differs from ours in that they require
-the functional extensionality axiom, and the use of impredicative \coq{Set}.
-The authors justify well the use of impredicative \coq{Set} and its
-compatibility with the functional extensionality axiom. In contrast, our
-development remains entirely \emph{axiom-free}. Another key difference with our
-approach is that they do not discuss what the resulting extracted code
-\emph{looks like} (that is, whether the extracted OCaml code resembles the
-natural formulation of the recursive function). Through experiments, we found
-that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
-structure that may be hard to understand or interface with other OCaml code.
-Due to the great benefit of entirely avoiding termination proofs, it would be
-interesting to extend their approach to improve code extraction.
 
 
 \bibliography{references.bib}
