@@ -706,7 +706,11 @@ introducing a custom equivalence relation on types
 \subsection{Functors and Containers}
 \label{sec:containers}
 Functors are functions \coq{F : Type -> Type} which additionally have a
-map \coq{fmap : forall A B, (A -> B) -> F A -> F B} witnessing the idea that a
+map
+\begin{coqcode}
+fmap : forall A B, (A -> B) -> F A -> F B
+\end{coqcode}
+witnessing the idea that a
 functor represents a container for abstract data that can be manipulated without
 changing the outer structure. For example, the type \coq{List : Type -> Type} is
 a functor and \coq{List A} is the type of lists over elements of type \coq{A}
