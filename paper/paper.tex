@@ -1386,16 +1386,30 @@ use a shortcut tactic, \coq{calculate}, that is a synonym to
 \coq{f =e ?Goal0}. We can rewrite \coq{f}, unfold definitions, etc, and
 complete the definition with \coq{reflexivity}, and this will instantiate the
 metavariable \coq{?Goal0} to our desired function. We will use this extensively
-in our examples.
+in our examples.\mvol{This is a very dry overview that doesn't need to be here. We can just jump
+  right into the examples.}
+
+\mvol{Instead of explaining what types, tactics, etc., will be used, this space should
+  be used for a little overview of the rest of the section, like: ``We will go over a series
+  of case studies of various recursive algorithms, showing how they can be encoded
+  in our framework and extracted to idiomatic OCaml code.''}
+
+\mvol{There are three sub-sections: divide-and-conquer, dynamic programming, and deforestation.
+  Each of these is written like a case study, with a particular program worked out all the way
+  to extracted OCaml code. The sub-section titles should reflect this, and there needs to be
+  a sentence at the beginning of each section re-iterating this to make the whole thing
+  flow more smoothly.}
 
 \subsection{Sorting Algorithms}
+\mvol{Some glue text here, like: ``our first case study is divide-and-conquer sorting
+  algorithms''.}
 So far, our examples could be modelled exclusively using catamorphisms. Here, we
 show examples that require recursive hylomorphisms and termination proofs.  We
 complete the sorting algorithm examples by applying fusion optimisation.
 
 Both mergesort and quicksort are divide-and-conquer algorithms that can be
 captured by the structure of an hylomorphisms. The structure of the recursion
-that of a binary tree.  For example, in the case of quicksort, a list is split
+is that of a binary tree.  For example, in the case of quicksort, a list is split
 into a pivot, the label of the node, and two sublists. We define the data
 functor of trees as follows:
 \begin{coqcode}
@@ -1532,7 +1546,9 @@ The mergesort algorithm can be defined analogously and can be found in the forma
 %      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
 % \end{ocamlcode}
 \subsubsection{Fusing a divide-and-conquer computation}
-
+\mvol{This is good, but it needs some text to connect it to the parent sub-section,
+  like: ``As an aside, we can show how aonther traversal can be fused into the divide-and-conquer
+  algorithm.''}
 Suppose that we map a function to the result of sorting the list. We can
 use our framework to fuse both computations. In particular, consider
 the following definition:
@@ -1563,7 +1579,7 @@ let rec qsort_times_two = function
 \end{ocamlcode}
 
 \subsection{Knapsack}
-
+\mvol{Don't say ``to close this section'' if it is not the last sub-section!}
 To close this section, we show how our framework can represent more advanced
 recursion schemes, such as \emph{dynamorphisms} for dynamic programming, by
 using their encoding as a hylomorphism. We use the knapsack example
@@ -1641,7 +1657,7 @@ this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
 
 \subsection{Shortcut Deforestation}
-
+\mvol{Again, this needs a glue sentence, like: ``The final case study we consider is shortcut deforestation on lists.''}
 Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
 their laws~\cite{TakanoM95}. In particular, given a function:
 \begin{coqcode}
