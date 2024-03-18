@@ -1,0 +1,4 @@
+/other
+/paper
+.gitattributes export-ignore  
+.gitignore export-ignore
