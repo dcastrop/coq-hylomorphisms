@@ -1403,15 +1403,15 @@ optimisation in our framework (Section~\ref{sec:shortcut}).
 %  flow more smoothly.}
 
 \subsection{Sorting Algorithms}
-Our first case study is divide-and-conquer sorting algorithms.  Encoding them in
-our framework will require the use of recursive hylomorphisms and termination
-proofs.  We complete the sorting algorithm examples by applying fusion
-optimisation.
+Our first case study is divide-and-conquer sorting algorithms.  Encoding them
+in our framework will require the use of recursive hylomorphisms and
+termination proofs.  We complete the sorting algorithm examples by applying
+fusion optimisation.
 
 Both mergesort and quicksort are divide-and-conquer algorithms that can be
 captured by the structure of an hylomorphisms. The structure of the recursion
-is that of a binary tree.  For example, in the case of quicksort, a list is split
-into a pivot, the label of the node, and two sublists. We define the data
+is that of a binary tree.  For example, in the case of quicksort, a list is
+split into a pivot, the label of the node, and two sublists. We define the data
 functor of trees as follows:
 \begin{coqcode}
 Inductive ITreeF L N X := i_leaf (l : L) | i_node (n : N) (l r : X)
@@ -1421,7 +1421,7 @@ We define the functor as a container using the following shapes and positions:
 Inductive Tshape L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
 \end{coqcode}
-We define the tree container, \coq{TreeF}, in a straightforward way, by making
+These define a container, \coq{TreeF}, in a straightforward way, by making
 the positions of type \coq{Tpos} only valid in \coq{Node}.
 We define a series of definitions for tree container constructors and 
 destructors:
@@ -1462,8 +1462,13 @@ Defined.
 \end{coqcode}
 We prove that the coalgebra \coq{c_split} is recursive by showing
 that it respects the ``less-than'' relation on the length of the lists.
-We then define, and extract, the hylomorphism \coq{hylo merge r_split}, which
-extracts to the following OCaml code:
+%\begin{coqcode}
+%Lemma split_fin : respects_relation c_split (@length int) lt.  (* *) Qed.
+%
+%Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
+%  := mk_wf_coalg wf_lt split_fin.
+%\end{coqcode}
+The code that we extract for \coq{hylo merge c_split} is the following:
 \begin{ocamlcode}
 let rec qsort = function
 | [] -> [] | h :: t ->
@@ -1473,8 +1478,8 @@ let rec qsort = function
 \end{ocamlcode}
 Note that Coq's code extraction is unable to inline \coq{x0}, but the resulting
 code is similar to a hand-written \coq{qsort}.
-
-The mergesort algorithm can be defined analogously and can be found in the formalisation. [REF LINK].
+The mergesort algorithm can be defined analogously and can be found in the
+formalisation. % [REF LINK].
 
 % \subsubsection{Mergesort}
 
@@ -1547,27 +1552,27 @@ The mergesort algorithm can be defined analogously and can be found in the forma
 %      mergeL (msort (cx Lbranch)) (msort (cx Rbranch)))
 % \end{ocamlcode}
 \subsubsection{Fusing a divide-and-conquer computation}
-\mvol{This is good, but it needs some text to connect it to the parent sub-section,
-  like: ``As an aside, we can show how aonther traversal can be fused into the divide-and-conquer
-  algorithm.''}
+As an example of how can we use program calculation techniques in our 
+framework, we show how another traversal can be fused into the
+divide-and-conquer algorithm using the laws of hylomorphisms.
 Suppose that we map a function to the result of sorting the list. We can
 use our framework to fuse both computations. In particular, consider
 the following definition:
 \begin{coqcode}
-Definition qsort_times_two : Ext (Lmap times_two \o hylo merge tsplit).
-  calculate.  apply hylo_fusion_l. 
-  (* calculate the fused stage *)
-Defined.
+Definition qsort_times_two := Lmap times_two \o hylo merge tsplit.
 \end{coqcode}
 Here, \coq{Lmap times_two} is a list map function defined as a hylomorphism,
 and \coq{times_two} multiplies every element of the list by two.
+We can use Coq's generalised rewriting, and \coq{hylo_fusion_l} to fuse
+\coq{times_two} into the RHS hylomorphism in \coq{qsort_times_two}.
 After applying hylo fusion and the necessary rewrites, the hylomorphism that we
-extract is 
-\coq{hylo (merge \o natural times_two) tsplit}. Here, \coq{natural} defines
-a natural transformation between container extensions by applying a function
-to the shapes that preserves the validity of the positions. In this case,
-the function is \coq{times_two} that multiplies every pivot in the Quicksort
-tree by two. The extracted OCaml code is a single recursive traversal:
+extract is \coq{hylo (merge \o natural times_two) tsplit}. In this definition,
+\coq{natural} defines a natural transformation by applying \coq{times_two} to
+the shapes, and \coq{times_two} multiplies every pivot in the Quicksort tree by
+two. Our formalisation contains a proof that \coq{natural} is indeed a natural
+transformation, which relies on the fact that it preserves the structure of the
+shapes and, therefore, the validity of the positions.  The extracted OCaml code
+is a single recursive traversal:
 \begin{ocamlcode}
 let rec qsort_times_two = function
 | [] -> []
@@ -1580,12 +1585,13 @@ let rec qsort_times_two = function
 \end{ocamlcode}
 
 \subsection{Knapsack}
-\mvol{Don't say ``to close this section'' if it is not the last sub-section!}
-To close this section, we show how our framework can represent more advanced
-recursion schemes, such as \emph{dynamorphisms} for dynamic programming, by
-using their encoding as a hylomorphism. We use the knapsack example
-from~\cite{HinzeWG15}. First, we define memoisation tables in terms
-of containers. 
+We focus now on the formalisation and extraction of \emph{dynamorphisms} for
+dynamic programming, by using their encoding as a hylomorphism. We use the
+knapsack example from~\cite{HinzeWG15}. Dynamorphisms build a memoisation table
+that stores intermediate results, alongside the current computation. The
+algebra used to define a dynamorphism can access this memoisation table to
+speed up computation.  First, we define memoisation tables in terms of
+containers. 
 \begin{coqcode}
 Definition MemoShape : Type := A * Sg.
 Definition MemoPos := Pg.
@@ -1605,6 +1611,9 @@ element from it:
 Definition headT : Table ~> A := (* *)
 Definition tailT : Table ~> App G Table := (* *)
 \end{coqcode}
+These tables map ``paths'' in the least fixed point of \coq{Memo} to elements
+of type \coq{A}. For example, if \coq{G} is a list-generating functor, these
+paths will be natural numbers. 
 Using these definitions, a dynamorphism is defined as follows:
 \begin{coqcode}
 Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
@@ -1639,9 +1648,10 @@ recursive coalgebra for \coq{nat}.
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
-Coq's code extraction mechanism is unable to inline several definitions in
-this case, but the extracted code can be trivially inlined to produce the
-following:
+Coq's code extraction mechanism is unable to inline several definitions in this
+case. We have manually inlined the extracted code for simplicity. The reader
+can check in our \textbf{Artefact} that the extracted code can be trivially
+inlined to produce the following:
 \begin{ocamlcode}
 let knapsack wvs x =
   let (y, _) =
@@ -1658,9 +1668,9 @@ this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
 
 \subsection{Shortcut Deforestation}
-\mvol{Again, this needs a glue sentence, like: ``The final case study we consider is shortcut deforestation on lists.''}
-Shortcut deforestation can be expressed succintly in terms of hylomorphisms and
-their laws~\cite{TakanoM95}. In particular, given a function:
+The final case study we consider is shortcut deforestation on lists.  Shortcut
+deforestation can be expressed succintly in terms of hylomorphisms and their
+laws~\cite{TakanoM95}. In particular, given a function:
 \begin{coqcode}
   s  : forall A. (App F A -> A) -> (App F A -> A)
 \end{coqcode}
@@ -1698,8 +1708,7 @@ Here, \coq{ilist_coalg} is a recursive coalgebra from Coq lists to the
 definitions, and simplify in our specification for \coq{sf1}:
 \begin{coqcode}
 Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
-  rewrite hylo_map_fusion, <- acid_rain.
-  simpl; reflexivity.
+  rewrite hylo_map_fusion, <- acid_rain. simpl; reflexivity.
 Defined.
 \end{coqcode}
 From this, we extract the following OCaml code:
@@ -1725,8 +1734,6 @@ This code extracts to the optimised length function on the input list:
 let rec ex2 = function | [] -> (Uint63.of_int (0))
                        | _ :: t -> add (Uint63.of_int (1)) (ex2 t)
 \end{ocamlcode}
-
-
 
 \section{Related Work}
 %
