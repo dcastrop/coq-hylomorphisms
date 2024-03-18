@@ -1738,7 +1738,7 @@ encodings of program calculation techniques in Coq (Section~\ref{sec:calccoq}),
 recursion schemes in Coq (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}).
 Finally, we compare our encoding of recursion schemes to other forms of
 termination checking (Section~\ref{sec:termcheck}, and sized types
-(Section~\ref{sec:sizedT}, as a way to guarantee termination of nonstructural
+(Section~\ref{sec:sizedT}), as a way to guarantee termination of nonstructural
 recursion.
 
 
@@ -1767,25 +1767,6 @@ their approach in a proof assistant, and the laws of hylomorphisms are axioms
 in their system.
 
 %\mvol{Need more general citations for program calculation.}
-
-\subsubsection{Divide and Conquer Recursion}\label{sec:reccoq}
-
-Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
-using a recursion scheme in which termination is entirely enforced by its
-typing.  This is a significant advance, since it avoids \emph{completely} the
-need for termination proofs. Their work differs from ours in that they require
-the functional extensionality axiom, and the use of impredicative \coq{Set}.
-The authors justify well the use of impredicative \coq{Set} and its
-compatibility with the functional extensionality axiom. In contrast, our
-development remains entirely \emph{axiom-free}. Another key difference with our
-approach is that they do not discuss what the resulting extracted code
-\emph{looks like} (that is, whether the extracted OCaml code resembles the
-natural formulation of the recursive function). Through experiments, we found
-that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
-structure that may be hard to understand or interface with other OCaml code.
-Due to the great benefit of entirely avoiding termination proofs, it would be
-interesting to extend their approach to improve code extraction.
-
 
 \subsection{Termination Checking}\label{sec:termcheck}
 
@@ -1817,6 +1798,26 @@ library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
 mergesort''~\cite{AbreuDHJMS23}.
+ 
+\subsubsection{Divide and Conquer Recursion}\label{sec:reccoq}
+
+Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
+using a recursion scheme in which termination is entirely enforced by its
+typing.  This is a significant advance, since it avoids \emph{completely} the
+need for termination proofs. Their work differs from ours in that they require
+the functional extensionality axiom, and the use of impredicative \coq{Set}.
+The authors justify well the use of impredicative \coq{Set} and its
+compatibility with the functional extensionality axiom. In contrast, our
+development remains entirely \emph{axiom-free}. Another key difference with our
+approach is that they do not discuss what the resulting extracted code
+\emph{looks like} (that is, whether the extracted OCaml code resembles the
+natural formulation of the recursive function). Through experiments, we found
+that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
+structure that may be hard to understand or interface with other OCaml code.
+Due to the great benefit of entirely avoiding termination proofs, it would be
+interesting to extend their approach to improve code extraction.
+
+
 
 
 \subsubsection{Sized Types}\label{sec:sizedT}
