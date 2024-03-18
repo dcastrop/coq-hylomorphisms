@@ -1733,8 +1733,16 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 %  \item Not that related: extraction for mutable arrays~\cite{SAKAGUCHI2020102372}
 %        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 %\end{itemize}
+Encoding recursion schemes in Coq is not new. We compare our work with other
+encodings of program calculation techniques in Coq (Section~\ref{sec:calccoq}),
+recursion schemes in Coq (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}).
+Finally, we compare our encoding of recursion schemes to other forms of
+termination checking (Section~\ref{sec:termcheck}, and sized types
+(Section~\ref{sec:sizedT}, as a way to guarantee termination of nonstructural
+recursion.
 
-\subsection{Program Calculation}
+
+\subsection{Program Calculation}\label{sec:calccoq}
 
 Within the domain of program optimization, program calculation serves as a
 well-established programming technique aimed at deriving efficient programs
@@ -1760,7 +1768,26 @@ in their system.
 
 %\mvol{Need more general citations for program calculation.}
 
-\subsection{Termination Checking}
+\subsubsection{Divide and Conquer Recursion}\label{sec:calccoq}
+
+Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
+using a recursion scheme in which termination is entirely enforced by its
+typing.  This is a significant advance, since it avoids \emph{completely} the
+need for termination proofs. Their work differs from ours in that they require
+the functional extensionality axiom, and the use of impredicative \coq{Set}.
+The authors justify well the use of impredicative \coq{Set} and its
+compatibility with the functional extensionality axiom. In contrast, our
+development remains entirely \emph{axiom-free}. Another key difference with our
+approach is that they do not discuss what the resulting extracted code
+\emph{looks like} (that is, whether the extracted OCaml code resembles the
+natural formulation of the recursive function). Through experiments, we found
+that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
+structure that may be hard to understand or interface with other OCaml code.
+Due to the great benefit of entirely avoiding termination proofs, it would be
+interesting to extend their approach to improve code extraction.
+
+
+\subsection{Termination Checking}\label{sec:termcheck}
 
 Termination and productivity are non-trivial properties of programs, and various
 methods have been proposed for checking that these properties hold. A common
@@ -1791,7 +1818,8 @@ with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
 mergesort''~\cite{AbreuDHJMS23}.
 
-\subsubsection{Sized Types}
+
+\subsubsection{Sized Types}\label{sec:sizedT}
 
 Another approach to certifying termination of recursive functions is the use of
 \emph{sized types}. Sized types were introduced by Hughes et al.\ as a way to
@@ -1811,24 +1839,6 @@ algorithms in Agda: Copello et al.\ used sized types in a straightforward
 formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
 in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
 Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
-
-\subsubsection{Divide and Conquer Recursion}
-
-Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
-using a recursion scheme in which termination is entirely enforced by its
-typing.  This is a significant advance, since it avoids \emph{completely} the
-need for termination proofs. Their work differs from ours in that they require
-the functional extensionality axiom, and the use of impredicative \coq{Set}.
-The authors justify well the use of impredicative \coq{Set} and its
-compatibility with the functional extensionality axiom. In contrast, our
-development remains entirely \emph{axiom-free}. Another key difference with our
-approach is that they do not discuss what the resulting extracted code
-\emph{looks like} (that is, whether the extracted OCaml code resembles the
-natural formulation of the recursive function). Through experiments, we found
-that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
-structure that may be hard to understand or interface with other OCaml code.
-Due to the great benefit of entirely avoiding termination proofs, it would be
-interesting to extend their approach to improve code extraction.
 
 
 \bibliography{references.bib}
