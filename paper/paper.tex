@@ -208,7 +208,7 @@ call appears directly under a constructor to make sure that this function
 always produces at least one element after each recursive step.
 This implies that some functions, though well-defined, cannot be accepted by
 the proof assistant. Examples of this include common sorting algorithms, such
-as quicksort and mergesort.
+as quicksort:
 %One example is Quicksort, written in OCaml
 %below:
 \begin{minted}{OCaml}
@@ -217,10 +217,10 @@ let rec qsort xs = match divide xs with | None -> []
 \end{minted}
 While \ocaml{qsort} is a well-defined mathematical function it cannot be
 accepted by a proof assistant.  The reason is that the \ocaml{divide}
-function \emph{destructuring} the input ``dives'' deeper in the input returning
+function \emph{destructuring} the input dives deeper in the input returning
 two sublists with the head as a pivot.
 
-The main approach for implementing nonstructural recursion in Coq is to use
+The main approach for implementing non-structural recursion in Coq is to use
 \emph{well-founded recursion}, where recursive definitions are coupled with
 \emph{termination proofs}.  Using well-founded recursion, the recursive calls
 will happen on \emph{structurally smaller termination proofs}\footnote{In Coq,
@@ -236,11 +236,14 @@ about nonstructural recursive functions.
 
 \emph{Structured recursion schemes} have been successfully employed in
 functional programming to structure recursive programs, for example, quicksort
-and mergesort are both instances of a divide-and-conquer algorithm which can be
-formalised using hylomorphisms~\cite{MeijerFP91, HuIT96}. In fact,  Hinze et
-al.~\cite{HinzeWG15} showed that \emph{every recursive program can be formalised
-as a hylomorphism}.  Furthermore, hylomorphism laws can capture a number of
-useful equivalences, ranging from common optimisations such as \emph{short-cut
+and mergesort are both instances of a divide-and-conquer algorithm which in
+terms of recursion schemes can be can be formalised as an
+hylomorphism~\cite{MeijerFP91, HuIT96}. Furthermore, it has been shown by Hinze
+et al.~\cite{HinzeWG15} that hylomorphisms provide the basic building block of
+every recursion scheme. In particular, any complex recursion scheme can be
+transmogrified down into an hylomorphisms by means of an adjunction.
+Furthermore, hylomorphism laws can capture a number of useful equivalences,
+ranging from common optimisations such as \emph{short-cut
 fusion}~\cite{TakanoM95}, to semi-automatic
 parallelisations~\cite{Gibbons96:Third, farmsCastro}.
 % Recursion schemes have successfully been applied to functional programming to
@@ -261,42 +264,37 @@ Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to
 divide-and-conquer computations in which termination is entirely enforced by the
 typing discipline. Their approach solves the problem of termination proofs as
 well as the performance of the code that is run \emph{within Coq}, but it does
-not allow the extraction of idiomatic OCaml code.  By this we refer to code that
-(1) does not preserve the recursive structure of common implementations; and (2)
-lead to unsafe casts like \ocaml{Obj.magic} in the generated code.  This latter is problematic in that, for higher-order programs, simple interoperations can lead to incorrect behaviour or
-even segfaults~\cite{forster:hal-04329663} and, moreover, it invalidates
-the fast-and-loose principle~\cite{DanielssonHJG06}. % The absence
-% of \ocaml{Obj.magic} provides even stronger
-% guarantees to the extracted code. In particular, the extracted code from Coq is
-% well-defined allowing the programmer to use the so-called \emph{fast-and-loose
-% reasoning}~\cite{DanielssonHJG06} on the extracted code. % For example, the
-% % programmer would need to manually
-% %
-% check that the inputs satisfy the necessary assumptions which would be
-% % impossible to enforce in the presence of unsafe casts. Overall, the absence
-% % of \ocaml{Obj.magic} makes it easer to reason about, and interoperate with
-% % extracted code.
+not allow for extraction of idiomatic OCaml code. This is problematic since code
+extration has proven useful in a variety of scenarios~\cite{OnoHTNH11,
+Larchey-Wendling23, MiculanP12, Sakaguchi20}.  However, most uses of extraction
+(1) do not preserve the recursive structure of common implementations; and (2)
+lead to unsafe casts like \ocaml{Obj.magic} in the generated code. This latter
+is also problematic in that, for higher-order programs, simple interoperations
+can lead to incorrect behaviour or even segfaults~\cite{forster:hal-04329663}
+and, moreover, it invalidates the fast-and-loose
+principle~\cite{DanielssonHJG06}.
 
-This work presents the first formalisation in Coq of \emph{hylomorphisms}, as
-well as their algebraic laws that: (1) is \emph{axiom-free}; and (2) allows the
+This work presents the first formalisation in Coq of \emph{hylomorphisms} that (1) is \emph{axiom-free} and (2) allows the
 extraction of idiomatic OCaml code. While programmers still need to reason about
 the termination of their programs, our mechanisation will allow the use of the
 algebraic laws of hylomorphisms for program reasoning, as well as extracting to
-idiomatic code. As an example our mechanisation of \ocaml{qsort} as a
-hylomorphism will produce the following code:
-\begin{coqcode}
-let rec qsort = function | [] -> []
-  | h :: t -> let (l, r) = partition (fun x0 -> (<=) x0 h) t in
-              let cx = fun p -> match p with | Lbranch -> l | Rbranch -> r in 
-              app (qsort (cx Lbranch)) (h :: (qsort (cx Rbranch)))
-\end{coqcode}
+idiomatic code (see extracted \ocaml{qsort} program in Section~\ref{sec:examples}). % As an example, our mechanisation of \ocaml{qsort} as a
+% hylomorphism will produce the following code:
+% \begin{coqcode}
+% let rec qsort = function | [] -> []
+%   | h :: t -> let (l, r) = partition (fun x0 -> (<=) x0 h) t in
+%               let cx = fun p -> match p with | Lbranch -> l | Rbranch -> r in
+%               app (qsort (cx Lbranch)) (h :: (qsort (cx Rbranch)))
+% \end{coqcode}
 
-Finally, in this paper we provide a framework for \emph{generic programming} with recursion
-schemes in Coq, with a proof of their algebraic laws and program equivalences for clean code extraction:
+To summarise, our contributions are as follows. In this paper we provide a
+framework for \emph{generic programming} with recursion schemes in Coq, with a
+proof of their algebraic laws and program equivalences for clean code
+extraction:
 \begin{itemize}
-  \item In Section~\ref{sec:containers} we formalise the type of container functors suitably modified for program extraction
-  \item In Section~\ref{sec:recursion-schemes} we formalise hylomorhisms and prove their universal property
-  \item In Section~\ref{sec:examples} we provide examples of divide and conquer, dynamic programming, and mutual recursion algorithms and we verify the short-cut fusion optimisation and show the extracted optimised code to OCaml.
+  \item In Section~\ref{sec:containers} we formalise the type of container functors ensuring the presence of least and greatest fixed-points for functors and suitably adapted for program extraction
+  \item In Section~\ref{sec:recursion-schemes} we formalise folds, unfolds and hylomorhisms and their universal properties
+  \item In Section~\ref{sec:examples} we use the framework to formalise examples of divide-and-conquer, dynamic programming, and mutual recursion algorithms. Furthermore we verify the short-cut fusion optimisation and show the extracted optimised code to OCaml.
 \end{itemize}
 
 % \section{Background on Recursion Schemes}
