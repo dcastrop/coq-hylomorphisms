@@ -1864,6 +1864,46 @@ in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
 Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
 
 
+\section{Conclusions and Future Work}
+
+Hylomorphisms are a general recursion scheme that can encode any other
+recursion scheme, and that satisfy a number of algebraic laws that can be used
+to reason about program equivalences. Not many
+pieces of work formalise them in a proof assistant, partly due to the
+difficulty of dealing with termination, and reasoning about functional
+extensionality. In this work, we tackle these problems in a \emph{fully
+axiom-free} way that targets the extraction of idiomatic OCaml code.  This
+formalisation allows the use of program calculation techniques in Coq to derive
+formally optimised implementations from naive specifications. Furthermore, the
+rewritings that are applied to specifications are formal, machine-checked
+proofs that the resulting program is extensionally equal to the input
+specification. 
+
+Remaining axiom-free forces us to deal with the well-known
+\emph{setoid hell}. As part of the future improvements, we will study how to
+mitigate this problem. At the moment, we use a short ad-hoc tactic that is able
+to automatically discharge many of these proofs in simple settings.  We will
+study the more thorough and systematic use of proof automation for respectful
+morphisms.  Generalisd rewriting in proofs involving setoids tends to be quite
+slow, due to the large size of the terms that need to be rewritten. Sometimes,
+this size is hidden in implicit arguments and coercions. We will study
+alternative formulations to try to improve the performance of the rewriting
+tactics (e.g.  canonical structures).  Currently, Coq is unable to inline a
+number of trivially inlineable definitions.  We will study alternative
+definitions, or extensions to Coq's code extraction mechanisms to force the
+full inlining of all container code that is used in hylomorphisms.  Finally,
+proving termination still remains a hurdle. In our framework this reduces to
+proving that the anamorphism
+terminates in all inputs, and we provide a convenient connection to
+well-founded recursion. Furthermore, recursive coalgebras compose with natural
+transformations, which allows the reuse
+of a number of core recursive coalgebras. A possible interesting future line of work
+is the use of the approach by Abreu et al.~\cite{AbreuDHJMS23} in combination with ours to
+improve code extraction from divide-and-conquer computations whose termination
+does not require an external proof. 
+
+
+
 \bibliography{references.bib}
 \appendix
 \section{Polynomial Functors as Container Extensions}
@@ -2215,15 +2255,6 @@ wrapped up in $L$. The transformation is done by just applying the isomorphism
 
 In the following section we instantiate the adjoint fold with some instances
 taken from the literature.
-
-\section{Conclusions and Future Work}
-
-Hylomorphisms are a general recursion scheme that can encode any other 
-recursion scheme, and that satisfy a number of algebraic laws that can be used
-to reason about program equivalences. Despite their useful properties, not many 
-pieces of work formalise them in a proof assistant, partly due to the difficulty
-of dealing with termination, and reasoning about program equivalences. In this work,
-we tackle these problems by
 
 \end{document}
 
