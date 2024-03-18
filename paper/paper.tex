@@ -1234,46 +1234,46 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
   : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 \end{coqcode}
 
-\subsection{Recursive Anamorphisms}
-Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
-inductive data type in the following way.  Intuitively, a recursive coalgebra
-can be applied only finitely many times, therefore when this is applied to an
-anamorphism the only possible traces it can produce from the seed function are
-the finite ones. We denote this special kind of recursion scheme \emph{recursive
-anamorphism}.  We can show that recursive anamorphisms of type \coq{X -> GFix F}
-can also be given the type \coq{X -> LFix F}. Moreover, these anamorphisms are
-exactly hylomorphisms on the recursive \coq{F}-coalgebra and the
-algebra \coq{In} for the inductive data type \coq{LFix F}. This fact falls out
-from the universality property of the hylomorphism and the fact that recursive
-anamorphisms satisfy the same equation.
-
-We now show how this is proven in the Coq development. First we define a
-recursive anamorphism as a function into \coq{LFix F}:
-\begin{coqcode}
-Definition rana_f__ `{setoid A} (c : Coalg F A)
-  : forall x : A, RecF c x -> LFix F
-  := fix f (x : A) (H : RecF c x) :=
-       let hx := c x in
-       LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
-
-Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F := ...
-\end{coqcode}
-We omit the boilerplate details to obtain the setoid morphism.
-The recursive anamorphism has the following universality property:
-\begin{coqcode}
-Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
-    : f =e rana h <-> f =e l_in \o fmap f \o h.
-\end{coqcode}
-We can now show that every hylomorphism is composed by a recursive anamorphism
-followed by a catamorphism:
-\begin{coqcode}
-Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
-  (g : Alg F B) (h : RCoalg F A)
-: cata g \o rana h =e hylo g h.
-\end{coqcode}
-This result will allow us to \emph{calculate} programs by providing small, easy
-to verify implementations, and combining them into efficient recursive functions
-by using Coq's proofs of hylomorphism laws as optimisation passes.
+% \subsection{Recursive Anamorphisms}
+% Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
+% inductive data type in the following way.  Intuitively, a recursive coalgebra
+% can be applied only finitely many times, therefore when this is applied to an
+% anamorphism the only possible traces it can produce from the seed function are
+% the finite ones. We denote this special kind of recursion scheme \emph{recursive
+% anamorphism}.  We can show that recursive anamorphisms of type \coq{X -> GFix F}
+% can also be given the type \coq{X -> LFix F}. Moreover, these anamorphisms are
+% exactly hylomorphisms on the recursive \coq{F}-coalgebra and the
+% algebra \coq{In} for the inductive data type \coq{LFix F}. This fact falls out
+% from the universality property of the hylomorphism and the fact that recursive
+% anamorphisms satisfy the same equation.
+% 
+% We now show how this is proven in the Coq development. First we define a
+% recursive anamorphism as a function into \coq{LFix F}:
+% \begin{coqcode}
+% Definition rana_f__ `{setoid A} (c : Coalg F A)
+%   : forall x : A, RecF c x -> LFix F
+%   := fix f (x : A) (H : RecF c x) :=
+%        let hx := c x in
+%        LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
+% 
+% Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F := ...
+% \end{coqcode}
+% We omit the boilerplate details to obtain the setoid morphism.
+% The recursive anamorphism has the following universality property:
+% \begin{coqcode}
+% Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
+%     : f =e rana h <-> f =e l_in \o fmap f \o h.
+% \end{coqcode}
+% We can now show that every hylomorphism is composed by a recursive anamorphism
+% followed by a catamorphism:
+% \begin{coqcode}
+% Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
+%   (g : Alg F B) (h : RCoalg F A)
+% : cata g \o rana h =e hylo g h.
+% \end{coqcode}
+% This result will allow us to \emph{calculate} programs by providing small, easy
+% to verify implementations, and combining them into efficient recursive functions
+% by using Coq's proofs of hylomorphism laws as optimisation passes.
 
 \subsubsection{On the subtype of finite elements}
 In this development we have defined recursive anamorphisms on inductive data
@@ -1737,13 +1737,13 @@ recursive function monad~\cite{McBride15, BoveC01}
 \subsection{Program Calculation}
 
 Within the domain of program optimization, program calculation serves as a
-well-established programming technique aimed at deriving efficient programs from
-their naive counterparts through systematic program transformation. This area
-has been extensively explored over the years. Tesson et al.\ demonstrated the
-efficacy of leveraging Coq to establish an approach for implementing a robust
-system dedicated to verifying the correctness of program transformations for
-functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and
-Emoto went further and\ldots~\cite{MurataE19}
+well-established programming technique aimed at deriving efficient programs
+from their naive counterparts through systematic program transformation. This
+area has been extensively explored over the years. Tesson et al.\ demonstrated
+the efficacy of leveraging Coq to establish an approach for implementing a
+robust system dedicated to verifying the correctness of program transformations
+for functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}. Murata
+and Emoto went further and\ldots~\cite{MurataE19}
 
 \mvol{Need more general citations for program calculation.}
 
@@ -1801,14 +1801,21 @@ Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
 
 \subsubsection{Divide and Conquer Recursion}
 
-Abreu et al.\ propose\ldots~\cite{AbreuDHJMS23}. Their approach has similarities to what is presented here.
-
-They differ in requiring the assumption of the functional extensionality axiom.
-Additionally, they are concerned with the erasure of termination proofs but have
-little discussion of what the resulting extracted code \emph{looks like} (that
-is, whether the extracted OCaml code resembles the natural formulation of the
-recursive function).
-\mvol{We should find out for sure if they use \texttt{obj.magic}.}
+Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
+using a recursion scheme in which termination is entirely enforced by its
+typing.  This is a significant advance, since it avoids \emph{completely} the
+need for termination proofs. Their work differs from ours in that they require
+the functional extensionality axiom, and the use of impredicative \coq{Set}.
+The authors justify well the use of impredicative \coq{Set} and its
+compatibility with the functional extensionality axiom. In contrast, our
+development remains entirely \emph{axiom-free}. Another key difference with our
+approach is that they do not discuss what the resulting extracted code
+\emph{looks like} (that is, whether the extracted OCaml code resembles the
+natural formulation of the recursive function). Through experiments, we found
+that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
+structure that may be hard to understand or interface with other OCaml code.
+Due to the great benefit of entirely avoiding termination proofs, it would be
+interesting to extend their approach to improve code extraction.
 
 
 \bibliography{references.bib}
