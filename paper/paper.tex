@@ -252,19 +252,21 @@ parallelisations~\cite{Gibbons96:Third, farmsCastro}.
 % % use of data functors.
 
 However, when used in the context of languages with general recursion like
-(e.g.) Haskell, recursion schemes cannot ensure termination, but while formalising
-recursion schemes in a type theory does provide stronger termination guarantees, to the best of our knowledge, not many attempts have been made at
-mechanise structured recursion schemes in a proof assistant.
+(e.g.) Haskell, recursion schemes cannot ensure termination, but while
+formalising recursion schemes in a type theory does provide stronger termination
+guarantees, to the best of our knowledge, not many attempts have been made at
+mechanising structured recursion schemes.
 
-Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to divide-and-conquer
-computations in which termination is entirely enforced by the typing discipline. Their approach solves the problem of
-termination proofs as well as the performance of the code that is run
-\emph{within Coq}, but it does not allow the extraction of idiomatic OCaml code.
-By this we refer to code that (1) does not preserve the recursive structure of
-common implementations; and (2) lead to unsafe casts like \ocaml{Obj.magic} in the
-generated code.  In OCaml, \ocaml{Obj.magic} is problematic in that it has been proven that,
-for higher-order programs, simple interoperations can lead to incorrect
-behaviour or even segfaults~\cite{forster:hal-04329663} and, more generally, it invalidates the fast-and-loose principle~\cite{DanielssonHJG06}. % The absence of \ocaml{Obj.magic} provides even stronger
+Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to
+divide-and-conquer computations in which termination is entirely enforced by the
+typing discipline. Their approach solves the problem of termination proofs as
+well as the performance of the code that is run \emph{within Coq}, but it does
+not allow the extraction of idiomatic OCaml code.  By this we refer to code that
+(1) does not preserve the recursive structure of common implementations; and (2)
+lead to unsafe casts like \ocaml{Obj.magic} in the generated code.  This latter is problematic in that, for higher-order programs, simple interoperations can lead to incorrect behaviour or
+even segfaults~\cite{forster:hal-04329663} and, moreover, it invalidates
+the fast-and-loose principle~\cite{DanielssonHJG06}. % The absence
+% of \ocaml{Obj.magic} provides even stronger
 % guarantees to the extracted code. In particular, the extracted code from Coq is
 % well-defined allowing the programmer to use the so-called \emph{fast-and-loose
 % reasoning}~\cite{DanielssonHJG06} on the extracted code. % For example, the
@@ -288,15 +290,13 @@ let rec qsort = function | [] -> []
               let cx = fun p -> match p with | Lbranch -> l | Rbranch -> r in 
               app (qsort (cx Lbranch)) (h :: (qsort (cx Rbranch)))
 \end{coqcode}
-The contributions we make in this paper are as follows:
+
+Finally, in this paper we provide a framework for \emph{generic programming} with recursion
+schemes in Coq, with a proof of their algebraic laws and program equivalences for clean code extraction:
 \begin{itemize}
-  \item We provide a framework for \emph{generic programming} with recursion
-    schemes in Coq, with a proof of their algebraic laws and 
-    program equivalences, that allows clean code extraction.
-  \item We formalise divide and conquer, dynamic programming, and
-    mutual recursion algorithms.
-  \item We verified the short-cut fusion optimisation in Coq and
-    extract optimised code to OCaml.
+  \item In Section~\ref{sec:containers} we formalise the type of container functors suitably modified for program extraction
+  \item In Section~\ref{sec:recursion-schemes} we formalise hylomorhisms and prove their universal property
+  \item In Section~\ref{sec:examples} we provide examples of divide and conquer, dynamic programming, and mutual recursion algorithms and we verify the short-cut fusion optimisation and show the extracted optimised code to OCaml.
 \end{itemize}
 
 % \section{Background on Recursion Schemes}
@@ -696,18 +696,19 @@ The contributions we make in this paper are as follows:
 % % % % \end{align*}
 
 \section{Mechanising Extractable Container Functors}
+\label{sec:containers}
 In order to abstract recursion patters we need to be able to abstract away from
 the particular shape of the data.  This is achieved by introducing the concept
 of \emph{functors} which have the suitable fixed-point properties, i.e.\ those
 who have a initial algebras. A common approach to construct such functors is to
-use \emph{containers}~\cite{AbbottAG05} (Section~\ref{sec:containers}).
+use \emph{containers}~\cite{AbbottAG05} (Section~\ref{sec:functors}).
 However, reasoning about container equality will require us to consider both
 functional extensionality and heterogeneous equality. We avoid these axioms by
 introducing a custom equivalence relation on types
 (Section~\ref{sec:types-morphisms}).
 
 \subsection{Functors and Containers}
-\label{sec:containers}
+\label{sec:functors}
 Functors are functions \coq{F : Type -> Type} which additionally have a
 map
 \begin{coqcode}
@@ -994,6 +995,7 @@ straightforward using the fact that \coq{Prod} containers only have two valid
 positions.
 
 \section{Formalising Recursion Schemes}
+\label{sec:recursion-schemes}
 Recursion schemes provide an abstract way to consume and generate data. We now
 proceed onto describing how to formalise hylomorphisms in Coq. We first
 formalise algebras for container extensions (Section~\ref{sec:algebras}), then
@@ -1370,6 +1372,7 @@ catamorphisms.
 % where \coq{h} is a recursive coalgebra.
 
 \section{Extraction}
+\label{sec:examples}
 We go in this section through a series of case studies of various recursive
 algorithms.  We show how they can be encoded in our framework, how can we do
 program calculation techniques for optimisation, and how can they be extracted
@@ -1745,6 +1748,7 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 \end{ocamlcode}
 
 \section{Related Work}
+\label{sec:related-work}
 %
 %\begin{itemize}
 %  \item McBride devised a generalisation of Bove and Capretta's general
@@ -1840,9 +1844,6 @@ that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
 structure that may be hard to understand or interface with other OCaml code.
 Due to the great benefit of entirely avoiding termination proofs, it would be
 interesting to extend their approach to improve code extraction.
-
-
-
 
 \subsubsection{Sized Types}\label{sec:sizedT}
 
