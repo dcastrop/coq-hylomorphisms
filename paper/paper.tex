@@ -994,7 +994,7 @@ straightforward using the fact that \coq{Prod} containers only have two valid
 positions.
 
 \section{Formalising Recursion Schemes}
-Recursion schemes provide an abstract way to consume and generate data. We know
+Recursion schemes provide an abstract way to consume and generate data. We now
 proceed onto describing how to formalise hylomorphisms in Coq. We first
 formalise algebras for container extensions (Section~\ref{sec:algebras}), then
 we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together
@@ -1029,7 +1029,6 @@ least fixed-point of \coq{F} as an inductive type:
 \begin{coqcode}
 Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
-\mpav{David, make it more Coq syntax like}
 where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
 As an example, the initial \coq{F}-algebra for the
 functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
@@ -1077,14 +1076,14 @@ Algebras and catamorphisms dualise nicely to the coinductive setting.  The dual
 of an algebra is a coalgebra. A coalgebra can be thought of as an
 \emph{observation} map. For example, for a type of states \coq{X} and an
 alphabet type \coq{L} we can define a labelled transition system (LTS)
-on \coq{X} as a function \coq{c : X -> FX} for a functor \coq{FX = L * X}
+on \coq{X} as a function \coq{c : X -> FX} for a functor \coq{F X = L * X}
 implementing the \emph{transition} map. In particular, for a
 state \coq{x1 : X}, \coq{c x1} returns a pair \coq{(l, x2) : L * X}
 where \coq{l : L} is the observable action and \coq{x2 : X} is the next state.
 
 In general, for a functor \coq{F}, an \coq{F}-coalgebra is a pair of a
 type \coq{X} called the \emph{carrier} of the coalgebra and a structure
-map \coq{X -> FX}.
+map \coq{X -> F X}.
 
 In our development we use the following notation for coalgebras:
 \begin{coqcode}
@@ -1096,7 +1095,7 @@ fixed-point for a functor \coq{F}. We define it using a coinductive data type:
 \begin{coqcode}
 CoInductive GFix `(F : Cont Sh Po) : Type := GFix_in { GFix_out : App F GFix }.
 \end{coqcode}
-where \coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix-in} is its
+where \coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix_in} is its
 inverse witnessing the isomorphism. Similarly to \coq{LFix}, \coq{GFix} is also
 defined as a setoid, with an equivalence relation that is the greatest fixpoint
 of \coq{AppR}. Additionally, we define smart constructors for the isomorphism of
@@ -1125,17 +1124,22 @@ into the terminal \coq{F}-coalgebra.
 % carrier \coq{X} is a map \coq{X -> F X}. In the previous example \coq{c} is
 % an \coq{F}-coalgebra on the carrier \coq{X} with \coq{F X = L * X}.
 
-\mpav{David, I need full def of this ana}
 We define anamorphisms as follows:
 \begin{coqcode}
-ana : forall `{F : Cont Sh P} `{setoid A}, Coalg F A ~> A ~> GFix F
+Definition ana_f_ (c : Coalg F A) :=
+  cofix f x := 
+    match c x with | MkApp sx kx => GFix_in (MkApp sx (fun e => f (kx e))) end.
+
+Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*... ana_f_ ... *)
 \end{coqcode}
 From this definition the universality property falls out:
 \begin{coqcode}
-Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix)
+Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix F)
 : f =e ana h <-> f =e g_in \o fmap f \o h.
 \end{coqcode}
-In words, for any \coq{F}-coalgebra, if there is any other function \coq{f} that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the same coalgebra.
+In words, for any \coq{F}-coalgebra, if there is any other function \coq{f}
+that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the
+same coalgebra.
 
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
@@ -1175,7 +1179,7 @@ Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
 A recursive coalgebra of type \coq{RCoalg F A} is a coalgebra 
-\coq{c : Coalg F A} such that \coq{forall x, RecF c x}.
+\coq{c} such that \coq{forall x, RecF c x}.
 Recursive hylomorphisms are implemented in Coq recursively on the structure of
 the proof for the type (\coq{RecF}) as follows:
 \begin{coqcode}
@@ -1293,14 +1297,22 @@ Definition ccata_f_ `{eA : setoid A} (g : Alg F A)
     let hx := g_out x in
       g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
 \end{coqcode}
-We now prove this is isomorphic to the least fixed-point of the functor \coq{F}
+We now prove this is isomorphic to the least fixed-point of the functor
+\coq{F}.
 We take the catamorphism from the finite elements of \coq{GFix F} to the
-inductive data type \coq{LFix F} using the \coq{F}-algebra \coq{l_in}. Its inverse is the catamorphism on the restriction of \coq{g_in} to the finite elements of \coq{GFix}, which we denote by \coq{lg_in}.
-The following lemmas prove the isomorphism:
+inductive data type \coq{LFix F} using the \coq{F}-algebra \coq{l_in}. Its
+inverse is the catamorphism on the restriction of \coq{g_in} to the finite
+elements of \coq{GFix}, which we denote by \coq{lg_in}.  The following lemmas
+prove the isomorphism:
 \begin{coqcode}
 Lemma cata_ccata `{setoid A} : cata lg_in \o ccata l_in =e id.
-Lemma ccata_cata `{setoid A} (f : Alg F A) : ccata l_in \o cata lg_in =e id.
+Lemma ccata_cata `{setoid A} : ccata l_in \o cata lg_in =e id.
 \end{coqcode}
+The finite subtype of \coq{GFix F} allows us to compose
+catamorphisms and anamorphisms, by using the above isomorphism. In our work,
+however, we use \emph{recursive} anamorphisms, defined as \coq{hylo l_in c} for
+a recursive coalgebra \coq{c}, which compose easily with
+catamorphisms.
 % This predicate is equivalent to the proposition that
 % the anamorphism of such coalgebras produce only finite trees:
 % \begin{coqcode}
@@ -1428,18 +1440,13 @@ These define a container, \coq{TreeF}, in a straightforward way, by making
 the positions of type \coq{Tpos} only valid in \coq{Node}.
 We define a series of definitions for tree container constructors and 
 destructors:
-\mpav{The following algebra should be called a\_in or l\_in whatever}
+% \mpav{The following algebra should be called a\_in or l\_in whatever}
 \begin{coqcode}
 Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
-
-(* Converting TreeF to ITreeF *)
 Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
 Notation a_node x l r := (MkCont (Node _ x)
   (fun p => match val p with | Lbranch => l | Rbranch => r end)).
 \end{coqcode}
-
-% \subsubsection{Quicksort}
-
 The container for the Quicksort hylomorphism is \coq{TreeF unit int}, with
 the following algebra and coalgebra.
 \begin{coqcode}
@@ -1604,11 +1611,11 @@ Definition Table := LFix Memo.
 \end{coqcode}
 Memoisation tables are the least fixed point of the container defined by shapes
 \coq{A * Sg} and positions \coq{Pg}, given a a container \coq{G : Cont Sg Pg}.
-We define a function to insert elements into the memoisation tables:
+We define a function to insert elements into the memo tables:
 \begin{coqcode}
   Definition Cons : A * App G Table ~> App Memo Table := (* *)
 \end{coqcode}
-And two functions to inspect the head of a memoisation table, and remove an
+And two functions to inspect the head of a memo table, and remove an
 element from it:
 \begin{coqcode}
 Definition headT : Table ~> A := (* *)
@@ -1623,7 +1630,7 @@ Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
 := headT \o hylo (l_in \o Cons \o pair a id) c.
 \end{coqcode}
 Note how, instead of an algebra \coq{App G A ~> A}, the algebra takes a
-memoisation table. The definition of the algebra can use this table to lookup
+memo table. The definition of the algebra can use this table to lookup
 elements, instead of triggering a further recursive call. Elements are inserted
 into the memoisation table by the use of \coq{Cons} to the result of applying
 the algebra. The algebra for the dynamorphism looks up the previously computed
@@ -1685,7 +1692,6 @@ This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
 \textbf{not} provable in Coq if we want to remain axiom-free, since we would
 need to add the necessary parametricity
 axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}.
-
 However, we prove a specific version of this theorem for the list generating
 container (i.e.\ the container whose least fixed point is a list), and use it
 to encode the example from Takano and Meijer~\cite{TakanoM95}:
@@ -1860,6 +1866,46 @@ in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
 Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
 
 
+\section{Conclusions and Future Work}
+
+Hylomorphisms are a general recursion scheme that can encode any other
+recursion scheme, and that satisfy a number of algebraic laws that can be used
+to reason about program equivalences. Not many
+pieces of work formalise them in a proof assistant, partly due to the
+difficulty of dealing with termination, and reasoning about functional
+extensionality. In this work, we tackle these problems in a \emph{fully
+axiom-free} way that targets the extraction of idiomatic OCaml code.  This
+formalisation allows the use of program calculation techniques in Coq to derive
+formally optimised implementations from naive specifications. Furthermore, the
+rewritings that are applied to specifications are formal, machine-checked
+proofs that the resulting program is extensionally equal to the input
+specification. 
+
+Remaining axiom-free forces us to deal with the well-known
+\emph{setoid hell}. As part of the future improvements, we will study how to
+mitigate this problem. At the moment, we use a short ad-hoc tactic that is able
+to automatically discharge many of these proofs in simple settings.  We will
+study the more thorough and systematic use of proof automation for respectful
+morphisms.  Generalisd rewriting in proofs involving setoids tends to be quite
+slow, due to the large size of the terms that need to be rewritten. Sometimes,
+this size is hidden in implicit arguments and coercions. We will study
+alternative formulations to try to improve the performance of the rewriting
+tactics (e.g.  canonical structures).  Currently, Coq is unable to inline a
+number of trivially inlineable definitions.  We will study alternative
+definitions, or extensions to Coq's code extraction mechanisms to force the
+full inlining of all container code that is used in hylomorphisms.  Finally,
+proving termination still remains a hurdle. In our framework this reduces to
+proving that the anamorphism
+terminates in all inputs, and we provide a convenient connection to
+well-founded recursion. Furthermore, recursive coalgebras compose with natural
+transformations, which allows the reuse
+of a number of core recursive coalgebras. A possible interesting future line of work
+is the use of the approach by Abreu et al.~\cite{AbreuDHJMS23} in combination with ours to
+improve code extraction from divide-and-conquer computations whose termination
+does not require an external proof. 
+
+
+
 \bibliography{references.bib}
 \appendix
 \section{Polynomial Functors as Container Extensions}
@@ -2008,7 +2054,7 @@ Instance Comp : Cont Cs Cp :=
 
 \section{On Equality}
 This definition highlights why we cannot define equality of the positions and
-the contained elements generically (recall Section~\ref{sec:TODO}): the
+the contained elements generically: the
 contained types may not have (yet) an associated equivalence. In other words, we
 would need to provide an equivalence for \coq{LFix}, but the only way to do this
 is to define such equivalence simultaneously to the definition for  \coq{LFix}.
@@ -2023,9 +2069,9 @@ may not always able to inline them.
 \mpav{Dumped here}
 We define the equality of initial algebras of container extensions recursively,
 by traversing the structure and equating the shapes and positions. This
-definition is equivalent to taking the fixpoint of \coq{AppR} in
-Section~\ref{sec:TODO}, where the shapes must be equivalent and, for equal
-positions, the contents must be related by \coq{LFixR}.
+definition is equivalent to taking the fixpoint of \coq{AppR} where the shapes
+must be equivalent and, for equal positions, the contents must be related by
+\coq{LFixR}.
 \begin{coqcode}
 Fixpoint LFixR (x y : LFix) : Prop :=
   let f_x := LFix_out x in
@@ -2211,7 +2257,6 @@ wrapped up in $L$. The transformation is done by just applying the isomorphism
 
 In the following section we instantiate the adjoint fold with some instances
 taken from the literature.
-
 
 \end{document}
 
