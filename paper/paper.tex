@@ -1800,7 +1800,7 @@ in their system.
 
 Termination and productivity are non-trivial properties of programs, and various
 methods have been proposed for checking that these properties hold. A common
-approach is guardedness checking~\cite{10.5555/646535.695850}, which is a
+approach is guardedness checking~\cite{Eduardo94}, which is a
 \emph{syntactic} check that definitions avoid the introduction of
 non-normalizable terms. This sort of check generally looks for a
 \emph{structural decrease} of arguments in the recursive calls of a function.
@@ -1809,7 +1809,7 @@ patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
 definitions will not be accepted by such checks.
 
 In particular, the problem of \emph{nonstructural recursion} (including
-divide-and-conquer algorithms) is well-studied~\cite{BOVE_KRAUSS_SOZEAU_2016}.
+divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % A distinction between standard and
 % nonstandard recursion lies in the fact that standard recursion adheres strictly
 % to recursing on pattern variables, avoiding reliance on results from other
@@ -1864,7 +1864,7 @@ This approach has been used to express nonstructurally recursive
 algorithms in Agda: Copello et al.\ used sized types in a straightforward
 formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
 in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
-Coq as well, though it has not yet been adopted~\cite{CHAN_2023}.
+Coq as well, though it has not yet been adopted~\cite{ChanLB23}.
 
 
 \section{Conclusions and Future Work}
@@ -1908,6 +1908,10 @@ does not require an external proof.
 
 
 \bibliography{references.bib}
+
+\end{document}
+
+\endinput
 \appendix
 \section{Polynomial Functors as Container Extensions}
 \label{sec:pol-containers}
