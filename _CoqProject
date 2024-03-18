@@ -16,6 +16,7 @@ theories/FCoalgebra.v
 theories/Hylo.v
 theories/Extraction.v
 examples/CList.v
+examples/BTree.v
 examples/QSort.v
 examples/MSort.v
 examples/ShortcutFusion.v
