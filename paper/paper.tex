@@ -1143,33 +1143,27 @@ same coalgebra.
 
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
-Hylomorphisms capture the concept of \emph{divide-and-conquer} algorithms.
-First the input is destructured (\emph{divide}) in smaller parts. This
-operation may or may not be structural. Next the results from the subparts are
-computed recursively and finally the results are composed together
+Hylomorphisms capture the concept of \emph{divide-and-conquer} algorithms where
+the input is first destructured (\emph{divide}) in smaller parts by means of a
+coalgebra which are computed recursively and then composed back together
 (\emph{conquer}) by means of an algebra.
 
-A catamorphism is a special kind of hylomorphism where the coalgebra
-map \coq{InOp} only destructures the input structurally, for example,
-decomposing a list into its head and tail. A \emph{recursive
-coalgebra}~\cite{AdamekMM19,CaprettaUV04} is a coalgebra which does not
-necessarily decompose the input structurally, still maintaining the size of the
-input smaller. This is what, for example, happens in quicksort where the
-partition function, given a list, returns two smaller sublists and a pivot
-element.
-
-Thus, in general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
+In general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
 unique solution (when it exists) to the equation
 \begin{equation}
   \label{eq:hylo}
   f = a \circ F\; f \circ c
 \end{equation}
-However this solution does not necessarily exist for an arbitrary pair of
-algebras and coalgebras. In fact, this definition cannot be accepted by Coq,
-since there is no structurally smaller argument to do recursion on and there is
-no corecursive definition that is guaranteed to be syntactically guarded -- as
-required by Coq -- due to the use of an arbitrary algebra $a$.
-To address these issues, we mechanise \emph{recursive
+As we stated earlier, a solution to this equation does not exist for an arbitrary  algebra and coalgebra pair and, in fact, this definition cannot be accepted by Coq.
+
+In order to find a solution we restrict ourselves to the so-called
+\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  An example of a
+recursive coalgebra is the \coq{partition} function in quicksort which
+destructures a list into a pivot and two sublist and as long as the sublists are
+smaller the partitioning function still yields a unique solution to the
+recursion scheme.
+
+We mechanise \emph{recursive
 hylomorphisms} which are guaranteed to have a unique solution to the
 hylomorphism equation. These are hylomoprhisms where the coalgebra is
 \emph{recursive}, i.e. coalgebras that terminate on all inputs. The following
