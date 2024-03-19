@@ -276,10 +276,12 @@ principle~\cite{DanielssonHJG06}.
 
 This work presents the first Coq formalisation to our knowledge of
 \emph{hylomorphisms} that (1) is \emph{axiom-free} and (2) allows the
-extraction of idiomatic OCaml code. While programmers still need to reason about
+extraction of idiomatic OCaml code. The full mechanisation can be found on Github\footnote{https://github.com/dcastrop/coq-hylomorphisms}. While programmers still need to reason about
 the termination of their programs, our mechanisation will allow the use of the
 algebraic laws of hylomorphisms for program reasoning, as well as extracting to
-idiomatic code (see extracted \ocaml{qsort} program in Section~\ref{sec:examples}). % As an example, our mechanisation of \ocaml{qsort} as a
+idiomatic code (see extracted \ocaml{qsort} program in Section~\ref{sec:examples}).
+
+% As an example, our mechanisation of \ocaml{qsort} as a
 % hylomorphism will produce the following code:
 % \begin{coqcode}
 % let rec qsort = function | [] -> []
@@ -1491,7 +1493,7 @@ let rec qsort = function
 Note that Coq's code extraction is unable to inline \coq{x0}, but the resulting
 code is similar to a hand-written \coq{qsort}.
 The mergesort algorithm can be defined analogously and can be found in the
-formalisation. % [REF LINK].
+formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
 
 % \subsubsection{Mergesort}
 
@@ -1586,14 +1588,11 @@ transformation, which relies on the fact that it preserves the structure of the
 shapes and, therefore, the validity of the positions.  The extracted OCaml code
 is a single recursive traversal:
 \begin{ocamlcode}
-let rec qsort_times_two = function
-| [] -> []
-| h :: t ->
-  let (l, r) = partition (fun x0 -> leb x0 h) t in
-  let x0 = fun p -> qsort_times_two (match p with
-                                     | Lbranch -> l
-                                     | Rbranch -> r) in
-  app (x0 Lbranch) ((mul (Uint63.of_int (2)) h) :: (x0 Rbranch))
+let rec qsort_times_two = function | [] -> []
+| h :: t -> let (l, r) = partition (fun x0 -> leb x0 h) t in
+            let x0 = fun p -> qsort_times_two (match p with
+                                 | Lbranch -> l | Rbranch -> r) in
+            app (x0 Lbranch) ((mul (Uint63.of_int (2)) h) :: (x0 Rbranch))
 \end{ocamlcode}
 
 \subsection{Knapsack}\label{sec:knap}
@@ -1662,18 +1661,16 @@ Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
 Coq's code extraction mechanism is unable to inline several definitions in this
 case. We have manually inlined the extracted code for simplicity. The reader
-can check in our \textbf{Artefact} that the extracted code can be trivially
+can check in our artefact that the extracted code can be trivially
 inlined to produce the following:
 \begin{ocamlcode}
-let knapsack wvs x =
-  let (y, _) =
+let knapsack wvs x = let (y, _) =
     (let rec f x0 =
       if x0=0 then Uint63.of_int (0)
       else let fn := f (x0-1) in { lFix_out = { 
            shape = (max_int (Uint63.of_int (0)) (memo_knap fn wvs), sx);
            cont = fun _ -> fn } }
-     in f x).lFix_out.shape
-  in y
+     in f x).lFix_out.shape in y
 \end{ocamlcode}
 Note how the recursive calls of \ocaml{f} build the memoisation table, and how
 this memoisation table is used to compute the intermediate results in
