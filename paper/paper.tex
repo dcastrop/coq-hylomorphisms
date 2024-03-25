@@ -176,7 +176,7 @@
 \begin{abstract}
   Generic programming with recursion schemes provides a powerful abstraction for
 structuring recursion while ensuring termination and providing reasoning about
-program equivalences as well as deriving optimisations which has been
+program equivalences, as well as deriving optimisations which have been
 successfully applied to functional programming. Formalising recursion schemes in
 a type theory offers additional termination guarantees, but it often requires
 compromises affecting the resulting code, such as imposing performance
@@ -271,11 +271,11 @@ algorithms, e.g. short-cut fusion and semi-automatic parallelisations~\cite{Taka
 % % use of data functors.
 
 However, when used in the context of languages with general recursion like
-(e.g.) Haskell and ML, recursion schemes cannot ensure termination. This is because the
-input information itself could be non-terminating. On the other hand, while
-formalising recursion schemes in a type theory does provide stronger termination
-guarantees, to the best of our knowledge, not many attempts have been made at
-mechanising them.
+(e.g.) Haskell and ML, recursion schemes cannot ensure termination. This is
+because the input information itself could be non-terminating. On the other
+hand, while formalising recursion schemes in a type theory does provide stronger
+termination guarantees, to the best of our knowledge, not many attempts have
+been made at mechanising them.
 
 Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to
 divide-and-conquer computations in which termination is entirely enforced by the
@@ -283,7 +283,7 @@ typing discipline. Their approach solves the problem of termination proofs as
 well as the performance of the code that is run \emph{within Coq}, but it does
 not allow for extraction of idiomatic OCaml code. This is unfortunate since code
 extration has proven useful in a variety of scenarios~\cite{OnoHTNH11,
-Larchey-Wendling23, MiculanP12, Sakaguchi20}.  However, most uses of extraction
+Larchey-Wendling23, MiculanP12, Sakaguchi20}.  However, in Abreu et al.'s approach, extraction
 (1) do not preserve the recursive structure of common implementations; and (2)
 lead to unsafe casts like \ocaml{Obj.magic} in the generated code. This latter
 is also problematic in that, for higher-order programs, simple interoperations
@@ -299,7 +299,6 @@ programmers still need to reason about the termination of their programs, our
 mechanisation will allow the use of the algebraic laws of hylomorphisms for
 program reasoning, as well as extracting to idiomatic code (see
 extracted \ocaml{qsort} program in Section~\ref{sec:examples}).
-
 % As an example, our mechanisation of \ocaml{qsort} as a
 % hylomorphism will produce the following code:
 % \begin{coqcode}
@@ -1586,14 +1585,14 @@ Suppose that we map a function to the result of sorting the list. We can
 use our framework to fuse both computations. In particular, consider
 the following definition:
 \begin{coqcode}
-Definition qsort_times_two := Lmap times_two \o hylo merge tsplit.
+Definition qsort_times_two := Lmap times_two \o hylo merge c_split.
 \end{coqcode}
 Here, \coq{Lmap times_two} is a list map function defined as a hylomorphism,
 and \coq{times_two} multiplies every element of the list by two.
 We can use Coq's generalised rewriting, and \coq{hylo_fusion_l} to fuse
 \coq{times_two} into the RHS hylomorphism in \coq{qsort_times_two}.
 After applying hylo fusion and the necessary rewrites, the hylomorphism that we
-extract is \coq{hylo (merge \o natural times_two) tsplit}. In this definition,
+extract is \coq{hylo (merge \o natural times_two) c_split}. In this definition,
 \coq{natural} defines a natural transformation by applying \coq{times_two} to
 the shapes, and \coq{times_two} multiplies every pivot in the Quicksort tree by
 two. Our formalisation contains a proof that \coq{natural} is indeed a natural
