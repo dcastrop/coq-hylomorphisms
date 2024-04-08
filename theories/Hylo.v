@@ -193,8 +193,8 @@ Corollary hylo_map_fusion_c `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
   `{setoid A} `{setoid B} (g : Alg G B) (m : naturalM F G) (h : RCoalg F A)
   : hylo g l_out \o hylo (l_in \o natural m) h =e hylo g (natural m \o h).
 Proof.
-  rewrite hylo_map_shift, (deforest l_out_in).
-  reflexivity.
+  rewrite hylo_map_shift, deforest; try reflexivity.
+  apply l_out_in.
 Qed.
 
 Corollary hylo_map_fusion `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
@@ -202,8 +202,9 @@ Corollary hylo_map_fusion `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
   (g : Alg G B) (m : naturalM F G) (h : RCoalg F A)
   : hylo g l_out \o hylo (l_in \o natural m) h =e hylo (g \o natural m) h.
 Proof.
-  rewrite hylo_map_shift, (deforest l_out_in), hylo_map_shift.
+  rewrite hylo_map_shift, deforest, ?hylo_map_shift.
   reflexivity.
+  apply l_out_in.
 Qed.
 
 Definition everywhere `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}

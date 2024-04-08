@@ -89,9 +89,8 @@ Definition example1 {A B} (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
   calculate.
   unfold length, Lmap, append, everywhere.
   rewrite !hylo_cata, hylo_map_fusion.
-  rewrite <- (tau_fusion _ l_out_in _ ilist_coalg).
-  simpl.
-  reflexivity.
+  rewrite <- tau_fusion. simpl. reflexivity.
+  apply l_out_in.
 Defined.
 
 (** Example 2 from shortcut fusion in calc form [length \o rev ] *)
