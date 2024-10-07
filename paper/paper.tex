@@ -198,61 +198,99 @@ a machine-checked proof of the well-known short-cut fusion optimisation.
 
 \section{Introduction}
 \label{sec:intro}
-Recursive definitions cannot be proven well-defined automatically due to the
-halting problem. Modern proof assistants like Coq or Agda provide a sound, but
-incomplete algorithm which syntactically checks for termination or
-productivity. For recursion, this is done by automatically inferring
-which argument in the recursive call gets smaller with respects to the original
-input argument. For productivity, the algorithm checks that the corecursive
-call appears directly under a constructor to make sure that this function
-always produces at least one element after each recursive step.
-This implies that some functions, though well-defined, cannot be accepted by
-the proof assistant. Examples of this include common sorting algorithms, such
-as quicksort:
-%One example is Quicksort, written in OCaml
-%below:
-\begin{minted}{OCaml}
-let rec qsort xs = match divide xs with | None -> []
- | Some (pivot, (smaller, larger)) -> qsort smaller @ (pivot::qsort larger)
-\end{minted}
-While \ocaml{qsort} is a well-defined mathematical function it cannot be
-accepted by a proof assistant. The reason is that the \ocaml{divide}
-function \emph{destructuring} the input dives deeper in the input returning
-two sublists with the head as a pivot.
+Structured recursion schemes~\cite{HinzeW16, HinzeWG15} are powerful
+abstractions that capture common patterns of recursion. The main benefit of
+structuring computation using recursion schemes, is that they enjoy
+well-estabished \emph{algebraic properties} that can serve as a foundation for
+program optimisation (e.g.\ \emph{fusion} laws, or semi-automatic
+parallelisations~\cite{TakanoM95,Gibbons96:Third, farmsCastro}).  These
+algebraic properties led to their use in the context of \emph{program
+calculation}, where programmers would describe their code using simple,
+inefficient specifications in an \emph{algebra of programming}~\cite{}, and then
+use the algebraic laws of this algebra of programming to \emph{calculate} an
+efficient version of the same algorithm.
 
-The main approach for implementing non-structural recursion in Coq is to use
-\emph{well-founded recursion}, where recursive definitions are accompanied by
-\emph{termination proofs}. Using well-founded recursion, the recursive calls
-will happen on \emph{structurally smaller termination proofs}\footnote{In Coq,
-one approach is using the \coq{Fix} combinator, in which recursion is done on an
-\emph{accesibility} predicate on the input, which is a proof that there are no
-infinitely decreasing chains.}.
-A benefit of this strategy is that when extracting verified non-structural
-recursive functions to OCaml, the additional proofs are discarded, resulting in
-code that closely resembles what a programmer might have written directly in
-OCaml. However, reasoning about program equivalences needs  such termination
-proofs to be kept around, leading to the common practice of employing additional
-reduction lemmas extensively.
+\dcas{TODO: Introduce example}
 
-% A benefit of this approach is that, extracting
-% verified nonstructural recursive functions to OCaml will erase the additional
-% proofs, thus producing code that will be closer to what a programmer may have
-% written directly in OCaml. However, reasoning about program equivalences
-% requires dealing with such termination proofs, and it is common practice to use
-% custom reduction lemmas that will be used extensively when proving properties
-% about nonstructural recursive functions.
+Despite the rigorous algebraic laws that are satisfied by recursion schemes,
+there is a lack of tool support for their use in the context of program
+calculation. In fact, most of the work on applying program calculation is done
+by performing pen-and-paper proofs, and then translating the result to specific
+instances of recursion schemes, implemented in a programming language (generally
+Haskell)~\cite{TODO:INeedToFindSomeMoreReferences}. Most of the work on
+automating program calculation techniques either build implementations of the
+algebraic laws, together with some form of syntax or
+EDSL~\cite{TODO:INeedToFindSomeMoreReferences}. Such implementations are not
+verified, and can introduce bugs in the way they apply the algebraic laws as
+rewriting rules.
 
-\emph{Structured recursion schemes}~\cite{HinzeW16, HinzeWG15} is a technique
-for structuring recursive definitions that has found a lot of success in
-functional programming. The idea is that, rather than writing a self-refential
-definition, we use a function library, the recursion scheme, which takes as
-input the non-recursive parts of the algorithm and returns the desired recursive
-definition which is guaranteed to terminate by the properties of the recursion
-scheme itself. More complex recursion schemes do exist but it has been
-proven by Hinze et al.~\cite{HinzeWG15} that they are all instances of a divide-and-conquer
-algorithm which goes under the name of hylomorphism~\cite{MeijerFP91,HuIT96}.
-This result, thus, yields a general framework to reason about the algebraic properties of these
-algorithms, e.g. short-cut fusion and semi-automatic parallelisations~\cite{TakanoM95,Gibbons96:Third, farmsCastro}.
+A more rigorous approach to implementing program calculation techniques is to
+\emph{mechanise} them as part of a proof assistant. However, most of the work in
+mechanising recursion schemes focuses on a narrow subset of the known recursion
+schemes due to termination
+issues~\cite{TODO:FillInReferencesForCoqMechanisationsFromRelatedWorkSection}.
+Indeed, most of the mechanisations focus on \emph{maps} and \emph{folds}, and
+few authors focus on the \emph{unfolds}. In general, Hinze et
+al.~\cite{HinzeWG15} has proven that all known  recursion schemes are instances
+of a  divide-and-conquer algorithm which goes under the name of
+\emph{hylomorphism}~\cite{MeijerFP91,HuIT96}.  To date, no work has mechanised
+hylomorphisms in the Coq proof assistant.
+
+%Recursive definitions cannot be proven well-defined automatically due to the
+%halting problem. Modern proof assistants like Coq or Agda provide a sound, but
+%incomplete algorithm which syntactically checks for termination or
+%productivity. For recursion, this is done by automatically inferring
+%which argument in the recursive call gets smaller with respects to the original
+%input argument. For productivity, the algorithm checks that the corecursive
+%call appears directly under a constructor to make sure that this function
+%always produces at least one element after each recursive step.
+%This implies that some functions, though well-defined, cannot be accepted by
+%the proof assistant. Examples of this include common sorting algorithms, such
+%as quicksort:
+%%One example is Quicksort, written in OCaml
+%%below:
+%\begin{minted}{OCaml}
+%let rec qsort xs = match divide xs with | None -> []
+% | Some (pivot, (smaller, larger)) -> qsort smaller @ (pivot::qsort larger)
+%\end{minted}
+%While \ocaml{qsort} is a well-defined mathematical function it cannot be
+%accepted by a proof assistant. The reason is that the \ocaml{divide}
+%function \emph{destructuring} the input dives deeper in the input returning
+%two sublists with the head as a pivot.
+%
+%The main approach for implementing non-structural recursion in Coq is to use
+%\emph{well-founded recursion}, where recursive definitions are accompanied by
+%\emph{termination proofs}. Using well-founded recursion, the recursive calls
+%will happen on \emph{structurally smaller termination proofs}\footnote{In Coq,
+%one approach is using the \coq{Fix} combinator, in which recursion is done on an
+%\emph{accesibility} predicate on the input, which is a proof that there are no
+%infinitely decreasing chains.}.
+%A benefit of this strategy is that when extracting verified non-structural
+%recursive functions to OCaml, the additional proofs are discarded, resulting in
+%code that closely resembles what a programmer might have written directly in
+%OCaml. However, reasoning about program equivalences needs  such termination
+%proofs to be kept around, leading to the common practice of employing additional
+%reduction lemmas extensively.
+%
+%% A benefit of this approach is that, extracting
+%% verified nonstructural recursive functions to OCaml will erase the additional
+%% proofs, thus producing code that will be closer to what a programmer may have
+%% written directly in OCaml. However, reasoning about program equivalences
+%% requires dealing with such termination proofs, and it is common practice to use
+%% custom reduction lemmas that will be used extensively when proving properties
+%% about nonstructural recursive functions.
+
+%\emph{Structured recursion schemes}~\cite{HinzeW16, HinzeWG15} is a technique
+%for structuring recursive definitions that has found a lot of success in
+%functional programming. The idea is that, rather than writing a self-refential
+%definition, we use a function library, the recursion scheme, which takes as
+%input the non-recursive parts of the algorithm and returns the desired recursive
+%definition which is guaranteed to terminate by the properties of the recursion
+%scheme itself. More complex recursion schemes do exist but it has been
+%proven by Hinze et al.~\cite{HinzeWG15} that they are all instances of a divide-and-conquer
+%algorithm which goes under the name of hylomorphism~\cite{MeijerFP91,HuIT96}.
+%This result, thus, yields a general framework to reason about the algebraic properties of these
+%algorithms, e.g. short-cut fusion and semi-automatic parallelisations~\cite{TakanoM95,Gibbons96:Third, farmsCastro}.
 
 % A more complex recursion scheme is the hylomorphism~\cite{MeijerFP91, HuIT96} which has a divide-and-conquer
 % structure. It has been shown by Hinze et
@@ -270,26 +308,26 @@ algorithms, e.g. short-cut fusion and semi-automatic parallelisations~\cite{Taka
 % recursion scheme to a non-terminating (co)algebra, but also to the unrestricted
 % % use of data functors.
 
-However, when used in the context of languages with general recursion like
-(e.g.) Haskell and ML, recursion schemes cannot ensure termination. This is
-because the input information itself could be non-terminating. On the other
-hand, while formalising recursion schemes in a type theory does provide stronger
-termination guarantees, to the best of our knowledge, not many attempts have
-been made at mechanising them.
+%However, when used in the context of languages with general recursion like
+%(e.g.) Haskell and ML, recursion schemes cannot ensure termination. This is
+%because the input information itself could be non-terminating. On the other
+%hand, while formalising recursion schemes in a type theory does provide stronger
+%termination guarantees, to the best of our knowledge, not many attempts have
+%been made at mechanising them.
 
 Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to
 divide-and-conquer computations in which termination is entirely enforced by the
 typing discipline. Their approach solves the problem of termination proofs as
 well as the performance of the code that is run \emph{within Coq}, but it does
 not allow for extraction of idiomatic OCaml code. This is unfortunate since code
-extration has proven useful in a variety of scenarios~\cite{OnoHTNH11,
-Larchey-Wendling23, MiculanP12, Sakaguchi20}.  However, in Abreu et al.'s approach, extraction
-(1) do not preserve the recursive structure of common implementations; and (2)
-lead to unsafe casts like \ocaml{Obj.magic} in the generated code. This latter
-is also problematic in that, for higher-order programs, simple interoperations
-can lead to incorrect behaviour or even segfaults~\cite{forster:hal-04329663}
-and, moreover, it invalidates the fast-and-loose
-principle~\cite{DanielssonHJG06}.
+extration is what allows the execution of code that has been verified in
+Coq~\cite{OnoHTNH11, Larchey-Wendling23, MiculanP12, Sakaguchi20}.  In Abreu et
+al.'s approach, extraction (1) do not preserve the recursive structure of common
+implementations; and (2) lead to unsafe casts like \ocaml{Obj.magic} in the
+generated code. This latter is also problematic in that, for higher-order
+programs, simple interoperations can lead to incorrect behaviour or even
+segfaults~\cite{forster:hal-04329663} and, moreover, it invalidates the
+fast-and-loose principle~\cite{DanielssonHJG06}.
 
 This work presents the first Coq formalisation \emph{hylomorphisms} that (1) is
 \emph{axiom-free} and (2) allows the extraction of idiomatic OCaml code. The
@@ -297,7 +335,7 @@ full mechanisation can be found on
 Github\footnote{https://github.com/dcastrop/coq-hylomorphisms}. While
 programmers still need to reason about the termination of their programs, our
 mechanisation will allow the use of the algebraic laws of hylomorphisms for
-program reasoning, as well as extracting to idiomatic code (see
+\emph{program calculation}, as well as extracting to idiomatic code (see
 extracted \ocaml{qsort} program in Section~\ref{sec:examples}).
 % As an example, our mechanisation of \ocaml{qsort} as a
 % hylomorphism will produce the following code:
@@ -309,9 +347,10 @@ extracted \ocaml{qsort} program in Section~\ref{sec:examples}).
 % \end{coqcode}
 
 To summarise, our contributions are as follows. In this paper we provide a
-framework for \emph{generic programming} with recursion schemes in Coq, with a
-proof of their algebraic laws and program equivalences for clean code
-extraction:
+framework for \emph{program calculation} with recursion schemes in Coq, where
+program calculation is done by applying regular Coq equalities, based on  proofs
+of the algebraic laws of hylomorphisms, and that allows the extraction of safe,
+idiomatic OCaml code:
 \begin{itemize}
   \item In Section~\ref{sec:containers} we formalise the type of container functors ensuring the presence of least and greatest fixed-points for functors and suitably adapted for program extraction
   \item In Section~\ref{sec:recursion-schemes} we formalise folds, unfolds and hylomorhisms and their universal properties
