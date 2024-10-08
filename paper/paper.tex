@@ -125,6 +125,7 @@
 \newcommand{\List}[1]{\operator{List}(#1)}
 \newcommand{\nil}{\operator{nil}}
 \newcommand{\cons}{\operator{cons}}
+\newcommand{\foldr}{\operator{foldr}}
 
 \newmintinline[coq]{coq}{fontsize=\small}
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
@@ -748,19 +749,20 @@ algorithm which processes that data. Recursion schemes aim at analyzing these
 analogies.
 
 \subsection{Elements of Category Theory}
-A \emph{category}, denoted with $\CatC, \CatD, \CatE$,  is a collection of
-objects $A, B, C$, denoted by $\Obj(\CatC)$ and a collection of arrows $f, g, h$
-between these objects, denoted by $\Arr{\CatC}$, such that there always exists
-an identity arrow $id_{A} : A \to A$ for each object $A$ and for two arrows
-$A \xrightarrow{f} B$ and $B \xrightarrow{g} C$ there always exists an arrow
+A \emph{category} is a collection of objects $A, B, C$, denoted by $\Obj(\CatC)$
+and a collection of arrows $f, g, h$ between these objects, denoted by
+$\Arr{\CatC}$, such that there always exists an identity arrow
+$id_{A} : A \to A$ for each object $A$ and for two arrows $A \xrightarrow{f} B$
+and $B \xrightarrow{g} C$ there always exists an arrow
 $A \xrightarrow{g\circ f} C$ obeying the associativity law. We denote
-$\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to $B$\footnote[1]{For
-presentation purposes we shall not deal with size issues and assume all the
-categories are small.}. The initial object in a category, denoted by $0$, is the
-object such that for any other object $A$ there is a unique arrow
-$0 \xrightarrow{!} A$.  Dually, the terminal object, denoted by $1$, is the
-object such that for any other object $A$ there is a unique arrow
-$A \xrightarrow{!} 1$. Initial and terminal object are unique up-to isomorphism.
+$\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to $B$ and we use the letters
+$\CatC$, $\CatD$, $\CatE\dots$ for categories\footnote[1]{For presentation
+purposes we shall not deal with size issues and assume all the categories are
+small.}. The initial object in a category, denoted by $0$, is the object such
+that for any other object $A$ there is a unique arrow $0 \xrightarrow{!} A$.
+Dually, the terminal object, denoted by $1$, is the object such that for any
+other object $A$ there is a unique arrow $A \xrightarrow{!} 1$. Initial and
+terminal object are unique up-to isomorphism.
 
 For example, the category of sets, denoted by $\Set$, is the category where
 objects are sets and arrows are functions between sets. The initial object $0$
@@ -791,32 +793,42 @@ $\List{f}$ is well-defined as it recursively calls on a smaller argument,
 however, there is a more general way of proving these type of definitions are
 well-defined.
 
+
 \subsection{Algebras and Catamorphisms}
 \label{sec:algebras}
 For a functor $F : \CatC \to \CatC$ an $F$-\emph{algebra} is a pair $(A,\alpha)$
 where $A$ is an object of the category called the \emph{carrier} of the algebra
 and $\alpha$ is an arrow of type $FA \to A$ called the \emph{structure map}.
 The category of $F$-algebras, denoted by $F\Alg(\CatC)$, is the category where
-objects are $F$-algebras and arrows $f : (A, \alpha) \to (B, \beta)$ in
-$F\Alg(\CatC)$ are arrows $f : A \to B$ in $\CatC$ such that they respect the
-structure of the algebra, that is $f \circ \alpha = \beta \circ F(f)$.  The
-initial object in this category is called the \emph{initial $F$-algebra}, that
-is the $F$-algebra which has a unique $F$-algebra homomorphism into any other
-$F$-algebra. If $(A, \alpha)$ is initial this implies $A$ is the \emph{least
-fixed-point} for the functor $F$, i.e. $A \iso FA$ is the least solution of the
-domain equation $X \iso F X$ by Lambek's lemma.
+objects are $F$-algebras and arrows $f : (A, \alpha) \to (B, \beta)$ are
+\emph{$F$-algebra homomorphisms}  $f : A \to B$ in $\CatC$ such that they
+respect the structure of the algebra, that is
+$f \circ \alpha = \beta \circ F(f)$. The initial object in this category is
+called the \emph{initial $F$-algebra}, that is the $F$-algebra which has a
+unique $F$-algebra homomorphism into any other $F$-algebra. By Lambek's lemma
+the initial $F$-algebra is precisely the \emph{least fixed-point} for the
+functor $F$ which we denote by $(\mu F, \InIso)$ with
+$\InIso : F \mu F \to \mu F$ and $\InOp : \mu F \to F \mu F$ witnessing the
+isomorphism $F\mu F \iso \mu F$. By the property of initial $F$-algebras, for
+any other $F$-algebra $(B, \beta)$ there exists a unique $F$-algebra
+homomorphism, denoted by $\cata{\beta} : (\mu F, \InIso) \to (B, \beta)$ and
+pronounced ``\emph{catamorphism}''.
 
-For example, for a set $A$ and a given the functor $F : \Set \to \Set$ mapping
-$X \mapsto 1 + A \times X$ an algebra is a set $X$ together with an arrow
-$\alpha : 1 + A \times X \to X$.in $\Set$ given such a type
-\coq{A} we can define the monoid operations as \coq{u : unit -> A} for unit and
-\coq{m : A * A -> A} for multiplication. Notice that \coq{F X = unit + X * X} is
-a functor on \coq{X} which means we can equivalently describe these two maps as
-a single one of type \coq{F X -> X} which we call the algebra for the functor
-\coq{F} satisfying the unit and associative laws of the monoid. In this work we
-will be using algebras to describe the operations of a data type and so we will
-not be needing additional equations on these operations.
+For example, for a set $A$ we define the functor $F : \Set \to \Set$ mapping
+$X \mapsto 1 + A \times X$. An $F$-algebra is a set $B$ together with a
+structure map $[base, ind] : 1 + A \times B \to B$. The initial $F$-algebra is
+clearly the set of lists $\List{A}$. The catamorphism associated with the type
+of lists is the unique arrow recursively translating the initial algebra
+$[\nil,\cons]$ into the algebra $[base, ind]$:
+\begin{align*}
+  & \cata{[base,ind]}(\nil) = base\\
+  & \cata{[base, ind]}(\cons(a, xs)) = ind(a, \cata{[base, ind]}(xs))
+\end{align*}
+In functional programming this is commonly referred to as
+$\foldr : (1 \to B) \to (A \times B \to B) \to B$. We can in fact set
+$\foldr\;base\;ind = \cata{[base, ind]}$.
 
+\subsection{Dump}
 Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
 by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of type
 \coq{App F A ~> A}:
