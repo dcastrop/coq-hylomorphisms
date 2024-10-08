@@ -203,38 +203,53 @@ abstractions that capture common patterns of recursion. The main benefit of
 structuring computation using recursion schemes, is that they enjoy
 well-estabished \emph{algebraic properties} that can serve as a foundation for
 program optimisation (e.g.\ \emph{fusion} laws, or semi-automatic
-parallelisations~\cite{TakanoM95,Gibbons96:Third, farmsCastro}).  These
-algebraic properties led to their use in the context of \emph{program
-calculation}, where programmers would describe their code using simple,
-inefficient specifications in an \emph{algebra of programming}~\cite{}, and then
-use the algebraic laws of this algebra of programming to \emph{calculate} an
-efficient version of the same algorithm.
+parallelisations~\cite{TakanoM95,Gibbons96:Third, Morihata09:Third,
+farmsCastro}).  These algebraic properties led to their use in the context of
+\emph{program calculation}, where programmers would describe their code using
+simple, inefficient specifications in an \emph{algebra of
+programming}~\cite{BirddeMoor96:Algebra}, and then use the algebraic laws of
+this algebra of programming to \emph{calculate} an efficient version of the same
+algorithm. Suppose, for example, that we want to write a program sorts a list of
+integers, and then multiplies by 2 all its elements. In OCaml, we may write this
+function directly:
+\begin{minted}{ocaml}
+let rec sort_times_two = function
+  | [] -> []
+  | h :: t -> let (l, r) = partition (fun x -> x < h) t in
+  sort_times_two l @ (h * 2) :: sort_times_two t
+\end{minted}
+Instead of writing this function directly, we may observe that we can derive it
+by \emph{fusing} a regular \emph{quickort} OCaml implementation, with
+\ocaml{map (fun x -> x * 2)}. This is the main idea behind program calculation:
+start
+from a simple specification, e.g.\
+$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
+equivalences and algebraic laws to rewrite it to an optimised version  (e.g.\
+the fused OCaml implementation above). We will revisit a similar example
+in Section~\ref{sec:sorting}.
 
-\dcas{TODO: Introduce example}
-
-Despite the rigorous algebraic laws that are satisfied by recursion schemes,
-there is a lack of tool support for their use in the context of program
+Despite the rigorous set of algebraic laws that are satisfied by recursion
+schemes, there is a lack of tool support for their use in the context of program
 calculation. In fact, most of the work on applying program calculation is done
 by performing pen-and-paper proofs, and then translating the result to specific
 instances of recursion schemes, implemented in a programming language (generally
-Haskell)~\cite{TODO:INeedToFindSomeMoreReferences}. Most of the work on
-automating program calculation techniques either build implementations of the
-algebraic laws, together with some form of syntax or
-EDSL~\cite{TODO:INeedToFindSomeMoreReferences}. Such implementations are not
-verified, and can introduce bugs in the way they apply the algebraic laws as
-rewriting rules.
+Haskell). There are some examples of implementations of program calculation
+techniques, but these implementations are scarce, not up to date, and not
+verified. For example, Cunha et al. automated program calculation techniques by
+a custom Haskell implementation~\cite{DrHylo}.
 
-A more rigorous approach to implementing program calculation techniques is to
-\emph{mechanise} them as part of a proof assistant. However, most of the work in
-mechanising recursion schemes focuses on a narrow subset of the known recursion
-schemes due to termination
-issues~\cite{TODO:FillInReferencesForCoqMechanisationsFromRelatedWorkSection}.
-Indeed, most of the mechanisations focus on \emph{maps} and \emph{folds}, and
-few authors focus on the \emph{unfolds}. In general, Hinze et
-al.~\cite{HinzeWG15} has proven that all known  recursion schemes are instances
-of a  divide-and-conquer algorithm which goes under the name of
-\emph{hylomorphism}~\cite{MeijerFP91,HuIT96}.  To date, no work has mechanised
-hylomorphisms in the Coq proof assistant.
+Several authors build tools for applying program calculation techniques by
+\emph{mechanising} them as part of a proof assistant. However, most of the work
+in mechanising recursion schemes focuses on a narrow subset of the known
+recursion schemes due to termination issues, or do not focus on proving
+algebraic laws of generic recursion schemes~\cite{10.1007/978-3-642-17796-5_10,
+MurataE19, larchey2022braga}.  Indeed, most of the mechanisations of generic
+recursion schemes focus on \emph{maps} and \emph{folds}, and few authors focus
+on the \emph{unfolds}. In general, Hinze et al.~\cite{HinzeWG15} has proven that
+all known  recursion schemes are instances of a  divide-and-conquer algorithm
+which goes under the name of \emph{hylomorphism}~\cite{MeijerFP91,HuIT96}.  To
+date, no work has mechanised hylomorphisms in the Coq proof assistant, together
+with their algebraic laws.
 
 %Recursive definitions cannot be proven well-defined automatically due to the
 %halting problem. Modern proof assistants like Coq or Agda provide a sound, but
@@ -322,9 +337,9 @@ well as the performance of the code that is run \emph{within Coq}, but it does
 not allow for extraction of idiomatic OCaml code. This is unfortunate since code
 extration is what allows the execution of code that has been verified in
 Coq~\cite{OnoHTNH11, Larchey-Wendling23, MiculanP12, Sakaguchi20}.  In Abreu et
-al.'s approach, extraction (1) do not preserve the recursive structure of common
-implementations; and (2) lead to unsafe casts like \ocaml{Obj.magic} in the
-generated code. This latter is also problematic in that, for higher-order
+al.'s approach, extraction (1) does not preserve the recursive structure of
+common implementations; and (2) leads to unsafe casts like \ocaml{Obj.magic} in
+the generated code. This latter is also problematic in that, for higher-order
 programs, simple interoperations can lead to incorrect behaviour or even
 segfaults~\cite{forster:hal-04329663} and, moreover, it invalidates the
 fast-and-loose principle~\cite{DanielssonHJG06}.
@@ -332,11 +347,11 @@ fast-and-loose principle~\cite{DanielssonHJG06}.
 This work presents the first Coq formalisation \emph{hylomorphisms} that (1) is
 \emph{axiom-free} and (2) allows the extraction of idiomatic OCaml code. The
 full mechanisation can be found on
-Github\footnote{https://github.com/dcastrop/coq-hylomorphisms}. While
-programmers still need to reason about the termination of their programs, our
-mechanisation will allow the use of the algebraic laws of hylomorphisms for
-\emph{program calculation}, as well as extracting to idiomatic code (see
-extracted \ocaml{qsort} program in Section~\ref{sec:examples}).
+Github\footnote{https://github.com/dcastrop/coq-hylomorphisms}\dcas{I SHOULD
+ANONYMISE THIS}. While programmers still need to reason about the termination of
+their programs, our mechanisation will allow the use of the algebraic laws of
+hylomorphisms for \emph{program calculation}, as well as extracting to idiomatic
+code (see examples of extracted code in Section~\ref{sec:examples}).
 % As an example, our mechanisation of \ocaml{qsort} as a
 % hylomorphism will produce the following code:
 % \begin{coqcode}
@@ -352,9 +367,15 @@ program calculation is done by applying regular Coq equalities, based on  proofs
 of the algebraic laws of hylomorphisms, and that allows the extraction of safe,
 idiomatic OCaml code:
 \begin{itemize}
-  \item In Section~\ref{sec:containers} we formalise the type of container functors ensuring the presence of least and greatest fixed-points for functors and suitably adapted for program extraction
-  \item In Section~\ref{sec:recursion-schemes} we formalise folds, unfolds and hylomorhisms and their universal properties
-  \item In Section~\ref{sec:examples} we use the framework to formalise examples of divide-and-conquer, dynamic programming, and mutual recursion algorithms. Furthermore we verify the short-cut fusion optimisation and show the extracted optimised code to OCaml.
+  \item In Section~\ref{sec:containers} we formalise the type of container
+functors ensuring the presence of least and greatest fixed-points for functors
+and suitably adapted for program extraction
+  \item In Section~\ref{sec:recursion-schemes} we formalise folds, unfolds and
+hylomorhisms and their universal properties
+  \item In Section~\ref{sec:examples} we use the framework to formalise examples
+of divide-and-conquer, dynamic programming, and mutual recursion algorithms.
+Furthermore we verify the short-cut fusion optimisation and show the extracted
+optimised code to OCaml.
 \end{itemize}
 
 % \section{Background on Recursion Schemes}
