@@ -5,13 +5,17 @@
 % \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
 % \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
 % \addbibresource{references.bib}
-% \usepackage{amsmath, amssymb, amsfonts, amsthm, stmaryrd}
+\pagestyle{plain}
+
+\usepackage{amsmath, mathpartir}
+%, amssymb, amsfonts, stmaryrd}
+% \usepackage{mathpartir}
+% \usepackage{bussproofs}
+
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{enumitem}
-% \usepackage{mathpartir}
-% \usepackage{bussproofs}
 \usepackage{xparse}
 \usepackage[usenames, dvipsnames]{xcolor}
 \usepackage{lipsum}
@@ -113,6 +117,15 @@
 \newcommand{\pair}[2]{\langle #1, #2 \rangle}
 \newcommand{\haskell}[1]{\mintinline{haskell}{#1}}
 %\newcommand{\coq}[1]{\mintinline{coq}{#1}}
+
+\newcommand{\Hom}{\text{Hom}}
+\newcommand{\Obj}{\text{Obj}}
+\newcommand{\Arr}{\text{Arr}}
+
+\newcommand{\List}[1]{\operator{List}(#1)}
+\newcommand{\nil}{\operator{nil}}
+\newcommand{\cons}{\operator{cons}}
+
 \newmintinline[coq]{coq}{fontsize=\small}
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
@@ -728,46 +741,81 @@ optimised code to OCaml.
 % % % %   & \operator{alg} :: D (G_{\infty} \R) \to \R\\
 % % % %   & \operator{alg}\; Zero           = 0\\
 % % % %   & \operator{alg}\; (Succ{table}) = maximum_{0} [v + \operator{lookup}\; table (i - w) | (w,v) \leftarrow wvs, w \le i]
-% % % % \end{align*}
+            % % % % \end{align*}
 \section{Recursion Schemes}
-\subsection{Functors}
-Functors are functions \coq{F : Type -> Type} which additionally have a
-map
-\begin{coqcode}
-fmap : forall A B, (A -> B) -> F A -> F B
-\end{coqcode}
-witnessing the idea that a functor represents a container for abstract data that
-can be manipulated without changing the outer structure. For example, the type
-\coq{List : Type -> Type} is a functor and \coq{List A} is the type of lists
-over elements of type \coq{A} with the obvious \coq{fmap} function recursively
-traversing a list and applying the function \coq{A -> B} for each element.
-Additionally, the type of lists \coq{List A} arises as the least fixed-point of
-the functor \coq{F X = unit + (A * X) }.
+The structure of the a certain data is very similar to the structure of an
+algorithm which processes that data. Recursion schemes aim at analyzing these
+analogies.
 
-In general not every functor has a fixed-point, and it is not possible to build
-the fixed-point of a functor such as \coq{F} in Coq due to not being strictly
-positive. Due to this, we are going to restrict to \emph{polynomial functors}
-as represented by containers.
-\subsection{Algebras and Coalgebras}
-\subsection{Hylomorphisms}
-Recursion schemes provide an abstract way to consume and generate data. We now
-proceed onto describing how to formalise hylomorphisms in Coq. We first
-formalise algebras for container extensions (Section~\ref{sec:algebras}), then
-we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together these
-notions to formalise recursive coalgebras and hylomorphisms
-(Section~\ref{sec:rec-coalgebras}).
+\subsection{Elements of Category Theory}
+A \emph{category}, denoted with $\CatC, \CatD, \CatE$,  is a collection of
+objects $A, B, C$, denoted by $\Obj(\CatC)$ and a collection of arrows $f, g, h$
+between these objects, denoted by $\Arr{\CatC}$, such that there always exists
+an identity arrow $id_{A} : A \to A$ for each object $A$ and for two arrows
+$A \xrightarrow{f} B$ and $B \xrightarrow{g} C$ there always exists an arrow
+$A \xrightarrow{g\circ f} C$ obeying the associativity law. We denote
+$\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to $B$\footnote[1]{For
+presentation purposes we shall not deal with size issues and assume all the
+categories are small.}. The initial object in a category, denoted by $0$, is the
+object such that for any other object $A$ there is a unique arrow
+$0 \xrightarrow{!} A$.  Dually, the terminal object, denoted by $1$, is the
+object such that for any other object $A$ there is a unique arrow
+$A \xrightarrow{!} 1$. Initial and terminal object are unique up-to isomorphism.
+
+For example, the category of sets, denoted by $\Set$, is the category where
+objects are sets and arrows are functions between sets. The initial object $0$
+in $\Set$ is the empty set $\emptyset$ and the terminal object $1$ is any
+singleton set. In this section, we are going to assume types are sets, hence
+this category can also be viewed as the category of types and programs between
+them.
+
+A \emph{functor} $F : \CatC \to \CatD$ is a map between categories mapping both
+objects and arrows from one category to another. Hence a functor has two
+components, one which maps objects into objects
+$F : \Obj(\CatC) \to \Obj(\CatD)$ and one which maps arrows into arrows
+$F : \Hom_{\CatC}(A, B) \to \Hom_{\CatD} (FA,FB)$ such that identity and
+composition of arrows are preserved:
+\begin{mathpar}
+  F(id_A) = id_{FA} \and F(g \circ f) = F(g) \circ F(f)
+\end{mathpar}
+This latter component is also called the \emph{functorial action} and can be
+thought of as the $\operator{fmap}$ program in functional programming.
+
+For example, in $\Set$, we can define the set of lists
+$\List{A} \iso 1 + A \times \List{A}$ as the set inductively generated by the
+constructors $\nil : 1 \to \List{A}$ and
+$\cons : A \times \List{A} \to \List{A}$. This type is a functor with functorial
+action $\List{f} : \List{A} \to \List{B}$ given by $\List{f}(*) = *$ and
+$\List{f}(\cons(a,xs)) = \cons(f(a), \List{f}(xs))$. Notice that the definition
+$\List{f}$ is well-defined as it recursively calls on a smaller argument,
+however, there is a more general way of proving these type of definitions are
+well-defined.
 
 \subsection{Algebras and Catamorphisms}
-\label{sec:algebras} An algebra is a set \coq{A} (the \emph{carrier} of the
-algebra) together with some operations on it sometimes subject to some
-equational laws. For example, given such a type \coq{A} we can define the monoid
-operations as \coq{u : unit -> A} for unit and \coq{m : A * A -> A} for
-multiplication. Notice that \coq{F X = unit + X * X} is a functor on \coq{X}
-which means we can equivalently describe these two maps as a single one of type
-\coq{F X -> X} which we call the algebra for the functor \coq{F} satisfying the
-unit and associative laws of the monoid. In this work we will be using algebras
-to describe the operations of a data type and so we will not be needing
-additional equations on these operations.
+\label{sec:algebras}
+For a functor $F : \CatC \to \CatC$ an $F$-\emph{algebra} is a pair $(A,\alpha)$
+where $A$ is an object of the category called the \emph{carrier} of the algebra
+and $\alpha$ is an arrow of type $FA \to A$ called the \emph{structure map}.
+The category of $F$-algebras, denoted by $F\Alg(\CatC)$, is the category where
+objects are $F$-algebras and arrows $f : (A, \alpha) \to (B, \beta)$ in
+$F\Alg(\CatC)$ are arrows $f : A \to B$ in $\CatC$ such that they respect the
+structure of the algebra, that is $f \circ \alpha = \beta \circ F(f)$.  The
+initial object in this category is called the \emph{initial $F$-algebra}, that
+is the $F$-algebra which has a unique $F$-algebra homomorphism into any other
+$F$-algebra. If $(A, \alpha)$ is initial this implies $A$ is the \emph{least
+fixed-point} for the functor $F$, i.e. $A \iso FA$ is the least solution of the
+domain equation $X \iso F X$ by Lambek's lemma.
+
+For example, for a set $A$ and a given the functor $F : \Set \to \Set$ mapping
+$X \mapsto 1 + A \times X$ an algebra is a set $X$ together with an arrow
+$\alpha : 1 + A \times X \to X$.in $\Set$ given such a type
+\coq{A} we can define the monoid operations as \coq{u : unit -> A} for unit and
+\coq{m : A * A -> A} for multiplication. Notice that \coq{F X = unit + X * X} is
+a functor on \coq{X} which means we can equivalently describe these two maps as
+a single one of type \coq{F X -> X} which we call the algebra for the functor
+\coq{F} satisfying the unit and associative laws of the monoid. In this work we
+will be using algebras to describe the operations of a data type and so we will
+not be needing additional equations on these operations.
 
 Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
 by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of type
@@ -896,6 +944,15 @@ Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix F)
 In words, for any \coq{F}-coalgebra, if there is any other function \coq{f}
 that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the
 same coalgebra.
+
+
+\subsection{Hylomorphisms}
+Recursion schemes provide an abstract way to consume and generate data. We now
+proceed onto describing how to formalise hylomorphisms in Coq. We first
+formalise algebras for container extensions (Section~\ref{sec:algebras}), then
+we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together these
+notions to formalise recursive coalgebras and hylomorphisms
+(Section~\ref{sec:rec-coalgebras}).
 
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
