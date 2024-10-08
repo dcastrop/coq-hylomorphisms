@@ -1835,39 +1835,57 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 %        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 %\end{itemize}
 Encoding recursion schemes in Coq is not new. We compare our work with other
-encodings of program calculation techniques in Coq (Section~\ref{sec:calccoq}),
-recursion schemes in Coq (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}).
-Finally, we compare our encoding of recursion schemes to other forms of
-termination checking (Section~\ref{sec:termcheck}, and sized types
-(Section~\ref{sec:sizedT}), as a way to guarantee termination of nonstructural
+encodings of program calculation techniques in Coq and recursion schemes in Coq
+(Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}). Additionally, we compare our
+encoding of recursion schemes to other forms of termination checking
+(Section~\ref{sec:termcheck}, as a way to guarantee termination of nonstructural
 recursion.
-
 
 \subsection{Program Calculation}\label{sec:calccoq}
 
 Within the domain of program optimization, program calculation serves as a
-well-established programming technique aimed at deriving efficient programs
-from their naive counterparts through systematic program
-transformation~\cite{gibbonsSquiggol}. This area has been extensively explored
-over the years. Tesson et al.\ demonstrated the efficacy of leveraging Coq to
-establish an approach for implementing a robust system dedicated to verifying
-the correctness of program transformations for functions that manipulate
+well-established programming technique aimed at deriving efficient programs from
+their naive counterparts through systematic program
+transformation~\cite{gibbonsSquiggol}. Programmers may specify algorithms
+abstractly at a high level, and then derive an efficient implementation using
+the process of program calculation~\cite{BirddeMoor96:Algebra}. This area has
+been extensively explored over the years.
+
+Tesson et al.\ demonstrated the efficacy of leveraging Coq to establish an
+approach for implementing a robust system dedicated to verifying the correctness
+of program transformations for functions that manipulate
 lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and Emoto went further and
-formalised recursion schemes in Coq~\cite{MurataE19}. Their development does
-not include hylomorphisms and dynamorphisms, and relies on the functional
+formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
+include hylomorphisms and dynamorphisms, and relies on the functional
 extensionality axiom, as well as further extensionality axioms for each
-coinductive datatype that they use. They do not discuss the extracted OCaml
-code from their formalisation.  Larchey-Wendling and Monin encode recursion
-schemes in Coq, by formalising computational graphs of
-algorithms~\cite{larchey2022braga}. Their work does not focus on encoding
-generic recursion schemes, and proving their algebraic laws.  Castro-Perez et
-al.~\cite{farmsCastro} encode the laws of hylomorphisms as part of the type
-system of a functional language to calculate parallel programs from
-specifications. Their work focuses on parallelism, and they do not formalise
-their approach in a proof assistant, and the laws of hylomorphisms are axioms
-in their system.
+coinductive datatype that they use. They do not discuss the extracted OCaml code
+from their formalisation. Larchey-Wendling and Monin encode recursion schemes in
+Coq, by formalising computational graphs of algorithms~\cite{larchey2022braga}.
+Their work does not focus on encoding generic recursion schemes, and proving
+their algebraic laws. Castro-Perez et al.~\cite{farmsCastro} encode the laws of
+hylomorphisms as part of the type system of a functional language to calculate
+parallel programs from specifications. Their work focuses on parallelism, and
+they do not formalise their approach in a proof assistant, and the laws of
+hylomorphisms are axioms in their system.
 
 %\mvol{Need more general citations for program calculation.}
+\subsection{Divide and Conquer Recursion}\label{sec:reccoq}
+
+Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
+using a recursion scheme in which termination is entirely enforced by its
+typing.  This is a significant advance, since it avoids \emph{completely} the
+need for termination proofs. Their work differs from ours in that they require
+the functional extensionality axiom, and the use of impredicative \coq{Set}.
+The authors justify well the use of impredicative \coq{Set} and its
+compatibility with the functional extensionality axiom. In contrast, our
+development remains entirely \emph{axiom-free}. Another key difference with our
+approach is that they do not discuss what the resulting extracted code
+\emph{looks like} (that is, whether the extracted OCaml code resembles the
+natural formulation of the recursive function). Through experiments, we found
+that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
+structure that may be hard to understand or interface with other OCaml code.
+Due to the great benefit of entirely avoiding termination proofs, it would be
+interesting to extend their approach to improve code extraction.
 
 \subsection{Termination Checking}\label{sec:termcheck}
 
@@ -1880,6 +1898,8 @@ non-normalizable terms. This sort of check generally looks for a
 Coq uses such a check, and it works for many classic functional programming
 patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
 definitions will not be accepted by such checks.
+
+\mvol{Do we need to discuss this or can we cut it?}
 
 In particular, the problem of \emph{nonstructural recursion} (including
 divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
@@ -1899,46 +1919,6 @@ library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
 mergesort''~\cite{AbreuDHJMS23}.
- 
-\subsubsection{Divide and Conquer Recursion}\label{sec:reccoq}
-
-Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
-using a recursion scheme in which termination is entirely enforced by its
-typing.  This is a significant advance, since it avoids \emph{completely} the
-need for termination proofs. Their work differs from ours in that they require
-the functional extensionality axiom, and the use of impredicative \coq{Set}.
-The authors justify well the use of impredicative \coq{Set} and its
-compatibility with the functional extensionality axiom. In contrast, our
-development remains entirely \emph{axiom-free}. Another key difference with our
-approach is that they do not discuss what the resulting extracted code
-\emph{looks like} (that is, whether the extracted OCaml code resembles the
-natural formulation of the recursive function). Through experiments, we found
-that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
-structure that may be hard to understand or interface with other OCaml code.
-Due to the great benefit of entirely avoiding termination proofs, it would be
-interesting to extend their approach to improve code extraction.
-
-\subsubsection{Sized Types}\label{sec:sizedT}
-
-Another approach to certifying termination of recursive functions is the use of
-\emph{sized types}. Sized types were introduced by Hughes et al.\ as a way to
-track/verify various properties of recursive programs, including productivity
-and termination~\cite{HughesPS96}. The core idea of sized types is that types
-express bounds on the sizes of recursive data structures. With this approach,
-algorithms are implemented in the standard functional way, following the
-divide-and-conquer pattern of splitting, recurring, and merging, with the
-addition of the data types being indexed by a static approximation of the
-relative \emph{size}. An advantage of this approach is that it allows for code
-to be written in a natural way. There are costs, however. Programs must be
-written in a way that accounts for the handling of size indexes, and support for
-the size types must be added to the language.
-
-This approach has been used to express nonstructurally recursive
-algorithms in Agda: Copello et al.\ used sized types in a straightforward
-formulation of mergesort~\cite{CopelloTB14}. Such an approach has also been used
-in MiniAgda~\cite{abs-1202-3496}. A proposal exists to add sized types to
-Coq as well, though it has not yet been adopted~\cite{ChanLB23}.
-
 
 \section{Conclusions and Future Work}
 
@@ -1964,7 +1944,7 @@ morphisms.  Generalised rewriting in proofs involving setoids tends to be quite
 slow, due to the large size of the terms that need to be rewritten. Sometimes,
 this size is hidden in implicit arguments and coercions. We will study
 alternative formulations to try to improve the performance of the rewriting
-tactics (e.g.  canonical structures).  Currently, Coq is unable to inline a
+tactics (e.g.\ canonical structures).  Currently, Coq is unable to inline a
 number of trivially inlineable definitions.  We will study alternative
 definitions, or extensions to Coq's code extraction mechanisms to force the
 full inlining of all container code that is used in hylomorphisms.  Finally,
