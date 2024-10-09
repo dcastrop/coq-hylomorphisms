@@ -423,12 +423,12 @@ particular, for a state $x_{1} \in X$, $c(x_{1})$ returns a pair $(l, x_{2})$
 where $l \in L$ is the observable action and $x_{2} \in X$ is the next state.
 In this case, we can even set some notation for the transition map:
 \[
-  x \xrightarrow{l} y \eqdef c(x) = (l, y)
+  x \xrightarrow{l} y \eqdef c_{X}(x) = (l, y)
 \]
 The category of $B$-coalgebras, denoted $B\Coalg$, is the category where objects
-are $B$-coalgebras and morphisms $f : (X, \gamma_{X}) \to (Y, \gamma_{Y})$ are
+are $B$-coalgebras and morphisms $f : (X, c_{X}) \to (Y, c_{Y})$ are
 $B$-coalgebra homomorphisms $f : A \to B$, that is
-$ \gamma_{Y} \circ f = F(f) \circ \gamma_{X}$. Terminal object in this category
+$ c_{Y} \circ f = F(f) \circ c_{X}$. Terminal object in this category
 $B$-coalgebra corresponds to the greatest fixed-point for the functor $B$,
 denoted by $(\nu B, \OutIso)$ where $\OutIso$ denotes the final $B$-coalgebra
 $\OutIso : \nu B \to B\nu B$.
@@ -436,21 +436,21 @@ $\OutIso : \nu B \to B\nu B$.
 For example, the terminal coalgebra for the functor $BX = L \times X$ is the set
 of of infinite streams, that is the greatest solution to the domain equation
 $\Str{A} \iso A \times \Str{A}$.  As a result, for any $B$-coalgebra
-$(B, \gamma)$ there exists a unique $B$-coalgebra homomorphism into the terminal
-coalgebra $(\nu B, \OutIso)$ which is denoted by $\ana{\gamma}$ and pronounced
+$(X, c_{X})$ there exists a unique $B$-coalgebra homomorphism into the terminal
+coalgebra $(\nu B, \OutIso)$ which is denoted by $\ana{c_{X}}$ and pronounced
 ``\emph{anamorphism}''. We spell out the uniqueness property:
 \begin{equation}
   \label{eq:ana:unique}
-  f = \ana{\gamma} \iff f = \OutOp \circ B(f) \circ \gamma
+  f = \ana{c_{X}} \iff f = \OutOp \circ B(f) \circ c_{X}
 \end{equation}
 In words, for any $B$-coalgebra, if there is any other $B$-coalgebra
 homomorphism $f$ into the terminal object then it must be the anamorphism on the
 same coalgebra. As a result of the uniqueness property we can derive the fusion
 laws. For all $B$-coalgebra homomorphisms
-$f : (X, \gamma_{X}) \to (Y, \gamma_{Y})$ we have
+$f : (X, c_{X}) \to (Y, c_{Y})$ we have
 \begin{equation}
   \label{eq:ana:fusion}
-  \ana{\gamma_{Y}} \circ f = \ana{\gamma_{X}}
+  \ana{c_{Y}} \circ f = \ana{c_{X}}
 \end{equation}
 
 \subsection{Recursive Coalgebras and Hylomorphism}
