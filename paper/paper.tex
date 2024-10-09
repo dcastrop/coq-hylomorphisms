@@ -8,7 +8,7 @@
 % \addbibresource{references.bib}
 \pagestyle{plain}
 
-\usepackage{amsmath, mathpartir}
+\usepackage{amsmath, mathpartir, stmaryrd}
 %, amssymb, amsfonts, stmaryrd}
 % \usepackage{mathpartir}
 % \usepackage{bussproofs}
@@ -113,6 +113,7 @@
 \newcommand{\CatE}{\mathcal{E}}
 \newcommand{\CatI}{\mathcal{I}}
 \newcommand{\Set}{\mathbf{Set}}
+\newcommand{\Type}{\mathbf{Type}}
 \newcommand{\iso}{\cong}
 \newcommand{\ceiling}[1]{\lceil #1 \rceil}
 \newcommand{\floor}[1]{\lfloor #1 \rfloor}
@@ -583,6 +584,7 @@ an inductive type:
 \begin{coqcode}
 Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
+
 where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
 As an example, the initial \coq{F}-algebra for the
 functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
@@ -688,6 +690,8 @@ be able to mechanise recursion schemes that follow this structure:
 (* REJECTED due to negative occurrence of (LFix F) *)
 Inductive LFix (F : Type -> Type) := LFix_in (lfix_out : F (LFix F)).
 \end{coqcode}
+
+\noindent
 One common workaround for this is the use of Mendler-style
 recursion~\cite{Mendler91}. Roughly, the idea is to ``pack'' an abstract type
 together with the functor that captures the structure of the recursion. From
@@ -698,6 +702,8 @@ simplified version of it is the following:
 Inductive MendlerLFix (F : Type -> Type) :=
   In Y (next : Y -> MendlerLFix F) (in_op : F Y).
 \end{coqcode}
+
+\noindent
 While this definition solves the strict positivity problem, it does not solve
 the problems of: (1) reasoning about data/program equalities; and (2) extraction
 to idiomatic OCaml code. To reason about program equalities, we would need to
@@ -706,45 +712,30 @@ domain.  Furthermore, the extraction of \coq{F Y} will lead to unsafe casts in
 the extracted OCaml code.
 
 \paragraph{Containers} Another common solution is to the strict positivity
-problem is the use \emph{containers}~\cite{AbbottAG05}.  A container is defined
-by a type of \emph{shapes} and a \emph{family of position types} indexed by
-shapes.
-\begin{coqcode}
-(Shape : Type) (Pos : Shape -> Type)
-\end{coqcode}
+problem is the use \emph{containers}~\cite{AbbottAG05}.  A container
+$S \triangleright P$ is defined by a type of \emph{shapes} $S : \Type$ and a
+\emph{family of position types} indexed by shapes $P : S \to \Type$.  An
+\emph{extension} of this container is a functor
+$\llbracket S \triangleright P \rrbracket$, whose action on objects is given by
+$\llbracket S \triangleright P \rrbracket \; X = \Sigma s : S.\; P\;s \to X$,
+and on morphisms is given by post-composition, keeping the shape the same
+$\llbracket S \triangleright P \rrbracket \; f = \lambda (s,\;g).\;(s,\;f\circ g)$.
 
-For the functor \coq{F} we introduced in the previous paragraph we would
-define \coq{Shape} as \coq{unit + A} indicating there are two constructors in
-the data type and one of these contains a piece of data of type \coq{A}.
-Moreover, we would define the positions as \coq{Pos (inl tt) = Empty_set}
-and  \coq{Pos (inr a) = unit} indicating that the first constructor does not
-have any type variables and the second constructor has one type variable.
 
-At this point an \emph{extension} of this container is a functor defined as
-follows:
-\begin{coqcode}
-Record App (X : Type) := MkApp { shape : Shape; contents : Pos shape -> X }.
-\end{coqcode}
-with the obvious action on morphisms given by post-composition
-with \coq{contents}.
-\begin{coqcode}
-Definition fmap (f : A -> B) (x : App C A) : App C B
-  := {| shape := shape x; contents := fun e => f (contents x e) |}
-\end{coqcode}
-In our running example, the type \coq{App X}, for some \coq{X} has two
-inhabitants.  The first is a pair composed by \coq{inl tt : Shape} and a
-function \coq{Pos (inl tt) -> X}. This latter is in fact a function of
-type \coq{Empty_set -> X}. This pair is, therefore isomorphic to the
-type \coq{unit}, the type with only one inhabitant.  The second inhabitant is
-the pair composed by \coq{inr a : Shape}, for some \coq{a : A}, and a
-function \coq{Pos (inr a) -> X}.  This latter type is equal to \coq{unit -> X}
-which represents the elements of \coq{X} and therefore is isomorphic to \coq{X}.
-This particular pair of shapes and positions is  therefore isomorphic to the
-type \coq{unit + A * X}.
+To explain the role of shapes and positions in containers, consider the functor
+$F\; X = 1 + A \times X$.  An equivalent container, i.e.\ a container with an
+extension that is isomorphic to $F$ requires a shape that can distinguish two
+cases, indicating that there are two constructors to build an object of type
+$F\;X$. For example, we could define $S_{F} = 1 + A$. We need to consider two
+cases for the family of positions:  $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because
+there are no occurrences of $X$ in the left case; and
+$P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence of $X$ in the
+right hand side. It is easy to see that
+$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
-The correspondence between containers and polynomial functors has been
-formalised in this work and can be found in the accompanying code (file
-Container.v). 
+In general, every polynomial functor has an equivalent container, with an
+isomorphic extension. We have mechanised this result, and this can  be found in
+the accompanying code (file Container.v).
 % 
 %Generally, any functor that
 %is isomorphic to a container extension is called a \emph{container functor}.
@@ -752,19 +743,19 @@ Container.v).
 %container extension.
 
 \subsection{Extractable Containers}
-In the previous section we defined containers using dependent types.  However,
-Ocaml's type system is not equipped to handle these. To solve this problem
-Coq's code extraction mechanism will insert unsafe casts.
+A straightforward encoding of containers in Coq would use dependent types  to
+represent families of positions.  However, Ocaml's type system is not equipped
+to handle these, which will lead to extracting OCaml code with unsafe casts.
 
 Consider instead representing the positions of a container using a decidable
-validity predicate (\coq{valid}) which assigns shapes to positions. We use
-boolean functions and coercions from \coq{bool} to \coq{Prop} to represent
-decidable predicates, similarly to SSReflect~\cite{GonthierL09}. The family of
-positions for a given shape in a container can be recovered by defining:
+validity predicate which assigns shapes to positions. In Coq, we use
+a boolean function and a coercion from \coq{bool} to \coq{Prop} to represent
+the decidable predicate \coq{valid}, similarly to SSReflect~\cite{GonthierL09}. Given
+a \coq{Shape : Type}, and a type of \emph{all possible positions} \coq{APos : Type},
+the family of
+positions for a given shape can be defined as a dependent pair:
 \begin{coqcode}
-Class Cont (Shape : Type) (APos : Type) := { valid : Shape -> APos -> bool }.
-Record Pos `(C : Cont Shape APos) (shape : Shape) :=
-  ValidPos { val : APos; IsValid : valid shape pos }.
+Definition Pos (s : Shape) = { p : APos | valid s p }.
 \end{coqcode}
 Coq's code extraction will now be able to erase the validity predicate, and
 generate OCaml code that is free of unsafe casts. The OCaml code extracted for
@@ -775,10 +766,10 @@ the equality of two container extensions. We will need to show that, for
 the same positions, they will produce the same result. In Coq, the goal
 would look as follows: 
 \begin{coqcode}
- k : Pos C s -> X
+ k : Pos s -> X
  P1, P2 : valid s p
  ---------------------------
- k (ValidPos p P1) = k (ValidPos p P2)
+ k (existT _ p P1) = k (existT _ p P2)
 \end{coqcode}
 If \coq{valid} was a regular proposition in \coq{Prop}, it would not possible
 to prove the equality of \coq{P1} and \coq{P2}. However, by using a decidable
@@ -787,15 +778,15 @@ predicate, if we know that \coq{P1} and \coq{P2} are of type
 \coq{P1 = P2 = eq_refl}.
 
 
-% A container extension is then defined as follows:
-% \begin{coqcode}
-% Context (Shape : Type) (Pos : Type) (Valid : Shape -> Pos -> Prop).
-% Record App (X : Type) := { shape    : Shape;
-%                           contents : {p | Valid shape p} -> X }.
+A container extension, \coq{App} in Coq, is then defined as follows:
+\begin{coqcode}
+Record App (X : Type)
+   := { shape : Shape; contents : {p | valid shape p} -> X }.
 % \end{coqcode}
-% This approach solves the problem of the unsafe casts, since the code extracted
-% for \coq{{p | Valid shape pos}} will be an OCaml singleton type defined as the
-% OCaml equivalent to \coq{Pos}.
+
+This approach solves the problem of the unsafe casts, since the code extracted
+for \coq{{p | valid shape p}} will be an OCaml singleton type defined as the
+OCaml equivalent to \coq{Pos}.
 
 \subsubsection{Equality of Container Extensions}
 Reasoning about the equality of container extensions is not entirely solved by
@@ -805,9 +796,9 @@ that, for equal shape and position, they return the same element. To avoid the
 use of the functional extensionality axiom, we capture this relation with the
 following inductive proposition in Coq:
 \begin{coqcode}
-Inductive AppR `{F : Cont Sh P} {X} (x y : App F X) : Prop :=
-| AppR_ext (Es : shape x = shape y)
-           (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 = cont y e2).
+Inductive AppR (x y : App F X) : Prop :=
+| AppR_ext (shape x = shape y)
+           (forall p1 p2, projT1 e1 = projT1 e2 -> contents p1 = contents p2).
 \end{coqcode}
 Note that  we do not care about the validity proof of the positions, only their
 value. This is to simplify (slightly) our proofs. This relation is
@@ -816,7 +807,7 @@ trivially \emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
 However, the use of a different equality for container extensions now forces us
 to deal with the fact that some types have different definitions of equality.
 In particular, we want to reason about the equality of functions of types such
-as \coq{App F A -> B} (or \coq{B -> App F A}). Since 
+as \coq{App A -> B} (or \coq{B -> App A}). Since
 these types now come with their own equivalence, any function that manipulates
 them needs to be \emph{respectful}. I.e.\ given 
 \coq{R : X -> X -> Prop} and \coq{R' : Y -> Y -> Prop},
@@ -933,8 +924,10 @@ Products are built using function \coq{fun f g x => (f x, g x)},
 with the projections being the standard Coq  \coq{fst} and
 \coq{snd} functions. Similarly, sum injections are encoded using
 Coq's \coq{inl} and \coq{inr} constructors, and
-pattern matching on them uses the function 
-\coq{fun f g x => match x with | inl y => f y | inr y => g y end}.
+pattern matching on them uses the function:
+\begin{coqcode}
+fun f g x => match x with | inl y => f y | inr y => g y end
+\end{coqcode}
 The proofs that these morphisms are proper are straightforward.  Finally, we
 also provide functions for currying/uncurrying, and  flipping the arguments of
 a proper morphism. We force most of our definitions to be inlined, to help
