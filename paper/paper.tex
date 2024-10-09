@@ -93,6 +93,7 @@
 \newcommand{\inr}{\operator{inr}}
 \newcommand{\tail}{\operator{tail}}
 \newcommand{\Alg}{\text{-Alg}}
+\newcommand{\Coalg}{\text{-CoAlg}}
 \newcommand{\Free}{\text{Free\xspace}}
 \newcommand{\fmap}[1]{\text{fmap}\;#1}
 
@@ -122,6 +123,7 @@
 \newcommand{\Obj}{\text{Obj}}
 \newcommand{\Arr}{\text{Arr}}
 
+\newcommand{\Str}[1]{\operator{Str}(#1)}
 \newcommand{\List}[1]{\operator{List}(#1)}
 \newcommand{\nil}{\operator{nil}}
 \newcommand{\cons}{\operator{cons}}
@@ -171,13 +173,13 @@ a machine-checked proof of the well-known short-cut fusion optimisation.
 
 \section{Introduction}
 \label{sec:intro}
-Structured recursion schemes~\cite{HinzeW16, HinzeWG15} are powerful
+Structured recursion schemes~\cite{HinzeW16,HinzeWG15} are powerful
 abstractions that capture common patterns of recursion. The main benefit of
 structuring computation using recursion schemes, is that they enjoy
 well-estabished \emph{algebraic properties} that can serve as a foundation for
 program optimisation (e.g.\ \emph{fusion} laws, or semi-automatic
-parallelisations~\cite{TakanoM95,Gibbons96:Third, Morihata09:Third,
-farmsCastro}).  These algebraic properties led to their use in the context of
+parallelisations~\cite{TakanoM95,Gibbons96:Third,Morihata09:Third,farmsCastro}).
+These algebraic properties led to their use in the context of
 \emph{program calculation}, where programmers would describe their code using
 simple, inefficient specifications in an \emph{algebra of
 programming}~\cite{BirddeMoor96:Algebra}, and then use the algebraic laws of
@@ -215,8 +217,8 @@ Several authors build tools for applying program calculation techniques by
 \emph{mechanising} them as part of a proof assistant. However, most of the work
 in mechanising recursion schemes focuses on a narrow subset of the known
 recursion schemes due to termination issues, or do not focus on proving
-algebraic laws of generic recursion schemes~\cite{10.1007/978-3-642-17796-5_10,
-MurataE19, larchey2022braga}.  Indeed, most of the mechanisations of generic
+algebraic laws of generic recursion schemes~\cite{10.1007/978-3-642-17796-5_10,MurataE19,larchey2022braga}.
+Indeed, most of the mechanisations of generic
 recursion schemes focus on \emph{maps} and \emph{folds}, and few authors focus
 on the \emph{unfolds}. In general, Hinze et al.~\cite{HinzeWG15} has proven that
 all known  recursion schemes are instances of a  divide-and-conquer algorithm
@@ -309,7 +311,7 @@ typing discipline. Their approach solves the problem of termination proofs as
 well as the performance of the code that is run \emph{within Coq}, but it does
 not allow for extraction of idiomatic OCaml code. This is unfortunate since code
 extration is what allows the execution of code that has been verified in
-Coq~\cite{OnoHTNH11, Larchey-Wendling23, MiculanP12, Sakaguchi20}.  In Abreu et
+Coq~\cite{OnoHTNH11,Larchey-Wendling23,MiculanP12,Sakaguchi20}.  In Abreu et
 al.'s approach, extraction (1) does not preserve the recursive structure of
 common implementations; and (2) leads to unsafe casts like \ocaml{Obj.magic} in
 the generated code. This latter is also problematic in that, for higher-order
@@ -351,402 +353,17 @@ Furthermore we verify the short-cut fusion optimisation and show the extracted
 optimised code to OCaml.
 \end{itemize}
 
-% \section{Background on Recursion Schemes}
-% Recursion schemes provide a systematic way to work with data types, such as
-% trees or lists, by abstracting away the recursion into higher-order functions.
-% Canonical recursion schemes include \emph{folds} (catamorphisms) which consume
-% data and \emph{unfolds} (anamorphisms) which produce data. These are the unique
-% solutions (when they exist) to the following two equations respectively
-% \[
-%   h  = a \comp F h \comp \InOp \qquad k = \OutOp \comp F k \comp c
-% \]
-% where $F$ is a \emph{base functor}, $Ff$ is the \emph{functorial action} which
-% can be thought of the program $\operator{fmap}\; f$, $a$ is a program of type
-% $F A \to A$ (an $F$-algebra),  $c$ is a program of type $C \to FC$ (a
-% $F$-coalgebra), $\InOp$ is the isomoprhism on the least fixed-point of $F$,
-% namely $\InOp : \mu F \to F\mu F$, and $\OutOp$ is the isomorphism on
-% the greatest fixed-point of $F$, namely $F \nu F \to \nu F$. When
-% the unique solutions to the above equations exist we denote them as $\cata{a}$
-% and $\ana{c}$ respectively.
-
-% \subsection{Hylomorphisms}
-% Catamorphisms (dually anamorphisms) do not capture every recursion
-% scheme we can think of.  As an example, consider an example of a classic
-% \emph{divide-and-conquer} program such as quicksort algorithm:\footnote[1]{This
-% program is written in Coq notation to be consistent, but it is not a program
-% that Coq can accept.}
-
-% \mpav{I need this to be written in Coq notation}
-% \begin{coqcode}
-% qs :: [a] -> [a]
-% qs [] = []
-% qs (x:xs) = qs (filter (x <=) xs) ++ [x] ++ (qs (filter (x >) xs))
-% \end{coqcode}
-% This program is formed of essentially two parts. The first one is what is
-% commonly thought as the \emph{partition} function destructuring the input list
-% in three parts, the pivot and the other two sublists, and the second part
-% recursing over the sublists and composing the results back together.
-
-% Notice that if we define the functor \coq{TreeF} $X = X \times A \times X$ with
-% the obvious functorial action then \coq{partition} can be viewed as a
-% \coq{TreeF}-coalgebra on lists over the type $A$
-% \begin{coqcode}
-% c : [A] -> TreeF [A]
-% c (x:xs) = (filter (x <=) xs, x, filter (x >) xs)
-% \end{coqcode}
-
-% While we can define an \coq{TreeF}-algebra on lists
-% over $A$ as well, that is a map
-% \begin{coqcode}
-% a : TreeF [A] -> [A]
-% a (left, x, right) = left ++ [x] ++ right
-% \end{coqcode}
-
-% It should be easy to see that the program \coq{qs} can now be defined as the
-% unique program that runs the coalgebra $c$ recurses over the sublists produced
-% and then composes the results together. The structure exemplified by this
-% program is a typical divide-and-conquer algorithm which can be implemented using
-% an \emph{hylomorphism}. An hylomorphism is the unique solution $x : C \to A$ to
-% the hylo equation
-% \begin{equation}
-%   \label{eq:hylo}
-%   x =  a \comp Fx \comp c
-% \end{equation}
-% for a $F$-algebra on $A$, an $F$-coalgebra on $C$ and a functor $F$.  If for
-% every $F$-algebra there exists a unique solution to (\ref{eq:hylo}) then we say
-% the $F$-coalgebra $c$ is \emph{recursive}. Dually if for every $F$-coalgebra $c$
-% there exists a unique solution to (\ref{eq:hylo}) we say the $F$-algebra $a$ is
-% \emph{corecursive}. We denote the unique solution to the hylo equation
-% (\ref{eq:hylo}) as $\hylo{a}{c}$.
-
-% Moreover, it shoud be easy to see that catamorphisms and anamorphism arise as a
-% special case of hylomorphisms
-% \begin{equation}
-%   \label{eq:cata}
-%   \cata{a} = \hylo{\InOp}{a} \qquad \ana{c} = \hylo{c}{\OutOp}
-% \end{equation}
-% since $\InOp$ is indeed a recursive coalgebra and $\OutOp$ is a corecursive
-% algebra.
-
-% \subsection{Implementing Recursion Schemes}
-% Hylomorphisms can implement all structured recursion schemes~\cite{HinzeWG15,
-% HinzeW16}.  Here we show the result by means of a very basic example: mutual
-% recursion. We refer the reader to Hinze et al.~\cite{HinzeWG15} for the
-% theoretical result and to Yang and Wu~\cite{YangW22} for more examples of
-% recursion schemes.
-
-% % More specifically, in the context of recursive data types, such as in Haskell,
-% % where induction and coinduction is conflated, an hylomorphism can be implemented
-% % in terms of a catarmorphism (folding) and an anamorphism (unfolding)
-% % \[
-% %   \hylo{a}{c} = \cata{a} \comp \ana{c}
-% % \]
-% % They first generate a data structure using an anamorphism and then immediately
-% % fold or reduce it using a catamorphism.
-
-% % The hylomorphism pattern is particularly useful for defining recursive
-% % algorithms in a functional programming context, where recursion is a fundamental
-% % tool for solving problems. By separating the generation of data structures from
-% % their consumption, hylomorphisms enable clearer and more modular code, making it
-% % easier to reason about and maintain recursive algorithms.
-
-% % However, in a type theory inductive and coinductive data types are separate.
-
-% % In this section we will introduce the notion of hylomorphism. By way of examples
-% % we will also give high level intution as to way all recursion schemes can be
-% % defined in terms of a basic
-
-% Say that we want to prove that the two mutually recursive functions below are
-% well-defined
-
-% \begin{tabular}{LL}
-%   \operator{even} : \Nat \to \Bool                  &  \operator{odd} : \Nat \to \Bool\\
-%   \operator{even} (0) = \top                        &  \operator{odd}(0) = \bot\\
-%   \operator{even} (n+1) = \neg \operator{odd}(n)    &  \operator{odd}(n+1) = \neg (\operator{even}(n))
-% \end{tabular}
-
-% One option is to prove that the following function is
-% equivalent to the above
-% \begin{align*}
-%   & \operator{even-odd} : \Nat \to \Bool \times \Bool\\
-%   & \operator{even-odd} (0) = (\top, \bot)\\
-%   & \operator{even-odd} (n+1) = \operator{let } (x,y) \leftarrow \operator{even-odd}(n) \operator{ in } (\neg x, \neg y)
-% \end{align*}
-% which is clearly a catamorphism $\cata{a}$ with $a (\Nil) = (\top, \bot)$ and
-% $a(\operator{x,y}) = (\neg x, \neg y)$ and hence an hylomorphism as defined in
-% (\ref{eq:cata}).  Now we are left to show they are equivalent. Well, it is easy
-% to do so since $\operator{even} = \pi_{1} \comp \operator{even-odd}$
-% $\operator{odd} = \pi_{2} \comp \operator{even-odd}$. The proof that these two
-% pairs of functions are the same is an easy induction over the natural numbers.
-
-% This is an instance of a more general phenonema whose argument uses the concept
-% of an adjunction~\cite{MacLane71}.  For this particular example, the argument is
-% as follows.  There is an isomorphism between pairs of maps
-% $(A \to B_{1}, A \to B_{2})$ and maps $(A \to B_{1} \times B_{2})$.  This is
-% given by $\Phi (f,g) = \pair{f}{g}$ and
-% $\Psi(f) = (\pi_{1} \comp f, \pi_{2} \comp f)$ where the projections $\pi$ are
-% part of the counit of the adjunction between the diagonal functor
-% $\Delta X = (X,X)$ and the product $\times$.  Once this correspondence is
-% established we can implement the map $A \to B_{1} \times B_{2}$ as an
-% hylomorphism and derive the original and more complex recursion scheme.
-
-% % In general an adjunction is a natural correspondence of maps
-% % \[
-% %   LA \to B \iff A \to RB
-% % \]
-% % where $L$ and $R$ are called adjoints.
-
-% However, formalising adjunctions in Coq would require to formalise a
-% non-negligible amount of category theory which goes beyond the scope of the
-% present work. In this paper, we will instead derive the recursion schemes as
-% needed and implement them as hylos.
-% % \subsubsection{Course-of-Value Recursion}
-% % The knapsack algorithm is defined as following in pseudo-Haskell code:
-% % \begin{align*}
-% %   & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
-% %   & \operator{knapsack}\;wvs\; c = \operator{maximum}_{0}
-% %     [v + \operator{knapsack}\;wvs\; (c - w) \mid (w,v) \leftarrow wvs, w \le c]
-% % \end{align*}
-% % %
-% % with dynamic programming knapsack can be rephrased like this
-% % \begin{align*}
-% %   & \operator{knapsack} : [(\Nat, \R)] \to \Nat \to \R\\
-% %   & \operator{knapsack}\;wvs\;c= table !! c \\
-% %   & \qquad table  = [ks\;i \mid i \leftarrow [0..c]]\\
-% %   & \qquad ks\; i = maximum_{0} [v + table!! (i - w) \mid (w,v) \leftarrow wvs, w \le i]
-% % \end{align*}
-
-% % The recursion scheme is justified by solving a recursive equation.  First we
-% % define an operation to create a memory table representing the list of capacities
-% % $[0..c]$. We first define a functor $D X = 1 + X$ representing the base functor
-% % for constructing the naturals $\Nat = \mu D$ the we define the generating
-% % function by induction on the naturals
-% % \begin{align*}
-% %   & \operator{fan} : \Nat \to D_{\infty}\Nat\\
-% %   & \operator{fan} (0)    = \pair{0}{\inl}\\
-% %   & \operator{fan} (n+1)  = \pair{n+1}{\inr (\operator{fan}(n))}
-% % \end{align*}
-% % The recursion scheme from a comonad is then defined as follows
-% % \begin{align*}
-% %   & \operator{rsfc} : \Nat \to A\\
-% %   & \operator{rsfc} = alg \comp DD_{\infty}(\operator{rsfc}) \comp D(\operator{fan}) \comp \InOp
-% % \end{align*}
-% % At his point we can given the definition of the algebra $alg$ which effectively implements knapsack.
-% % Firs we define the $\operator{lookup}$ function which returns (if present) the element indexed in the memory table
-% % \begin{align*}
-% %   & \operator{lookup} : \Nat \to D_{\infty} \R \to \R_{\bot}\\
-% %   & \operator{lookup} (0,   \pair{r}{\textunderscore})  = r\\
-% %   & \operator{lookup} (n+1, \pair{r}{\inl})         = \bot\\
-% %   & \operator{lookup} (n+1, \pair{r}{\inr(table)})  = \operator{lookup} (n, table)
-% % \end{align*}
-% % and now we can define the algebra over the reals
-% % \begin{align*}
-% %   & \operator{alg} : DD_{\infty} \R \to \R\\
-% %   & \operator{alg}\; (\inl)  = 0\\
-% %   & \operator{alg}\; (\inr(table))  = \operator{maximun}_{0} [ v + \operator{lookup}\; table\; (i - w) \mid (w,v) \leftarrow wvs, w \le i]
-% % \end{align*}
-
-% % It remains to show how an $\operator{rsfc}$ is implemented in terms of
-% % hylomorhisms.
-
-% % \paragraph{Implementation into hylomorphisms}
-% % In order to implement rsfcs as hylos we need a parametric distributive law
-% % \[
-% %   \lambda_{X} : GG_{\infty}X \to G_{\infty}GX
-% % \]
-% % This can be defined as
-% % $\lambda = G_{\infty}G(\head) \comp \anacofree{G(\tail)}$.  The distributive law
-% % is instrumental to be able to lift coalgebras in the following sense. Give a
-% % $G$-coalgebra on $X$, a lifting $H$ is a functor which lifts this coalgebra to a
-% % $G$-coalgebra on $HX$.  In particular, the lifting $G_{\lambda}$ takes
-% % $G_{\infty}$-coalgebras on $X$ and transforms them into $G_{\infty}$-coalgebras
-% % on $GX$
-% % \begin{align*}
-% %   & G_{\lambda}(c) : GA \to G_{\infty} GA\\
-% %   & G_{\lambda}(c) = \lambda \comp G (c)
-% % \end{align*}
-% % where $c : C \to GC$.
-
-% % Now, given an algebra $a : GG_{\infty} A \to A$ on the carrier $A$ we can
-% % convert it into an algebra for the carrier $G_{\infty} A$ by
-% % \begin{align*}
-% %   & \floor{a} : GG_{\infty} A \to G_{\infty} A\\
-% %   & \floor{a} = G_{\infty}(a) \comp \anacofree{G_{\lambda}(\delta)}
-% % \end{align*}
-% % where $\eta_{A} : A \to G_{\infty} A$ is the unit of the comonad creating an
-% % infinite constant list.
-
-% % At this point the hylo is simply defined by
-% % $\hylo{\InOp}{a} : \mu F \to G_{\infty}A$  and the rsfc is derived as follows
-% % \begin{align*}
-% %   & \operator{rsfc} : \mu G \to A \\
-% %   & \operator{rsfc} = \head \comp \hylo{\InOp}{a}
-% % \end{align*}
-
-% % % \subsection{Catamorphisms and Anamorphism}
-% % % A catamorphism is the unique program defined as
-% % % \[
-% % %   x = a \comp \fmap{x} \comp \InOp
-% % % \]
-% % % Can be implemented:
-% % % \[
-% % %   \cata{a} = \hylo{\InOp}{a}
-% % % \]
-
-% % % An anamorphism is the unique program satisfying the equation
-% % % \[
-% % %   x = \OutOp \comp \fmap{x} \comp{c}
-% % % \]
-% % % The anamorphism is indicated by $\ana{c}$. Recursion schemes given by a
-% % % corecursive algebra such as $\OutIso$ are also called hylomorphism but they are
-% % % indicated with the symbol for the anamorphism, $\cohylo{c}{\OutOp}$.
-
-% % \paragraph{Free Monads}
-% % Given an endofunctor $D$ and a type $A$ the free monad is defined as the least
-% % solution to the following domain equation
-% % \[
-% %   D^{*}A = A + DD^{*}A
-% % \]
-% % where $\eta_{A} : A \to D^{*}A$ is the left injection and
-% % $\call_{A} : DD^{*}A \to D^{*}A$ is the right injection. Given an algebra
-% % $a : DA \to A$ there is a unique solution to the following recursive equation
-% % \[
-% %   x \comp \call_{A} = a \comp D(x)
-% % \]
-% % that is $\catafree{a} = \cata{[id_{A}; a]}$. With this operation we can extend
-% % the free algebra $\call$ to the multiplication $\mu : D^{*}D^{*}A \to D^{*}A$
-% % defined as $\mu = \catafree{\call}$.
-
-% % \paragraph{Cofree Comonads}
-% % Given an endofunctor $D$ and a type $A$ the cofree comonad is defined as the
-% % greatest solution to the following domain equation
-% % \[
-% %   D_{\infty}A = A + DD_{\infty}A
-% % \]
-% % where $\head : D_{\infty}A \to A$ is the first projection and
-% % $\tail_{A} : D_{\infty}A \to DD_{\infty}A$ is the second projection.
-% % Given an algebra $c : A \to DA$ there is a unique solution to the following
-% % recursive equation
-% % \[
-% %   \tail_{A} \comp x = D(x) \comp c
-% % \]
-% % that is $\anacofree{c} = \ana{\pair{id_{A}}{c}}$. With the latter operation we
-% % can extend $\tail$ to the comultiplication for the comonad
-% % $\delta : D_{\infty}A \to D_{\infty} D_{\infty}A$ defined by
-% % $\delta = \anacofree{\tail}$.
-
-
-% % \subsection{Accumulators}
-% % For an algebra $a : D(A^{P})\times P \to A$:
-% % \begin{align*}
-% %   & g : \mu D \times P \to B\\
-% %   & g (d, p) = a (\fmap{(\curry g)} \comp \InOp(d), p)
-% % \end{align*}
-
-% % \paragraph{Hylo Implementation}
-% % Given an algebra $a : D(A^{P}) \to A^{P}$ the accumorphism corresponds to the unique
-% % solution to the following equation
-% % \begin{align*}
-% %   & f : \mu D \to A^{P}\\
-% %   & f = a \comp \fmap (f) \comp \InOp
-% % \end{align*}
-% % thus $f = \hylo{\InOp}{a}$.
-
-% % The complex recursion scheme is then
-% % $g = \uncurry\hylo{\InOp}{a} : \mu D \times P \to B$.
-
-% % \subsection{Mutu-Hylo}
-% % For an algebra $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and an algebra
-% % $a_{2} : D(A_{1} \times A_{2}) \to A_{2}$:
-% % \begin{align*}
-% %   & (g_{1}, g_{2}) : (\mu D, \mu D) \to (A_{1}, A_{2})\\
-% %   & (g_{1}, g_{2}) = (a_{1}, a_{2}) \comp (\fmap{\pair{g_{1}}{g_{2}}},\fmap{\pair{g_{1}}{g_{2}}}) \comp (\InOp, \InOp)
-% % \end{align*}
-
-% % \paragraph{Hylo Implementation}
-% % Given an algebra $a : D(A_{1} \times A_{2}) \to A_{1} \times A_{2}$
-% % \begin{align*}
-% %   & f : \mu D \to A_{1} \times A_{2}\\
-% %   & f = a \comp \fmap{f} \comp \InOp
-% % \end{align*}
-% % for which the solution is an hylo $f = \hylo{\InOp}{a}$.
-
-% % The mutumorphism can be implemented as
-% % $(g_{1}, g_{2}) = (\pi_{1} \comp f, \pi_{2} \comp f)$.
-
-% % \paragraph{Coq Implementation}
-% % Given the two algebras  $a_{1} : D(A_{1} \times A_{2}) \to A_{1}$ and
-% % $a_{2} : D(A_{1} \times A_{2}) \to A_{2}$.
-% % We define the two recursive functions  $f_{1}$ and $f_{2}$ as
-
-% % \[
-% %   f_{1} = \pi_{1} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}} \qquad f_{2} = \pi_{2} \comp \hylo{\InIso}{\pair{a_{1}}{a_{2}}}
-% % \]
-% % % A recursion scheme from a comonad $D_{\infty}$ for a data functor $F$
-
-% % % For example, for the functor $(1 + -)$ an algebra over this functor is a
-% % % function $1 + X \to X$ is a pair of functions $\Nil : 1 \to X$ and
-% % % $\Succ : X \to X$. The cofree comonad over $D$ is defined as follows
-% % % \[
-% % %   D_{\infty} A \iso A \times (1 + D_{\infty})
-% % % \]
-% % % which is the the type of non-empty possibly infinite lists with elements in $A$
-
-
-% % % First we have to assume a distributive law
-% % % $\lambda : DD_{\infty} \to D_{\infty}D$.  For an algebra
-% % % $a : D(D_{\infty} A) \to A$,
-% % % \begin{align*}
-% % %   & g : \mu D \to A\\
-% % %   & g = a \comp D(G_{\infty}(g) \comp \anacofree{\cata{G^{\lambda}(\InIso)}}) \comp \InOp
-% % % \end{align*}
-% % % where
-% % % $G^{\lambda} (alg : D\mu F \to \mu F) = DGX \xrightarrow{\lambda} GDX \xrightarrow{G(alg)} GX$
-% % % is a $D$-algebra on $GX$. The catamorphism of this algebra has the following
-% % % type
-% % % \[
-% % %   \cata{G^{\lambda}(\InIso)} : \mu D \to G\mu D
-% % % \]
-% % % which is the type of a $G$-algebra used to initialise the memory table.
-
-% % % Given an algebra $a : DG_{\infty} A \to G_{\infty} A$ we can equivalently ask
-% % % what is the unique solution of the following equation
-% % % \begin{align*}
-% % %   & f : \mu F \to G_{\infty} A\\
-% % %   & f = a \comp \fmap{f} \comp \InOp
-% % % \end{align*}
-% % % The solution to this equation can be found again using an hylo
-% % % $f = \hylo{\InOp}{a} : \mu F \to G_{\infty} A$.  The course-of-value recursion
-% % % can be recovered from this by setting $g = \head \comp f$
-
-% % % \subsubsection{Histomorphism}
-% % % The definition of $\lambda$ is:
-% % % \begin{align*}
-% % %   & \lambda : GG_{\infty} A \to G_{\infty} GA\\
-% % %   & \lambda = \fmap{(\fmap{\head})}\comp \anacofree{\fmap{\tail}}
-% % % \end{align*}
-% % % For example, for $GX = 1 + X$ we have to define
-% % % \begin{align*}
-% % %   & \lambda : 1 + G_{\infty} A \to G_{\infty} (1 + A)\\
-% % %   & \lambda(\inl) = \pair{\inl}{\lambda(\inl)}\\
-% % %   & \lambda(\inr(table)) = \pair{\inr (\head(table))}{\lambda (\tail (table))}
-% % % \end{align*}
-% % % % \begin{align*}
-% % % %   & \operator{lookup} :: \Nat \to G_{\infty} \R \to \operator{Maybe}\;\R\\
-% % % %   & \operator{lookup}\; \Zero       (\Cons{a}{\text{\textunderscore}})     = \Just{a}\\
-% % % %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Zero})                      = \Nothing\\
-% % % %   & \operator{lookup}\; (\Succ{n})  (\Cons{a}{\Succ table})                = \operator{lookup}\; n  table
-% % % % \end{align*}
-% % % % Defining the algebra
-% % % % \begin{align*}
-% % % %   & \operator{alg} :: D (G_{\infty} \R) \to \R\\
-% % % %   & \operator{alg}\; Zero           = 0\\
-% % % %   & \operator{alg}\; (Succ{table}) = maximum_{0} [v + \operator{lookup}\; table (i - w) | (w,v) \leftarrow wvs, w \le i]
-            % % % % \end{align*}
 \section{Recursion Schemes}
 The structure of the a certain data is very similar to the structure of an
-algorithm which processes that data. Recursion schemes aim at analyzing these
-analogies.
+algorithm which processes that data. This relationship manifests in the form of
+structured recursion schemes which are widely used in functional languages such
+Haskell. Canonical examples are folds (catamorphisms), which consume data, and
+unfolds (anamorphisms), which produce it. While some implementations of
+recursion schemes like $\operator{foldr}$ in Haskell as specific to a particular
+data structure, in this case $\operator{List}$s, we can generalise further these
+ideas to account for generic (co)inductive data types and generic algorithms
+operating on them. This is done by looking at recursion schemes from the point
+of view of category theory.
 
 \subsection{Elements of Category Theory}
 A \emph{category} is a collection of objects $A, B, C$, denoted by $\Obj(\CatC)$
@@ -791,8 +408,9 @@ action $\List{f} : \List{A} \to \List{B}$ given by $\List{f}(*) = *$ and
 $\List{f}(\cons(a,xs)) = \cons(f(a), \List{f}(xs))$. Notice that the definition
 $\List{f}$ is well-defined as it recursively calls on a smaller argument,
 however, there is a more general way of proving these type of definitions are
-well-defined.
-
+well-defined. Similarly, the set of streams $\Str{A} \iso A \times \Str{A}$ is
+the greatest set generated by the constructor
+$\cons : A \times \Str{A} \to \Str{A}$.
 
 \subsection{Algebras and Catamorphisms}
 \label{sec:algebras}
@@ -812,7 +430,13 @@ $\InIso : F \mu F \to \mu F$ and $\InOp : \mu F \to F \mu F$ witnessing the
 isomorphism $F\mu F \iso \mu F$. By the property of initial $F$-algebras, for
 any other $F$-algebra $(B, \beta)$ there exists a unique $F$-algebra
 homomorphism, denoted by $\cata{\beta} : (\mu F, \InIso) \to (B, \beta)$ and
-pronounced ``\emph{catamorphism}''.
+pronounced ``\emph{catamorphism}'' satisfying:
+\begin{equation}
+  \label{eq:cata:unique}
+  f = \cata{\alpha} \iff f = \alpha \circ F(f) \circ \InIso
+\end{equation}
+In words, any $F$-algebra homomorphism from the initial $F$-algebra is a
+catamorphism.
 
 For example, for a set $A$ we define the functor $F : \Set \to \Set$ mapping
 $X \mapsto 1 + A \times X$. An $F$-algebra is a set $B$ together with a
@@ -828,137 +452,44 @@ In functional programming this is commonly referred to as
 $\foldr : (1 \to B) \to (A \times B \to B) \to B$. We can in fact set
 $\foldr\;base\;ind = \cata{[base, ind]}$.
 
-\subsection{Dump}
-Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
-by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of type
-\coq{App F A ~> A}:
-\begin{coqcode}
-Notation Alg F A := (App F A ~> A).
-\end{coqcode}
-The least fixed-point for a functor \coq{F} is an instance of an \coq{F}-algebra
-where the structure map is an isomorphism. This is sometimes referred to as the
-\emph{initial algebra} for a functor \coq{F}. We will explain the reason behind
-this name shortly. \footnote[1]{To be more precise, initial algebras are
-isomorphisms by Lambek's lemma, but isomorphisms of functors do not necessarily
-correspond to initial algebras.}  We define the least fixed-point of \coq{F} as
-an inductive type:
-\begin{coqcode}
-Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
-\end{coqcode}
-where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
-As an example, the initial \coq{F}-algebra for the
-functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
-being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
-operation \coq{Cons : A * LFix F -> LFix F}.
-
-We define \coq{LFix} as a setoid, where its equivalence relation can be
-described as the least fixed point of \coq{AppR} and we define smart
-constructors for the isomorphism of least fixed points as respectful morphisms:
-\begin{coqcode}
-l_in : App F (LFix F) ~> LFix F                l_out : LFix F ~> App F (LFix F)
-\end{coqcode}
-
-The least fixed-point for \coq{F} is the initial \coq{F}-algebra in the sense
-that it gives rise to an inductive recursion scheme.  Specifically, for any
-other \coq{F}-algebra there exists a \emph{unique} map, known as a \emph{fold} or
-\emph{catamorphism}, such that it structurally deconstructs the data type
-using \coq{LFix_out}, calls itself recursively and then composes the result of
-the recursive call using the given an \coq{F}-algebra. In other words, for any
-give \coq{F}-algebra there exists a unique \coq{F}-algebra homomorphism from the
-initial one. We define it in Coq as follows:
-\begin{coqcode}
-  Definition cata_f `{F : Cont Sh P} (alg : Alg F A) : LFix -> A
-:= fix f (x : LFix) := match x with
-  | LFix_in ax => let (sx, kx) := ax in alg (MkApp sx (fun e => f (kx e))) end.
-\end{coqcode}
-It is easy to show that this function is a respectful morphism of
-\coq{F}-algebras. In fact, it is possible to define it as a map of the
-following type:
-\begin{coqcode}
-  cata : forall `{F : Cont Sh P} `{setoid A}, Alg F A ~> LFix ~> A
-\end{coqcode}
-We prove that catamorphisms satisfy the universality property we explained previously:
-\begin{coqcode}
-Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
-    : f =e cata alg <-> f =e alg \o fmap f \o l_out.
-\end{coqcode}
-In other words, if there is any other \coq{f} with the same structural recursive
-shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
-catamorphism.
-
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
-Algebras and catamorphisms dualise nicely to the coinductive setting.  The dual
-of an algebra is a coalgebra. A coalgebra can be thought of as an
-\emph{observation} map. For example, for a type of states \coq{X} and an
-alphabet type \coq{L} we can define a labelled transition system (LTS)
-on \coq{X} as a function \coq{c : X -> FX} for a functor \coq{F X = L * X}
-implementing the \emph{transition} map. In particular, for a
-state \coq{x1 : X}, \coq{c x1} returns a pair \coq{(l, x2) : L * X}
-where \coq{l : L} is the observable action and \coq{x2 : X} is the next state.
+The dual of an algebra is a coalgebra. For an endofunctor $B : \CatC \to \CatC$,
+a $B$-\emph{coalgebra} is a pair $(X, c)$ where $X \in \Obj(\CatC)$ is the
+carrier of the coalgebra and $c : X \to BX$ is a morphism.
 
-In general, for a functor \coq{F}, an \coq{F}-coalgebra is a pair of a
-type \coq{X} called the \emph{carrier} of the coalgebra and a structure
-map \coq{X -> F X}.
-
-In our development we use the following notation for coalgebras:
-\begin{coqcode}
-Notation Coalg F A := (A ~> App F A).
-\end{coqcode}
-
-Dually to the initial \coq{F}-algebra, a final \coq{F}-coalgebra is the greatest
-fixed-point for a functor \coq{F}. We define it using a coinductive data type:
-\begin{coqcode}
-CoInductive GFix `(F : Cont Sh Po) : Type := GFix_in { GFix_out : App F GFix }.
-\end{coqcode}
-where \coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix_in} is its
-inverse witnessing the isomorphism. Similarly to \coq{LFix}, \coq{GFix} is also
-defined as a setoid, with an equivalence relation that is the greatest fixpoint
-of \coq{AppR}. Additionally, we define smart constructors for the isomorphism of
-greatest fixed points
-\begin{coqcode}
-g_in : App F (GFix F) ~> GFix F                g_out : GFix F ~> App F (GFix F)
-\end{coqcode}
-
-The greatest fixed-point is a terminal \coq{F}-coalgebra in the sense that it
-yields a coinductive recursion scheme. Specifically, for any
-other \coq{F}-coalgebra there exists a \emph{unique} map, called the
-\emph{unfold} or \emph{anamorphism}, such that it applies the observation map,
-corecursively generates the rest of the computation and composes the result of
-the corecursive call by using the algebra \coq{GFix_in}. In other words, for any
-given \coq{F}-coalgebra there exists a unique \coq{F}-coalgebra homomorphism
-into the terminal \coq{F}-coalgebra.
-
-% Consider the transition system below composed by three states \coq{x1}, \coq{x2}
-% and \coq{x3} with the transitions labelled by the set of labels \coq{\{a, b\}} and define the map \coq{c} such that it implements the transition system below
-% \[\begin{tikzcd}
-%     {x_1} & {x_2} & {x_3} \arrow["b"', loop, distance=2em, in=35, out=325]
-% 	\arrow["a", from=1-1, to=1-2]
-% 	\arrow["b", from=1-2, to=1-3]
-% \end{tikzcd}\]
-% Note that for a generic functor \coq{F} an \coq{F}-coalgebra on the
-% carrier \coq{X} is a map \coq{X -> F X}. In the previous example \coq{c} is
-% an \coq{F}-coalgebra on the carrier \coq{X} with \coq{F X = L * X}.
-
-We define anamorphisms as follows:
-\begin{coqcode}
-Definition ana_f_ (c : Coalg F A) :=
-  cofix f x :=
-    match c x with | MkApp sx kx => GFix_in (MkApp sx (fun e => f (kx e))) end.
-
-Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*... ana_f_ ... *)
-\end{coqcode}
-From this definition the universality property falls out:
-\begin{coqcode}
-Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix F)
-: f =e ana h <-> f =e g_in \o fmap f \o h.
-\end{coqcode}
-In words, for any \coq{F}-coalgebra, if there is any other function \coq{f}
-that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the
+For example, for a set of states $X$ and a finite set of labels $L$ we can
+define a labelled transition system (LTS) on $X$ as a function $X \to BX$
+implementing the \emph{transition system} with $BX = L \times X$.  In
+particular, for a state $x \in X$, $c(x_{1})$ returns a pair $(l, x_{2})$ where
+$l \in L$ is the observable action and $x_{2} \in X$ is the next state.  In this
+case, we can even set some notation for the transition map:
+\[
+  x \xrightarrow{l} y \eqdef c(x) = (l, y)
+\]
+The category of $B$-coalgebras, denoted $B\Coalg$, is the category where objects
+are $B$-coalgebras and morphisms $f : (X, \gamma_{X}) \to (Y, \gamma_{Y})$ are
+$B$-coalgebra hommorphisms $f : A \to B$, that is
+$ \gamma_{Y} \circ f = F(f) \circ \gamma_{X}$. Terminal object in this category
+$B$-coalgebra corresponds to the greatest fixed-point for the functor $B$,
+denoted by $(\nu B, \OutIso)$ where $\OutIso$ denotes the final $B$-coalgebra
+$\OutIso : \nu B \to B\nu B$. For example, the terminal coalgebra for the
+functor $BX = L \times X$ is the set of of infinite streams, that is the
+greatest solution to the domain equation $\Str{A} \iso A \times \Str{A}$.  As a
+result, for any $B$-coalgebra $(B, \gamma)$ there exists a unique $B$-coalgebra
+homomorphism into the terminal coalgebra $(\nu B, \OutIso)$ which is denoted by
+$\ana{\gamma}$ and pronounced \emph{catamorphism}. We spell out the uniqueness
+property:
+\begin{equation}
+  \label{eq:ana:unique}
+  f = \ana{\gamma} \iff f = \OutOp \circ B(f) \circ \gamma
+\end{equation}
+In words, for any $B$-coalgebra, if there is any other $B$-coalgebra
+homomorphism $f$ into the terminal object then it must be the anamorphism on the
 same coalgebra.
 
-
-\subsection{Hylomorphisms}
+\subsection{Recursive Coalgebras and Hylomorphism}
+\label{sec:rec-coalgebras}
 Recursion schemes provide an abstract way to consume and generate data. We now
 proceed onto describing how to formalise hylomorphisms in Coq. We first
 formalise algebras for container extensions (Section~\ref{sec:algebras}), then
@@ -966,8 +497,8 @@ we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together these
 notions to formalise recursive coalgebras and hylomorphisms
 (Section~\ref{sec:rec-coalgebras}).
 
-\subsection{Recursive Coalgebras and Hylomorphism}
-\label{sec:rec-coalgebras}
+
+
 Hylomorphisms capture the concept of \emph{divide-and-conquer} algorithms where
 the input is first destructured (\emph{divide}) in smaller parts by means of a
 coalgebra which are computed recursively and then composed back together
@@ -1189,6 +720,63 @@ catamorphisms.
 % the unique solution to the equation
 % \coq{f =e l_in \o fmap f \o h},
 % where \coq{h} is a recursive coalgebra.
+
+\subsection{Dump}
+Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
+by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of type
+\coq{App F A ~> A}:
+\begin{coqcode}
+Notation Alg F A := (App F A ~> A).
+\end{coqcode}
+The least fixed-point for a functor \coq{F} is an instance of an \coq{F}-algebra
+where the structure map is an isomorphism. This is sometimes referred to as the
+\emph{initial algebra} for a functor \coq{F}. We will explain the reason behind
+this name shortly. \footnote[1]{To be more precise, initial algebras are
+isomorphisms by Lambek's lemma, but isomorphisms of functors do not necessarily
+correspond to initial algebras.}  We define the least fixed-point of \coq{F} as
+an inductive type:
+\begin{coqcode}
+Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
+\end{coqcode}
+where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
+As an example, the initial \coq{F}-algebra for the
+functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
+being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
+operation \coq{Cons : A * LFix F -> LFix F}.
+
+We define \coq{LFix} as a setoid, where its equivalence relation can be
+described as the least fixed point of \coq{AppR} and we define smart
+constructors for the isomorphism of least fixed points as respectful morphisms:
+\begin{coqcode}
+l_in : App F (LFix F) ~> LFix F                l_out : LFix F ~> App F (LFix F)
+\end{coqcode}
+The least fixed-point for \coq{F} is the initial \coq{F}-algebra in the sense
+that it gives rise to an inductive recursion scheme.  Specifically, for any
+other \coq{F}-algebra there exists a \emph{unique} map, known as a \emph{fold} or
+\emph{catamorphism}, such that it structurally deconstructs the data type
+using \coq{LFix_out}, calls itself recursively and then composes the result of
+the recursive call using the given an \coq{F}-algebra. In other words, for any
+give \coq{F}-algebra there exists a unique \coq{F}-algebra homomorphism from the
+initial one. We define it in Coq as follows:
+\begin{coqcode}
+  Definition cata_f `{F : Cont Sh P} (alg : Alg F A) : LFix -> A
+:= fix f (x : LFix) := match x with
+  | LFix_in ax => let (sx, kx) := ax in alg (MkApp sx (fun e => f (kx e))) end.
+\end{coqcode}
+It is easy to show that this function is a respectful morphism of
+\coq{F}-algebras. In fact, it is possible to define it as a map of the
+following type:
+\begin{coqcode}
+  cata : forall `{F : Cont Sh P} `{setoid A}, Alg F A ~> LFix ~> A
+\end{coqcode}
+We prove that catamorphisms satisfy the universality property we explained previously:
+\begin{coqcode}
+Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
+    : f =e cata alg <-> f =e alg \o fmap f \o l_out.
+\end{coqcode}
+In other words, if there is any other \coq{f} with the same structural recursive
+shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
+catamorphism.
 
 
 \section{Mechanising Extractable Container Functors}
