@@ -573,14 +573,15 @@ class Functor f where
 
 In this section, we focus on mechanising \emph{container functors} in a way that
 is suitable for code extraction. Recall from Section~\ref{sec:rec-schemes} that
-we need to be able toabstract away from the particular shape of the data, and
-that this is achieved by introducing the concept of \emph{functors} which have
-the suitable fixed-point properties, i.e.\ those which have a initial algebras.
+we need to be able to abstract away from particular shape of the data, and we
+can do this using \emph{functors} that have suitable fixed-point properties;
+i.e.\ those which have a initial algebras.
+%
 A common approach to construct such functors is to use
-\emph{containers}~\cite{AbbottAG05}.  However, reasoning about container
-equality will require us to consider both functional extensionality and
-heterogeneous equality. We avoid these axioms by introducing a custom
-equivalence relation on types (Section~\ref{sec:types-morphisms}).
+\emph{containers}~\cite{AbbottAG05}. However, reasoning about container equality
+will require us to consider both functional extensionality and heterogeneous
+equality. We avoid these axioms by introducing a custom equivalence relation on
+types (Section~\ref{sec:types-morphisms}).
 
 \subsection{Functors and Containers}
 \label{sec:functors}
@@ -617,7 +618,8 @@ reason about equalities of functions with \emph{some abstract} \coq{Y} as their
 domain.  Furthermore, the extraction of \coq{F Y} will lead to unsafe casts in
 the extracted OCaml code.
 
-\paragraph{Containers} Another common solution is to the strict positivity
+% \paragraph{Containers}
+Another common solution is to the strict positivity
 problem is the use \emph{containers}~\cite{AbbottAG05}.  A container
 $S \triangleright P$ is defined by a type of \emph{shapes} $S : \Type$ and a
 \emph{family of position types} indexed by shapes $P : S \to \Type$.  An
@@ -630,7 +632,7 @@ $\llbracket S \triangleright P \rrbracket \; f = \lambda (s,\;g).\;(s,\;f\circ g
 
 To explain the role of shapes and positions in containers, consider the functor
 $F\; X = 1 + A \times X$.  An equivalent container, i.e.\ a container with an
-extension that is isomorphic to $F$ requires a shape that can distinguish two
+extension that is isomorphic to $F$, requires a shape that can distinguish two
 cases, indicating that there are two constructors to build an object of type
 $F\;X$. For example, we could define $S_{F} = 1 + A$. We need to consider two
 cases for the family of positions:  $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because
@@ -640,8 +642,8 @@ right hand side. It is easy to see that
 $\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
 In general, every polynomial functor has an equivalent container, with an
-isomorphic extension. We have mechanised this result, and this can  be found in
-the accompanying code (file Container.v).
+isomorphic extension, and we have mechanised this result.
+% and this can  be found in the accompanying code (file Container.v).
 % 
 %Generally, any functor that
 %is isomorphic to a container extension is called a \emph{container functor}.
@@ -649,9 +651,9 @@ the accompanying code (file Container.v).
 %container extension.
 
 \subsection{Extractable Containers}
-A straightforward encoding of containers in Coq would use dependent types  to
-represent families of positions.  However, Ocaml's type system is not equipped
-to handle these, which will lead to extracting OCaml code with unsafe casts.
+A straightforward encoding of containers in Coq would use dependent types to
+represent families of positions. However, Ocaml's type system is not equipped to
+handle these, which will lead to extracting OCaml code with unsafe casts.
 
 Consider instead representing the positions of a container using a decidable
 validity predicate which assigns shapes to positions. In Coq, we use
@@ -700,22 +702,23 @@ using decidable validity predicates to define the families of positions. In
 general, we want to equate container extensions that have the same shape, and
 that, for equal shape and position, they return the same element. To avoid the
 use of the functional extensionality axiom, we capture this relation with the
-following inductive proposition in Coq:
+following inductive proposition:
 \begin{coqcode}
 Inductive AppR (x y : App F X) : Prop :=
 | AppR_ext (shape x = shape y)
            (forall p1 p2, projT1 e1 = projT1 e2 -> contents p1 = contents p2).
 \end{coqcode}
-Note that  we do not care about the validity proof of the positions, only their
-value. This is to simplify (slightly) our proofs. This relation is
-trivially \emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
+Note that we do not care about the validity proof of the positions, only their
+value. This is to simplify (slightly) our proofs. This relation is trivially
+\emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
 
 However, the use of a different equality for container extensions now forces us
 to deal with the fact that some types have different definitions of equality.
 In particular, we want to reason about the equality of functions of types such
-as \coq{App A -> B} (or \coq{B -> App A}). Since
-these types now come with their own equivalence, any function that manipulates
-them needs to be \emph{respectful}. I.e.\ given 
+as \coq{App A -> B} (or \coq{B -> App A}).
+%
+Since these types now come with their own equivalence, any function that
+manipulates them needs to be \emph{respectful}; i.e.\ given
 \coq{R : X -> X -> Prop} and \coq{R' : Y -> Y -> Prop},
 we want functions (morphisms) that satisfy the following property:
 \begin{coqcode}
@@ -841,7 +844,7 @@ Coq's code extraction mechanism to inline as many of these combinators as
 possible.
 
 We prove the isomorphisms of polynomial types and the equivalent 
-container extensions. As an example, we discuss (informally) the isomorphisms
+container extensions. As an example, we will consider the isomorphisms
 of pairs with their equivalent container extensions. Suppose that we
 know that \coq{App F X} is isomorphic to \coq{A}, and
 \coq{App G X} is isomorphic to \coq{B}. Then we can
