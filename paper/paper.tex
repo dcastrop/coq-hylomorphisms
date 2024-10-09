@@ -125,6 +125,8 @@
 
 \newcommand{\Str}[1]{\operator{Str}(#1)}
 \newcommand{\List}[1]{\operator{List}(#1)}
+\newcommand{\Strbare}{\operator{Str}}
+\newcommand{\Listbare}{\operator{List}}
 \newcommand{\nil}{\operator{nil}}
 \newcommand{\cons}{\operator{cons}}
 \newcommand{\foldr}{\operator{foldr}}
@@ -149,7 +151,7 @@
 
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
-  Generic programming with recursion schemes provides a powerful abstraction for
+Generic programming with recursion schemes provides a powerful abstraction for
 structuring recursion while ensuring termination and providing reasoning about
 program equivalences, as well as deriving optimisations which have been
 successfully applied to functional programming. Formalising recursion schemes in
@@ -194,7 +196,7 @@ let rec sort_times_two = function
   sort_times_two l @ (h * 2) :: sort_times_two t
 \end{minted}
 Instead of writing this function directly, we may observe that we can derive it
-by \emph{fusing} a regular \emph{quickort} OCaml implementation, with
+by \emph{fusing} a regular \emph{quicksort} OCaml implementation, with
 \ocaml{map (fun x -> x * 2)}. This is the main idea behind program calculation:
 start
 from a simple specification, e.g.\
@@ -225,85 +227,6 @@ all known  recursion schemes are instances of a  divide-and-conquer algorithm
 which goes under the name of \emph{hylomorphism}~\cite{MeijerFP91,HuIT96}.  To
 date, no work has mechanised hylomorphisms in the Coq proof assistant, together
 with their algebraic laws.
-
-%Recursive definitions cannot be proven well-defined automatically due to the
-%halting problem. Modern proof assistants like Coq or Agda provide a sound, but
-%incomplete algorithm which syntactically checks for termination or
-%productivity. For recursion, this is done by automatically inferring
-%which argument in the recursive call gets smaller with respects to the original
-%input argument. For productivity, the algorithm checks that the corecursive
-%call appears directly under a constructor to make sure that this function
-%always produces at least one element after each recursive step.
-%This implies that some functions, though well-defined, cannot be accepted by
-%the proof assistant. Examples of this include common sorting algorithms, such
-%as quicksort:
-%%One example is Quicksort, written in OCaml
-%%below:
-%\begin{minted}{OCaml}
-%let rec qsort xs = match divide xs with | None -> []
-% | Some (pivot, (smaller, larger)) -> qsort smaller @ (pivot::qsort larger)
-%\end{minted}
-%While \ocaml{qsort} is a well-defined mathematical function it cannot be
-%accepted by a proof assistant. The reason is that the \ocaml{divide}
-%function \emph{destructuring} the input dives deeper in the input returning
-%two sublists with the head as a pivot.
-%
-%The main approach for implementing non-structural recursion in Coq is to use
-%\emph{well-founded recursion}, where recursive definitions are accompanied by
-%\emph{termination proofs}. Using well-founded recursion, the recursive calls
-%will happen on \emph{structurally smaller termination proofs}\footnote{In Coq,
-%one approach is using the \coq{Fix} combinator, in which recursion is done on an
-%\emph{accesibility} predicate on the input, which is a proof that there are no
-%infinitely decreasing chains.}.
-%A benefit of this strategy is that when extracting verified non-structural
-%recursive functions to OCaml, the additional proofs are discarded, resulting in
-%code that closely resembles what a programmer might have written directly in
-%OCaml. However, reasoning about program equivalences needs  such termination
-%proofs to be kept around, leading to the common practice of employing additional
-%reduction lemmas extensively.
-%
-%% A benefit of this approach is that, extracting
-%% verified nonstructural recursive functions to OCaml will erase the additional
-%% proofs, thus producing code that will be closer to what a programmer may have
-%% written directly in OCaml. However, reasoning about program equivalences
-%% requires dealing with such termination proofs, and it is common practice to use
-%% custom reduction lemmas that will be used extensively when proving properties
-%% about nonstructural recursive functions.
-
-%\emph{Structured recursion schemes}~\cite{HinzeW16, HinzeWG15} is a technique
-%for structuring recursive definitions that has found a lot of success in
-%functional programming. The idea is that, rather than writing a self-refential
-%definition, we use a function library, the recursion scheme, which takes as
-%input the non-recursive parts of the algorithm and returns the desired recursive
-%definition which is guaranteed to terminate by the properties of the recursion
-%scheme itself. More complex recursion schemes do exist but it has been
-%proven by Hinze et al.~\cite{HinzeWG15} that they are all instances of a divide-and-conquer
-%algorithm which goes under the name of hylomorphism~\cite{MeijerFP91,HuIT96}.
-%This result, thus, yields a general framework to reason about the algebraic properties of these
-%algorithms, e.g. short-cut fusion and semi-automatic parallelisations~\cite{TakanoM95,Gibbons96:Third, farmsCastro}.
-
-% A more complex recursion scheme is the hylomorphism~\cite{MeijerFP91, HuIT96} which has a divide-and-conquer
-% structure. It has been shown by Hinze et
-% al.~\cite{HinzeWG15} that any complex recursion scheme can be transmogrified
-% into an hylomorphisms by means of an adjunction. Furthermore, hylomorphism laws
-% can capture a number of useful equivalences, ranging from common optimisations
-% such as \emph{short-cut fusion}~\cite{TakanoM95}, to semi-automatic
-% parallelisations~\cite{Gibbons96:Third, farmsCastro}.
-
-% Recursion schemes have successfully been applied to functional programming to
-% structure recursive programs, however, because of the presence of
-% non-termination in languages like (e.g.) Haskell, they cannot guarantee
-% recursive definitions well-defined. % This is due to the possibility of applying a
-% %
-% recursion scheme to a non-terminating (co)algebra, but also to the unrestricted
-% % use of data functors.
-
-%However, when used in the context of languages with general recursion like
-%(e.g.) Haskell and ML, recursion schemes cannot ensure termination. This is
-%because the input information itself could be non-terminating. On the other
-%hand, while formalising recursion schemes in a type theory does provide stronger
-%termination guarantees, to the best of our knowledge, not many attempts have
-%been made at mechanising them.
 
 Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to
 divide-and-conquer computations in which termination is entirely enforced by the
@@ -362,8 +285,15 @@ unfolds (anamorphisms), which produce it. While some implementations of
 recursion schemes like $\operator{foldr}$ in Haskell as specific to a particular
 data structure, in this case $\operator{List}$s, we can generalise further these
 ideas to account for generic (co)inductive data types and generic algorithms
-operating on them. This is done by looking at recursion schemes from the point
-of view of category theory.
+operating on them.
+
+Furthermore folds and unfolds can be shown to capture a wide
+range of recursion schemes such as primitive recursion, mutual recursion,
+dynamic programming algorithms, polymorphic recursion, recursion with
+accumulators and so on. However, for divide-and-conquer algorithms folds need to
+be generalised to hylomorphisms which provide the ultimate basic building block
+for any other recursion scheme. This is done by looking at recursion schemes
+from the point of view of category theory.
 
 \subsection{Elements of Category Theory}
 A \emph{category} is a collection of objects $A, B, C$, denoted by $\Obj(\CatC)$
@@ -384,9 +314,9 @@ terminal object are unique up-to isomorphism.
 For example, the category of sets, denoted by $\Set$, is the category where
 objects are sets and arrows are functions between sets. The initial object $0$
 in $\Set$ is the empty set $\emptyset$ and the terminal object $1$ is any
-singleton set. In this section, we are going to assume types are sets, hence
-this category can also be viewed as the category of types and programs between
-them.
+singleton set. The reader who is not accustomed with category theory can assume
+types are sets, giving the intuition that the category $\Set$ can also be viewed
+as the category of (simple) types and programs between them.
 
 A \emph{functor} $F : \CatC \to \CatD$ is a map between categories mapping both
 objects and arrows from one category to another. Hence a functor has two
@@ -397,20 +327,30 @@ composition of arrows are preserved:
 \begin{mathpar}
   F(id_A) = id_{FA} \and F(g \circ f) = F(g) \circ F(f)
 \end{mathpar}
-This latter component is also called the \emph{functorial action} and can be
-thought of as the $\operator{fmap}$ program in functional programming.
+This latter component is also called the \emph{functorial action}.
 
-For example, in $\Set$, we can define the set of lists
-$\List{A} \iso 1 + A \times \List{A}$ as the set inductively generated by the
+In $\Set$, we can define the set of lists
+\[
+  \List{A} \iso 1 + A \times \List{A}
+\]
+as the set inductively generated by the
 constructors $\nil : 1 \to \List{A}$ and
-$\cons : A \times \List{A} \to \List{A}$. This type is a functor with functorial
-action $\List{f} : \List{A} \to \List{B}$ given by $\List{f}(*) = *$ and
-$\List{f}(\cons(a,xs)) = \cons(f(a), \List{f}(xs))$. Notice that the definition
-$\List{f}$ is well-defined as it recursively calls on a smaller argument,
-however, there is a more general way of proving these type of definitions are
-well-defined. Similarly, the set of streams $\Str{A} \iso A \times \Str{A}$ is
-the greatest set generated by the constructor
-$\cons : A \times \Str{A} \to \Str{A}$.
+$\cons : A \times \List{A} \to \List{A}$. This set extends to a functor
+$\Listbare : \Set \to \Set$. Its functorial action has type
+$\List{f} : \List{A} \to \List{B}$ for a morphism $f : A \to B$ and it is given
+by $\List{f}(*) = *$ and $\List{f}(\cons(a,xs)) = \cons(f(a), \List{f}(xs))$.
+Notice that the definition $\List{f}$ is well-defined as it recursively calls on
+a smaller argument.
+
+Similarly, the set of streams
+\[
+  \Str{A} \iso A \times \Str{A}
+\]
+is the greatest set generated by the constructor
+$\cons : A \times \Str{A} \to \Str{A}$. This set also extends to a functor
+$\Strbare : \Set \to \Set$ whose functorial action is simply
+$\Str{f}(\cons(a,s)) = \cons (f (a), \Str{f}(s))$ defined coinductively.
+
 
 \subsection{Algebras and Catamorphisms}
 \label{sec:algebras}
@@ -427,7 +367,8 @@ unique $F$-algebra homomorphism into any other $F$-algebra. By Lambek's lemma
 the initial $F$-algebra is precisely the \emph{least fixed-point} for the
 functor $F$ which we denote by $(\mu F, \InIso)$ with
 $\InIso : F \mu F \to \mu F$ and $\InOp : \mu F \to F \mu F$ witnessing the
-isomorphism $F\mu F \iso \mu F$. By the property of initial $F$-algebras, for
+isomorphism $F\mu F \iso \mu F$.
+By the property of initial $F$-algebras, for
 any other $F$-algebra $(B, \beta)$ there exists a unique $F$-algebra
 homomorphism, denoted by $\cata{\beta} : (\mu F, \InIso) \to (B, \beta)$ and
 pronounced ``\emph{catamorphism}'' satisfying:
@@ -444,10 +385,7 @@ structure map $[base, ind] : 1 + A \times B \to B$. The initial $F$-algebra is
 clearly the set of lists $\List{A}$. The catamorphism associated with the type
 of lists is the unique arrow recursively translating the initial algebra
 $[\nil,\cons]$ into the algebra $[base, ind]$:
-\begin{align*}
-  & \cata{[base,ind]}(\nil) = base\\
-  & \cata{[base, ind]}(\cons(a, xs)) = ind(a, \cata{[base, ind]}(xs))
-\end{align*}
+
 In functional programming this is commonly referred to as
 $\foldr : (1 \to B) \to (A \times B \to B) \to B$. We can in fact set
 $\foldr\;base\;ind = \cata{[base, ind]}$.
@@ -469,17 +407,18 @@ case, we can even set some notation for the transition map:
 \]
 The category of $B$-coalgebras, denoted $B\Coalg$, is the category where objects
 are $B$-coalgebras and morphisms $f : (X, \gamma_{X}) \to (Y, \gamma_{Y})$ are
-$B$-coalgebra hommorphisms $f : A \to B$, that is
+$B$-coalgebra homomorphisms $f : A \to B$, that is
 $ \gamma_{Y} \circ f = F(f) \circ \gamma_{X}$. Terminal object in this category
 $B$-coalgebra corresponds to the greatest fixed-point for the functor $B$,
 denoted by $(\nu B, \OutIso)$ where $\OutIso$ denotes the final $B$-coalgebra
-$\OutIso : \nu B \to B\nu B$. For example, the terminal coalgebra for the
-functor $BX = L \times X$ is the set of of infinite streams, that is the
-greatest solution to the domain equation $\Str{A} \iso A \times \Str{A}$.  As a
-result, for any $B$-coalgebra $(B, \gamma)$ there exists a unique $B$-coalgebra
-homomorphism into the terminal coalgebra $(\nu B, \OutIso)$ which is denoted by
-$\ana{\gamma}$ and pronounced \emph{catamorphism}. We spell out the uniqueness
-property:
+$\OutIso : \nu B \to B\nu B$. For
+
+For example, the terminal coalgebra for the functor $BX = L \times X$ is the set
+of of infinite streams, that is the greatest solution to the domain equation
+$\Str{A} \iso A \times \Str{A}$.  As a result, for any $B$-coalgebra
+$(B, \gamma)$ there exists a unique $B$-coalgebra homomorphism into the terminal
+coalgebra $(\nu B, \OutIso)$ which is denoted by $\ana{\gamma}$ and pronounced
+\emph{anamorphism}. We spell out the uniqueness property:
 \begin{equation}
   \label{eq:ana:unique}
   f = \ana{\gamma} \iff f = \OutOp \circ B(f) \circ \gamma
@@ -490,19 +429,11 @@ same coalgebra.
 
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
-Recursion schemes provide an abstract way to consume and generate data. We now
-proceed onto describing how to formalise hylomorphisms in Coq. We first
-formalise algebras for container extensions (Section~\ref{sec:algebras}), then
-we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together these
-notions to formalise recursive coalgebras and hylomorphisms
-(Section~\ref{sec:rec-coalgebras}).
-
-
-
-Hylomorphisms capture the concept of \emph{divide-and-conquer} algorithms where
-the input is first destructured (\emph{divide}) in smaller parts by means of a
-coalgebra which are computed recursively and then composed back together
-(\emph{conquer}) by means of an algebra.
+Recursion schemes provide an abstract way to consume and generate data capturing
+\emph{divide-and-conquer} algorithms where the input is first destructured
+(\emph{divide}) in smaller parts by means of a coalgebra which are computed
+recursively and then composed back together (\emph{conquer}) by means of an
+algebra.
 
 In general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
 unique solution (when it exists) to the equation
@@ -511,71 +442,23 @@ unique solution (when it exists) to the equation
   f = a \circ F\; f \circ c
 \end{equation}
 As we stated earlier, a solution to this equation does not exist for an
-arbitrary  algebra and coalgebra pair and, in fact, this definition cannot be
+arbitrary algebra and coalgebra pair and, in fact, this definition cannot be
 accepted by Coq.
 
 In order to find a solution we restrict ourselves to the so-called
-\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  An example of a
+\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.
+A $F$-coalgebra $(X, c)$ is recursive if
+
+An example of a
 recursive coalgebra is the \coq{partition} function in quicksort which
 destructures a list into a pivot and two sublist and as long as the sublists are
 smaller the partitioning function still yields a unique solution to the
 recursion scheme.
 
-We mechanise \emph{recursive
-hylomorphisms} which are guaranteed to have a unique solution to the
-hylomorphism equation. These are hylomoprhisms where the coalgebra is
-\emph{recursive}, i.e. coalgebras that terminate on all inputs. The following
-predicate captures that a coalgebra terminates on an input:
-\begin{coqcode}
-Inductive RecF (h : Coalg F A) : A -> Prop :=
-| RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
-\end{coqcode}
-A recursive coalgebra of type \coq{RCoalg F A} is a coalgebra
-\coq{c} such that \coq{forall x, RecF c x}.
-Recursive hylomorphisms are implemented in Coq recursively on the structure of
-the proof for the type (\coq{RecF}) as follows:
-\begin{coqcode}
-Definition hylo_def (a : Alg F B) (c : Coalg F A)
-  : forall (x : A), RecF c x -> B := fix f x H
-  := match c x as h0 return (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
-     with | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
-     end (RecF_inv H).
-\end{coqcode}
-We use \coq{RecF_inv} to obtain the structurally smaller proof to use in
-the recursive calls. As we did with catamorphisms and anamorphisms, we
-prove that \coq{hylo_def} is respectful, and use this proof to build the
-corresponding higher-order proper morphism:
-\begin{coqcode}
-  hylo : forall `{F : Cont Sh P} `{setoid A} `{setoid B},
-    Alg F B ~> RCoalg F A ~> A ~> B
-\end{coqcode}
-Finally, we show that recursive hylomorphisms are the unique solution to the
-hylomorphism equation.
-\begin{coqcode}
-Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
-    : f =e hylo g h <-> f =e g \o fmap f \o h.
-\end{coqcode}
-Hylomorphisms fusion falls out from the universal property:
 \begin{coqcode}
 Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
   (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2) : f2 \o hylo g1 h1 =e hylo g2 h1.
 \end{coqcode}
-% Qed.
-%   rewrite hylo_univ, fmap_comp, compA, <- E2,
-%           <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
-
-  % rewrite hylo_univ, fmap_comp, compA, <- E2,
-  %         <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
-
-  % (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
-  % (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1 *)
-  % (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
-  % (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
-  % (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1 *)
-  % (* f2 \o hylo g1 h1 =e (f2 \o g1) \o (fmap (hylo g1 h1) \o h1) *)
-  % (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
-  % (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
-  % (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
 Using the hylo fusion law, we can prove the well-known \emph{deforestation
 optimisation}. This is when two consecutive recursive computations, one that
 builds a data structure, and another one that consumes it, can be fused together
@@ -588,138 +471,56 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
   : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 \end{coqcode}
 
-% \subsection{Recursive Anamorphisms}
-% Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
-% inductive data type in the following way.  Intuitively, a recursive coalgebra
-% can be applied only finitely many times, therefore when this is applied to an
-% anamorphism the only possible traces it can produce from the seed function are
-% the finite ones. We denote this special kind of recursion scheme \emph{recursive
-% anamorphism}.  We can show that recursive anamorphisms of type \coq{X -> GFix F}
-% can also be given the type \coq{X -> LFix F}. Moreover, these anamorphisms are
-% exactly hylomorphisms on the recursive \coq{F}-coalgebra and the
-% algebra \coq{In} for the inductive data type \coq{LFix F}. This fact falls out
-% from the universality property of the hylomorphism and the fact that recursive
-% anamorphisms satisfy the same equation.
-%
-% We now show how this is proven in the Coq development. First we define a
-% recursive anamorphism as a function into \coq{LFix F}:
-% \begin{coqcode}
-% Definition rana_f__ `{setoid A} (c : Coalg F A)
-%   : forall x : A, RecF c x -> LFix F
-%   := fix f (x : A) (H : RecF c x) :=
-%        let hx := c x in
-%        LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
-%
-% Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F := ...
-% \end{coqcode}
-% We omit the boilerplate details to obtain the setoid morphism.
-% The recursive anamorphism has the following universality property:
-% \begin{coqcode}
-% Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
-%     : f =e rana h <-> f =e l_in \o fmap f \o h.
-% \end{coqcode}
-% We can now show that every hylomorphism is composed by a recursive anamorphism
-% followed by a catamorphism:
-% \begin{coqcode}
-% Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
-%   (g : Alg F B) (h : RCoalg F A)
-% : cata g \o rana h =e hylo g h.
-% \end{coqcode}
-% This result will allow us to \emph{calculate} programs by providing small, easy
-% to verify implementations, and combining them into efficient recursive functions
-% by using Coq's proofs of hylomorphism laws as optimisation passes.
+\subsection{Recursive Anamorphisms}
+Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
+inductive data type in the following way.  Intuitively, a recursive coalgebra
+can be applied only finitely many times, therefore when this is applied to an
+anamorphism the only possible traces it can produce from the seed function are
+the finite ones. We denote this special kind of recursion scheme \emph{recursive
+anamorphism}.  We can show that recursive anamorphisms of type \coq{X -> GFix F}
+can also be given the type \coq{X -> LFix F}. Moreover, these anamorphisms are
+exactly hylomorphisms on the recursive \coq{F}-coalgebra and the
+algebra \coq{In} for the inductive data type \coq{LFix F}. This fact falls out
+from the universality property of the hylomorphism and the fact that recursive
+anamorphisms satisfy the same equation.
 
-\subsubsection{On the subtype of finite elements}
-In this development we have defined recursive anamorphisms on inductive data
-types. We might have as well defined them on the subtype of finite elements of
-coinductive data types using a predicate which states when an element of a
-coinductive data type is finite:
-\begin{coqcode}
-Inductive FinF : GFix F -> Prop :=
-| FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
-\end{coqcode}
-Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
-is isomorphic its corresponding the inductive data type \coq{LFix F}. This is
-easy to see. We first define a catamorphism \coq{ccata_f_} from the
-subtype \coq{{x : GFix F | FinF x}} of finitary elements of \coq{GFix F} to
-any \coq{F}-algebra.
-\begin{coqcode}
-Definition ccata_f_ `{eA : setoid A} (g : Alg F A)
-  : forall x : GFix F, FinF x -> A := fix f x H :=
-    let hx := g_out x in
-      g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
-\end{coqcode}
-We now prove this is isomorphic to the least fixed-point of the functor
-\coq{F}.
-We take the catamorphism from the finite elements of \coq{GFix F} to the
-inductive data type \coq{LFix F} using the \coq{F}-algebra \coq{l_in}. Its
-inverse is the catamorphism on the restriction of \coq{g_in} to the finite
-elements of \coq{GFix}, which we denote by \coq{lg_in}.  The following lemmas
-prove the isomorphism:
-\begin{coqcode}
-Lemma cata_ccata `{setoid A} : cata lg_in \o ccata l_in =e id.
-Lemma ccata_cata `{setoid A} : ccata l_in \o cata lg_in =e id.
-\end{coqcode}
-The finite subtype of \coq{GFix F} allows us to compose
-catamorphisms and anamorphisms, by using the above isomorphism. In our work,
-however, we use \emph{recursive} anamorphisms, defined as \coq{hylo l_in c} for
-a recursive coalgebra \coq{c}, which compose easily with
-catamorphisms.
-% This predicate is equivalent to the proposition that
-% the anamorphism of such coalgebras produce only finite trees:
-% \begin{coqcode}
-% Lemma ana_rec_term `{setoid A} (h : Coalg F A)
-%   : (forall x, FinF (ana h x)) <-> (forall x, RecF h x).
-% \end{coqcode}
 
-% \mpav{Moved here}
+\subsection{Haskell Implementation of Recursion Schemes}
+\begin{minted}{haskell}
+newtype Fix f = In {inOp :: f (Fix f )}
+\end{minted}
 
-% Note that such proofs will be erased when extracting code to OCaml, and this is
-% standard practice when building general recursive functions in
-% Coq\footnote{\dcas{This technique had a name in the community, but I cannot
-% remember. Something predicates}}. The core definitions are the following:
-% \begin{coqcode}
-% Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
+\begin{minted}{haskell}
+cata :: Functor f => (f a -> a) -> Fix f -> a
+cata alg = alg . fmap (cata alg) . In
+\end{minted}
+\begin{minted}{haskell}
+foldr :: (a -> b -> b) -> b -> [ a ] -> b
+foldr f e [ ]    = e
+foldr f e (x:xs) = f x (foldr f e xs)
+\end{minted}
+which is very useful in list processing. As a fold, The frequently used function map is also a fold:
+\begin{minted}{haskell}
+map :: (a -> b) -> [a] -> [b]
+map f = foldr (\x xs -> (f x):xs) []
+\end{minted}
 
-% \end{coqcode}
-% Here, \coq{RecF_inv} provides the structurally smaller element for
-% the Coq recursive definition. We then couple coalgebras with a proof that they
-% are recursive, and add a coercion from recursive coalgebras to coalgebras.
-% \begin{coqcode}
-% Definition RCoalg F A = Rec {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
-% \end{coqcode}
-% In some cases, proving that coalgebras can only be applied finitely many
-% times is straightforward (e.g.\ they are recursive on some inductive type in
-% Coq). However, in many cases, proving that a coalgebra is recursive directly
-% can be tedious and cumbersome. To ease development, we prove that if a
-% given coalgebra respects a \emph{well-founded relation}, then it is
-% necessarily recursive.
-% \begin{coqcode}
-% Definition respects_relation `{setoid A} (c : Coalg F A)
-%       {B} (m : A -> B) (R : B -> B -> Prop)
-%   := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
+\begin{minted}{haskell}
+newtype CoFix f = OutOp {out :: f (Fix f )}
+\end{minted}
 
-% Lemma wf_coalg_rec `{setoid A} {B}
-%   (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
-%   (c : Coalg F A) (RR : respects_relation c m R) : RecP c.
-% \end{coqcode}
-% In the above definition, \coq{m} is used as a form of ``metric''
-% for termination, and the well-founded relation is on \coq{B}. This
-% works equivalently to transporting a well-founded relation
-% \coq{R}
-% on
-% \coq{B} to \coq{A} as
-% \coq{R' := fun x y => R (m x) (m y)}, which is also trivially
-% well-founded. Using these definitions, we can construct recursive coalgebras by
-% proving that they respect a well-founded relation, which generally leads to
-% simpler proofs.
+\begin{minted}{haskell}
+ana :: Functor b => (a -> b a) -> a -> CoFix b
+ana coalg = OutOp . fmap (ana coalg) . coalg
+\end{minted}
 
-% Similarly to the rest of the definitions, we prove that recursive anamorphisms
-% are respectful, and use this fact to build them as higher order proper
-% morphisms, and prove their universal law, i.e.\ that recursive anamorphisms are
-% the unique solution to the equation
-% \coq{f =e l_in \o fmap f \o h},
-% where \coq{h} is a recursive coalgebra.
+ and can be
+thought of as the $\operator{fmap}$ program in functional programming.
+\begin{minted}{haskell}
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+\end{minted}
+
 
 \subsection{Dump}
 Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
@@ -778,6 +579,42 @@ In other words, if there is any other \coq{f} with the same structural recursive
 shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
 catamorphism.
 
+\subsubsection{On the subtype of finite elements}
+In this development we have defined recursive anamorphisms on inductive data
+types. We might have as well defined them on the subtype of finite elements of
+coinductive data types using a predicate which states when an element of a
+coinductive data type is finite:
+\begin{coqcode}
+Inductive FinF : GFix F -> Prop :=
+| FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
+\end{coqcode}
+Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
+is isomorphic its corresponding the inductive data type \coq{LFix F}. This is
+easy to see. We first define a catamorphism \coq{ccata_f_} from the
+subtype \coq{{x : GFix F | FinF x}} of finitary elements of \coq{GFix F} to
+any \coq{F}-algebra.
+\begin{coqcode}
+Definition ccata_f_ `{eA : setoid A} (g : Alg F A)
+  : forall x : GFix F, FinF x -> A := fix f x H :=
+    let hx := g_out x in
+      g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
+\end{coqcode}
+We now prove this is isomorphic to the least fixed-point of the functor
+\coq{F}.
+We take the catamorphism from the finite elements of \coq{GFix F} to the
+inductive data type \coq{LFix F} using the \coq{F}-algebra \coq{l_in}. Its
+inverse is the catamorphism on the restriction of \coq{g_in} to the finite
+elements of \coq{GFix}, which we denote by \coq{lg_in}.  The following lemmas
+prove the isomorphism:
+\begin{coqcode}
+Lemma cata_ccata `{setoid A} : cata lg_in \o ccata l_in =e id.
+Lemma ccata_cata `{setoid A} : ccata l_in \o cata lg_in =e id.
+\end{coqcode}
+The finite subtype of \coq{GFix F} allows us to compose
+catamorphisms and anamorphisms, by using the above isomorphism. In our work,
+however, we use \emph{recursive} anamorphisms, defined as \coq{hylo l_in c} for
+a recursive coalgebra \coq{c}, which compose easily with
+catamorphisms.
 
 \section{Mechanising Extractable Container Functors}
 \label{sec:containers}
