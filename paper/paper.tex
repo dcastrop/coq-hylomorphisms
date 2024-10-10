@@ -36,6 +36,7 @@
 \newcolumntype{C}{>{$}c<{$}} % math-mode version of "l" column type
 \newcolumntype{L}{>{$}l<{$}} % math-mode version of "l" column type
 
+\usepackage{inconsolata}
 % \usepackage{draftwatermark}
 % \SetWatermarkText{Confidential}
 % \SetWatermarkScale{4}
@@ -528,20 +529,29 @@ An example of a recursive coalgebra is the \coq{partition} function in quicksort
 which destructures a list into a pivot and two sublist and as long as the
 sublists are smaller the partitioning function still yields a unique solution to
 the recursion scheme.
-The uniqueness property of the hylo yields the following fusion law:
-\begin{equation}
+The uniqueness property of the hylo yields the following fusion laws:
+\begin{align}
   \label{eq:hylo:fusion}
-  f \circ \hylo{c}{a}= \hylo{c'}{a}
-\end{equation}
-Using the hylo fusion law, we can prove the well-known \emph{deforestation
-optimisation}. This is when two consecutive recursive computations, one that
-builds a data structure, and another one that consumes it, can be fused together
-into a single recursive definition. This, in turn, allows us to prove that a
-recursive hylomorphism is the composition of a catamorphism and a recursive
-anamorphism.
+  f \circ \hylo{c}{a} & = \hylo{c}{a'}
+  \hspace{1cm}
+  \Longleftarrow
+  \hspace{1cm}
+  f \circ a = a' \circ F(f) \\
+  \hylo{c}{a} \circ f & = \hylo{c'}{a}
+  \hspace{1cm}
+  \Longleftarrow
+  \hspace{1cm}
+  c \circ f = F(f) \circ c'
+\end{align}
+Using the hylo fusion laws, we can prove the well-known \emph{deforestation
+optimisation}, also known as the \emph{composition
+law}~\cite{DBLP:conf/ifl/HinzeHJ10}. This is when two consecutive recursive
+computations, one that builds a data structure, and another one that consumes
+it, can be fused together into a single recursive definition. This, in turn,
+allows us to prove that a recursive hylomorphism is the composition of a
+catamorphism and a recursive anamorphism.
 
 \subsubsection{Haskell Implementation of Hylomorphisms}
-
 
 which is very useful in list processing. As a fold, The frequently used function map is also a fold:
 \begin{minted}{haskell}
@@ -637,12 +647,10 @@ cases for the family of positions:  $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because
 there are no occurrences of $X$ in the left case; and
 $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence of $X$ in the
 right hand side. It is easy to see that
-$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
-
-In general, every polynomial functor has an equivalent container, with an
-isomorphic extension, and we have mechanised this result.
-% and this can  be found in the accompanying code (file Container.v).
-% 
+$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.  In general, every
+polynomial functor has an equivalent container, and we have mechanised this
+result.
+%
 %Generally, any functor that
 %is isomorphic to a container extension is called a \emph{container functor}.
 %Here we will call \emph{container functor} the functors defined by a specific
@@ -683,11 +691,11 @@ predicate, if we know that \coq{P1} and \coq{P2} are of type
 \coq{valid s p = true}, then we can prove without any axioms that 
 \coq{P1 = P2 = eq_refl}.
 
-
-A container extension, \coq{App} in Coq, is then defined as follows:
+An extension of a container \coq{F}, \coq{App F} in Coq, is then defined as
+follows:
 \begin{coqcode}
-Record App (X : Type)
-   := { shape : Shape; contents : {p | valid shape p} -> X }.
+Record App F (X : Type)
+   := { shape : Shape F; cont : {p | valid shape p} -> X }.
 % \end{coqcode}
 
 This approach solves the problem of the unsafe casts, since the code extracted
@@ -704,7 +712,7 @@ following inductive proposition:
 \begin{coqcode}
 Inductive AppR (x y : App F X) : Prop :=
 | AppR_ext (shape x = shape y)
-           (forall p1 p2, projT1 e1 = projT1 e2 -> contents p1 = contents p2).
+           (forall p1 p2, projT1 e1 = projT1 e2 -> cont p1 = cont p2).
 \end{coqcode}
 Note that we do not care about the validity proof of the positions, only their
 value. This is to simplify (slightly) our proofs. This relation is trivially
@@ -753,7 +761,7 @@ equivalence relations \coq{eA : A -> A -> Prop} and
 \coq{A ~> B} to represent \emph{proper} morphisms of the
 respectfulness relation of \coq{R} to \coq{R'}.
 \begin{coqcode}
-Structure morph A {eA : setoid A} B {eB : setoid B} :=
+Record morph A {eA : setoid A} B {eB : setoid B} :=
   MkMorph { app :> A -> B; app_eq : forall x y, x =e y -> app x =e app y }.
 Notation "A ~> B" := (@morph A _ B _).
 \end{coqcode}
@@ -774,8 +782,7 @@ extensions require a proper morphism to check the validity of positions in
 shapes, and container equality now uses equivalences of shapes and contained
 elements: 
 \begin{coqcode}
-Class Cont `{setoid Shape} (Pos : Type) := { valid : Shape * Pos ~> bool }.
-Inductive AppR `{F : Cont Sf Pf} `{setoid X} (x y : App F X) : Prop :=
+Inductive AppR F `{setoid X} (x y : App F X) : Prop :=
   | AppR_ext (Es : shape x =e shape y)
              (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
 \end{coqcode}
@@ -788,16 +795,16 @@ mechanisation of initial algebras of container extensions.
 %straightforward way, i.e. we prove that validity predicates are indeed proper
 %morphisms. 
 
-This definition leads to the well-known ``setoid hell'', which we mitigate by
-providing tactics and notations to automatically discharge proofs of
-\coq{app_eq} for morphisms, whenever the types use the standard propositional
-equality, or a combination of propositional and extensional equality. However,
-our compositional approach allows us to build morphisms by plugging in other
-morphisms to our combinators. In our framework, our expectation is that the
-user-provided functions remain small, with relatively straightforward proofs of
-\coq{app_eq}.
+Our definition of morphisms, and the use of different equivalences leads to the
+well-known ``setoid hell''. We mitigate this problem by providing tactics and
+notations to automatically discharge proofs of \coq{app_eq} for morphisms,
+whenever the types use the standard propositional equality, or a combination of
+propositional and extensional equality. However, our compositional approach
+allows us to build morphisms by plugging in other morphisms to our combinators.
+In our framework, our expectation is that the user-provided functions remain
+small, with relatively straightforward proofs of \coq{app_eq}.
 
-However, by using this mechanisation, we gain simplified proofs via the use of
+However, by using this mechanisation, we gain simplified proofs via
 Coq's \emph{Generalised Rewriting}. Since every morphism \coq{f : A ~> B}
 satisfies the property that if \coq{x =e y}, then \coq{f x =e f y}, we can add
 every morphism as a proper element of Coq's respectfulness relation. In
@@ -886,65 +893,55 @@ we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together
 these notions to formalise recursive coalgebras and hylomorphisms
 (Section~\ref{sec:rec-coalgebras}).
 
-\subsection{Algebras and Catamorphisms}
-\label{sec:algebras} An algebra is a set \coq{A} (the
-\emph{carrier} of the algebra) together with some operations on it sometimes
-subject to some equational laws. For example, given such a type \coq{A} we can
-define the monoid operations as \coq{u : unit -> A} for unit
-and \coq{m : A * A -> A} for multiplication. Notice
-that \coq{F X = unit + X * X} is a functor on \coq{X} which means we can
-equivalently describe these two maps as a single one of type \coq{F X -> X}
-which we call the algebra for the functor \coq{F} satisfying the unit and
-associative laws of the monoid. In this work we will be using algebras to
-describe the operations of a data type and so we will not be needing additional
-equations on these operations.
+\subsection{Algebras and Catamorphisms for Containers}
+\label{sec:algebras}
 
-Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
-by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of
-type \coq{App F A ~> A}:
+Recall that an algebra is a set $A$ together with a morphism that defines the
+operations of the algebra $F\;A \to A$.  Given a type \coq{A} and a container
+\coq{F}, an `\coq{App F}'-algebra is a pair given by the carrier \coq{A}, and the
+\emph{structure map} of type:
 \begin{coqcode}
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
-The least fixed-point for a functor \coq{F} is an instance of an \coq{F}-algebra
-where the structure map is an isomorphism. This is sometimes referred to as the
-\emph{initial algebra} for a functor \coq{F}. We will explain the reason behind this name shortly. \footnote[1]{To be more precise,
-initial algebras are isomorphisms by Lambek's lemma, but isomorphisms of
-functors do not necessarily correspond to initial algebras.}  We define the
-least fixed-point of \coq{F} as an inductive type:
+
+\noindent
+For simplicity, we will abuse terminology, and we calling these
+\coq{F}-algebras, instead of `\coq{App F}'-algebras.
+
+The initial \coq{F}-algebra can be defined as follows, thanks to the use of
+containers:
 \begin{coqcode}
-Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
+Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
-where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
+where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its inverse $\InOp$ (see Section~\ref{sec:rec-schemes}).
 As an example, the initial \coq{F}-algebra for the
 functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
 being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
 operation \coq{Cons : A * LFix F -> LFix F}.
 
 We define \coq{LFix} as a setoid, where its equivalence relation can be
-described as the least fixed point of \coq{AppR} and we define smart
+described as the least fixed point of \coq{AppR}. We define smart
 constructors for the isomorphism of least fixed points as respectful morphisms:
 \begin{coqcode}
-l_in : App F (LFix F) ~> LFix F                l_out : LFix F ~> App F (LFix F)
+l_in : App F (LFix F) ~> LFix F         l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
 
-The least fixed-point for \coq{F} is the initial \coq{F}-algebra in the sense
-that it gives rise to an inductive recursion scheme.  Specifically, for any
-other \coq{F}-algebra there exists a \emph{unique} map, known as a \emph{fold} or
-\emph{catamorphism}, such that it structurally deconstructs the data type
-using \coq{LFix_out}, calls itself recursively and then composes the result of
-the recursive call using the given an \coq{F}-algebra. In other words, for any
-give \coq{F}-algebra there exists a unique \coq{F}-algebra homomorphism from the
-initial one. We define it in Coq as follows:
+Catamorphisms are constructed, as expected, so that they structurally
+deconstruct the datatype, call themselves recursively, and then compose the
+result using an \coq{F}-algebra.
 \begin{coqcode}
-  Definition cata_f `{F : Cont Sh P} (alg : Alg F A) : LFix -> A
-:= fix f (x : LFix) := match x with
-  | LFix_in ax => let (sx, kx) := ax in alg (MkApp sx (fun e => f (kx e))) end.
+Definition cata_f F (alg : Alg F A) : LFix -> A
+  := fix f (x : LFix)
+     := match x with
+        | LFix_in ax =>
+             alg {shape := shape ax; cont := fun e => f (cont ax e)}
+        end.
 \end{coqcode}
 It is easy to show that this function is a respectful morphism of
 \coq{F}-algebras. In fact, it is possible to define it as a map of the
 following type:
 \begin{coqcode}
-  cata : forall `{F : Cont Sh P} `{setoid A}, Alg F A ~> LFix ~> A
+  cata : forall F `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
 We prove that catamorphisms satisfy the universality property we explained previously:
 \begin{coqcode}
@@ -957,65 +954,39 @@ catamorphism.
 
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
-Algebras and catamorphisms dualise nicely to the coinductive setting.  The dual
-of an algebra is a coalgebra. A coalgebra can be thought of as an
-\emph{observation} map. For example, for a type of states \coq{X} and an
-alphabet type \coq{L} we can define a labelled transition system (LTS)
-on \coq{X} as a function \coq{c : X -> FX} for a functor \coq{F X = L * X}
-implementing the \emph{transition} map. In particular, for a
-state \coq{x1 : X}, \coq{c x1} returns a pair \coq{(l, x2) : L * X}
-where \coq{l : L} is the observable action and \coq{x2 : X} is the next state.
 
-In general, for a functor \coq{F}, an \coq{F}-coalgebra is a pair of a
-type \coq{X} called the \emph{carrier} of the coalgebra and a structure
-map \coq{X -> F X}.
-
-In our development we use the following notation for coalgebras:
+In general, for a container \coq{F}, an \coq{F}-coalgebra is a pair of a carrier
+\coq{X} and a structure map \coq{X -> App F X}.  In our development we use the
+following notation for coalgebras:
 \begin{coqcode}
 Notation Coalg F A := (A ~> App F A).
 \end{coqcode}
 
 Dually to the initial \coq{F}-algebra, a final \coq{F}-coalgebra is the greatest
-fixed-point for a functor \coq{F}. We define it using a coinductive data type:
+fixed-point for \coq{App F}. We define it using a coinductive data type:
 \begin{coqcode}
-CoInductive GFix `(F : Cont Sh Po) : Type := GFix_in { GFix_out : App F GFix }.
+CoInductive GFix F : Type := GFix_in { GFix_out : App F GFix }.
 \end{coqcode}
+
+\noindent
 where \coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix_in} is its
 inverse witnessing the isomorphism. Similarly to \coq{LFix}, \coq{GFix} is also
 defined as a setoid, with an equivalence relation that is the greatest fixpoint
 of \coq{AppR}. Additionally, we define smart constructors for the isomorphism of
 greatest fixed points
 \begin{coqcode}
-g_in : App F (GFix F) ~> GFix F                g_out : GFix F ~> App F (GFix F)
+g_in : App F (GFix F) ~> GFix F          g_out : GFix F ~> App F (GFix F)
 \end{coqcode}
 
 The greatest fixed-point is a terminal \coq{F}-coalgebra in the sense that it
-yields a coinductive recursion scheme. Specifically, for any
-other \coq{F}-coalgebra there exists a \emph{unique} map, called the
-\emph{unfold} or \emph{anamorphism}, such that it applies the observation map,
-corecursively generates the rest of the computation and composes the result of
-the corecursive call by using the algebra \coq{GFix_in}. In other words, for any
-given \coq{F}-coalgebra there exists a unique \coq{F}-coalgebra homomorphism
-into the terminal \coq{F}-coalgebra.
-
-% Consider the transition system below composed by three states \coq{x1}, \coq{x2}
-% and \coq{x3} with the transitions labelled by the set of labels \coq{\{a, b\}} and define the map \coq{c} such that it implements the transition system below
-% \[\begin{tikzcd}
-%     {x_1} & {x_2} & {x_3} \arrow["b"', loop, distance=2em, in=35, out=325]
-% 	\arrow["a", from=1-1, to=1-2]
-% 	\arrow["b", from=1-2, to=1-3]
-% \end{tikzcd}\]
-% Note that for a generic functor \coq{F} an \coq{F}-coalgebra on the
-% carrier \coq{X} is a map \coq{X -> F X}. In the previous example \coq{c} is
-% an \coq{F}-coalgebra on the carrier \coq{X} with \coq{F X = L * X}.
-
-We define anamorphisms as follows:
+yields a coinductive recursion scheme: the \emph{anamorphism}.
 \begin{coqcode}
 Definition ana_f_ (c : Coalg F A) :=
   cofix f x :=
-    match c x with | MkApp sx kx => GFix_in (MkApp sx (fun e => f (kx e))) end.
+   let cx := c x in
+   GFix_in { shape := shape cx; cont := fun e => f (cont cx e) }.
 
-Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*... ana_f_ ... *)
+Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*...*)
 \end{coqcode}
 From this definition the universality property falls out:
 \begin{coqcode}
@@ -1028,10 +999,10 @@ same coalgebra.
 
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
-Hylomorphisms capture the concept of \emph{divide-and-conquer} algorithms where
-the input is first destructured (\emph{divide}) in smaller parts by means of a
-coalgebra which are computed recursively and then composed back together
-(\emph{conquer}) by means of an algebra.
+Recall that hylomorphisms capture the concept of \emph{divide-and-conquer}
+algorithms where the input is first destructured (\emph{divide}) in smaller
+parts by means of a coalgebra which are computed recursively and then composed
+back together (\emph{conquer}) by means of an algebra.
 
 In general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
 unique solution (when it exists) to the equation
@@ -1039,42 +1010,54 @@ unique solution (when it exists) to the equation
   \label{eq:hylo}
   f = a \circ F\; f \circ c
 \end{equation}
-As we stated earlier, a solution to this equation does not exist for an arbitrary  algebra and coalgebra pair and, in fact, this definition cannot be accepted by Coq.
+As we stated earlier, a solution to this equation does not exist for an
+arbitrary  algebra/coalgebra pair and, in fact, this definition cannot be
+accepted by Coq.
 
 In order to find a solution we restrict ourselves to the so-called
-\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  An example of a
-recursive coalgebra is the \coq{partition} function in quicksort which
-destructures a list into a pivot and two sublist and as long as the sublists are
-smaller the partitioning function still yields a unique solution to the
-recursion scheme.
-
-We mechanise \emph{recursive
-hylomorphisms} which are guaranteed to have a unique solution to the
-hylomorphism equation. These are hylomoprhisms where the coalgebra is
-\emph{recursive}, i.e. coalgebras that terminate on all inputs. The following
-predicate captures that a coalgebra terminates on an input:
+\emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  We mechanise
+\emph{recursive hylomorphisms} which are guaranteed to have a unique solution to
+the hylomorphism equation. These are hylomoprhisms where the coalgebra is
+\emph{recursive}, i.e. coalgebras that terminate on all inputs. We represent
+recursive coalgebras using a predicate that states that a coalgebra terminates
+on an input:
 \begin{coqcode}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
+
+\noindent
 A recursive coalgebra of type \coq{RCoalg F A} is a coalgebra
 \coq{c} such that \coq{forall x, RecF c x}.
 Recursive hylomorphisms are implemented in Coq recursively on the structure of
 the proof for the type (\coq{RecF}) as follows:
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A)
-  : forall (x : A), RecF c x -> B := fix f x H
-  := match c x as h0 return (forall e : Pos (shape h0), RecF c (cont h0 e)) -> B
-     with | MkApp s_x c_x => fun H => a (MkApp s_x (fun e => f (c_x e) (H e)))
-     end (RecF_inv H).
+  : forall (x : A), RecF c x -> B
+  := fix f x H
+     := match c x as cx
+          return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B
+        with
+        | MkApp sx kx => fun H => a (MkApp sx (fun e => f (kx e) (H e)))
+        end (RecF_inv H).
 \end{coqcode}
+
+\noindent
 We use \coq{RecF_inv} to obtain the structurally smaller proof to use in
-the recursive calls. As we did with catamorphisms and anamorphisms, we
+the recursive calls.
+
+For convenience, we package coalgebras with their proofs that they terminate for
+all inputs:
+\begin{coqcode}
+Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
+\end{coqcode}
+
+\noindent
+As we did with catamorphisms and anamorphisms, we
 prove that \coq{hylo_def} is respectful, and use this proof to build the
 corresponding higher-order proper morphism:
 \begin{coqcode}
-  hylo : forall `{F : Cont Sh P} `{setoid A} `{setoid B},
-    Alg F B ~> RCoalg F A ~> A ~> B
+hylo : forall F `{setoid A} `{setoid B}, Alg F B ~> RCoalg F A ~> A ~> B
 \end{coqcode}
 Finally, we show that recursive hylomorphisms are the unique solution to the
 hylomorphism equation.
@@ -1082,11 +1065,47 @@ hylomorphism equation.
 Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
 \end{coqcode}
-Hylomorphisms fusion falls out from the universal property:
+Hylomorphisms fusion falls out from this uniqueness property:
 \begin{coqcode}
-Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
-  (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2) : f2 \o hylo g1 h1 =e hylo g2 h1.
+Lemma hylo_fusion_l
+  (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C) (f2 : B ~> C)
+  : f2 \o g1 =e g2 \o fmap f2 ->
+    f2 \o hylo g1 h1 =e hylo g2 h1.
+
+Lemma hylo_fusion_r
+  (h1 : RCoalg F B) (g1 : Alg F C) (h2 : RCoalg F A) (f1 : A ~> B)
+  :  h1 \o f1 =e fmap f1 \o h2 ->
+     hylo g1 h1 \o f1 =e hylo g1 h2.
 \end{coqcode}
+
+\noindent
+It is important to highlight that, in our mechanisation, these proofs follow
+\emph{exactly} the steps that one would do in a pen-and-paper proof.
+We show the series of rewrite steps for \coq{hylo_fusion_l} in Figure~\ref{fig:proof-fusion-l}:
+\begin{figure}
+\begin{coqcode}
+(* E2 : f2 \o g1 =e g2 \o fmap f2 *)
+(* ------------------------------------- *)
+(* Goal : f2 \o hylo g1 h1 =e hylo g2 h1 *)
+
+apply hylo_univ.
+       (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1        *)
+rewrite fmap_comp.
+       (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
+rewrite [...]. (* rearranging by associativity *)
+       (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
+rewrite <- E2.
+       (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1      *)
+rewrite [...]. (* rearranging by associativity *)
+       (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o fmap (hylo g1 h1)) \o h1)      *)
+rewrite <- hylo_unroll.
+       (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1                             *)
+\end{coqcode}
+  \caption{Rewrite steps to prove \coq{hylo_fusion_l} in our mechanisation. The
+steps are exactly the same that woudld be required in a manual pen-and-paper
+proof.}
+\label{fig:proof-fusion-l}
+\end{figure}
 % Qed.
 %   rewrite hylo_univ, fmap_comp, compA, <- E2,
 %           <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
@@ -1103,12 +1122,8 @@ Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C)
   % (* f2 \o hylo g1 h1 =e f2 \o (g1 \o (fmap (hylo g1 h1) \o h1)) *)
   % (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o (fmap (hylo g1 h1)) \o h1) *)
   % (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1 *)
-Using the hylo fusion law, we can prove the well-known \emph{deforestation
-optimisation}. This is when two consecutive recursive computations, one that
-builds a data structure, and another one that consumes it, can be fused together
-into a single recursive definition. This, in turn, allows us to prove that a
-recursive hylomorphism is the composition of a catamorphism and a recursive
-anamorphism.
+Proving the deforestation optimisation is a straightforward application
+of \coq{hylo_fusion_l} (or \coq{hylo_fusion_r}).,
 \begin{coqcode}
 Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
   (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
@@ -1157,7 +1172,11 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
 % by using Coq's proofs of hylomorphism laws as optimisation passes.
 
 \subsubsection{On the subtype of finite elements}
-In this development we have defined recursive anamorphisms on inductive data
+As we mention in
+Section~\ref{sec:rec-schemes}, we define recursive anamorphisms as
+hylomorphisms built by using a recursive coalgebra, and the respective
+initial \coq{F}-algebra.
+In other words, in this development we have defined recursive anamorphisms on inductive data
 types.  We might have as well defined them on the subtype of finite elements of
 coinductive data types using a predicate which states when an element of a
 coinductive data type is finite:
@@ -1189,9 +1208,16 @@ Lemma ccata_cata `{setoid A} : ccata l_in \o cata lg_in =e id.
 \end{coqcode}
 The finite subtype of \coq{GFix F} allows us to compose
 catamorphisms and anamorphisms, by using the above isomorphism. In our work,
-however, we use \emph{recursive} anamorphisms, defined as \coq{hylo l_in c} for
-a recursive coalgebra \coq{c}, which compose easily with
-catamorphisms.
+however, we use \emph{recursive} anamorphisms, defined as follows for
+a recursive coalgebra \coq{c}:
+\begin{coqcode}
+Definition rana c := hylo l_in c.
+\end{coqcode}
+
+\noindent
+The main advantage of this definition is that recursive anamorphisms
+compose with catamorphisms without the need to reason about termination
+and finiteness of values of coinductive types.
 % This predicate is equivalent to the proposition that
 % the anamorphism of such coalgebras produce only finite trees:
 % \begin{coqcode}
