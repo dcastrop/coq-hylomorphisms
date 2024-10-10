@@ -519,8 +519,7 @@ anamorphism on it:
 ana :: Functor b => (a -> b a) -> a -> CoFix b
 ana coalg = OutOp . fmap (ana coalg) . coalg
 \end{minted}
-
-For example, the streams of natural numbers can now be defined using an anamorphism
+For example, the stream of natural numbers can now be defined using an anamorphism
 \begin{minted}{haskell}
 nat :: CoFix (ListF Int)
 nat = ana (\x -> Cons x (x+1)) 0
@@ -590,8 +589,8 @@ hylo :: Functor f => (c -> f c) -> (f a -> a) -> c -> a
 hylo c a = a . fmap (hylo c a) . c
 \end{minted}
 
-A classic example of a divide-and-conquer algorithm that can be written as an hylomorphism is the quicksort program below:
-
+A classic example of a divide-and-conquer algorithm that can be written as an
+hylomorphism is the quicksort program below:
 \begin{minted}{haskell}
 partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r >= x])
 
@@ -600,9 +599,16 @@ quicksort [] = []
 quicksort (x:xs) = let (xs, x, ys) = partition x xs
                    in (quicksort xs) ++ [x] ++ (quicksort ys)
 \end{minted}
-The partition program takes an element \mintinline{haskell}{x} and a list and returns a triple consisting of a list with all the elements in the list smaller than \mintinline{haskell}{x}, the element itself and a list with all the elements in the list greater or equal than  \mintinline{haskell}{x}. The quicksort program first runs the partition program, which divides the list in three parts, calls itself recursively on the sublists and then puts the results together using the concatenation function.
+The partition program takes an element \mintinline{haskell}{x} and a list and
+returns a triple consisting of a list with all the elements in the list smaller
+than \mintinline{haskell}{x}, the element itself and a list with all the
+elements in the list greater or equal than  \mintinline{haskell}{x}. The
+quicksort program first runs the partition program, which divides the list in
+three parts, calls itself recursively on the sublists and then puts the results
+together using the concatenation function.
 
-To implement this as an hylo we define the functor representing trees where leaves are just empty and each node contains a value:
+To implement this as an hylo we define the functor representing trees where
+leaves are just empty and each node contains a value:
 \begin{minted}{haskell}
 data TreeF a k = Leaf | Branch k a k deriving Functor
 \end{minted}
