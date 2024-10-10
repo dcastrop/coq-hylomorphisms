@@ -376,7 +376,9 @@ class Functor f where
   fmap :: (a -> b) -> f a -> f b
 \end{minted}
 
-We now define the type of lists as usual and then show that it is an instance of the class \mintinline{haskell}{Functor} by implementing the \mintinline{haskell}{fmap} program:
+We now define the type of lists as usual and then show that it is an instance of
+the class \mintinline{haskell}{Functor} by implementing the
+\mintinline{haskell}{fmap} program:
 \begin{minted}{haskell}
 data List a = Nil | Cons a (List a)
 
@@ -460,7 +462,8 @@ follows
 sum :: Fix (ListF Int) -> Int
 sum xs = cata (\case { Nil -> 0; Cons n m -> n + m } )  xs
 \end{minted}
-In the program above, the code inside the lambda case is precisely the \mintinline{haskell}{ListF Int}-algebra for the catamorphism.
+In the program above, the code inside the lambda case is precisely the
+\mintinline{haskell}{ListF Int}-algebra for the catamorphism.
 
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
@@ -519,8 +522,7 @@ anamorphism on it:
 ana :: Functor b => (a -> b a) -> a -> CoFix b
 ana coalg = OutOp . fmap (ana coalg) . coalg
 \end{minted}
-
-For example, the streams of natural numbers can now be defined using an anamorphism
+For example, the stream of natural numbers can now be defined using an anamorphism
 \begin{minted}{haskell}
 nat :: CoFix (ListF Int)
 nat = ana (\x -> Cons x (x+1)) 0
@@ -590,8 +592,8 @@ hylo :: Functor f => (c -> f c) -> (f a -> a) -> c -> a
 hylo c a = a . fmap (hylo c a) . c
 \end{minted}
 
-A classic example of a divide-and-conquer algorithm that can be written as an hylomorphism is the quicksort program below:
-
+A classic example of a divide-and-conquer algorithm that can be written as an
+hylomorphism is the quicksort program below:
 \begin{minted}{haskell}
 partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r >= x])
 
@@ -600,9 +602,16 @@ quicksort [] = []
 quicksort (x:xs) = let (xs, x, ys) = partition x xs
                    in (quicksort xs) ++ [x] ++ (quicksort ys)
 \end{minted}
-The partition program takes an element \mintinline{haskell}{x} and a list and returns a triple consisting of a list with all the elements in the list smaller than \mintinline{haskell}{x}, the element itself and a list with all the elements in the list greater or equal than  \mintinline{haskell}{x}. The quicksort program first runs the partition program, which divides the list in three parts, calls itself recursively on the sublists and then puts the results together using the concatenation function.
+The partition program takes an element \mintinline{haskell}{x} and a list and
+returns a triple consisting of a list with all the elements in the list smaller
+than \mintinline{haskell}{x}, the element itself and a list with all the
+elements in the list greater or equal than  \mintinline{haskell}{x}. The
+quicksort program first runs the partition program, which divides the list in
+three parts, calls itself recursively on the sublists and then puts the results
+together using the concatenation function.
 
-To implement this as an hylo we define the functor representing trees where leaves are just empty and each node contains a value:
+To implement this as an hylo we define the functor representing trees where
+leaves are just empty and each node contains a value:
 \begin{minted}{haskell}
 data TreeF a k = Leaf | Branch k a k deriving Functor
 \end{minted}
@@ -736,23 +745,21 @@ represent families of positions. However, Ocaml's type system is not equipped to
 handle these, which will lead to extracting OCaml code with unsafe casts.
 
 Consider instead representing the positions of a container using a decidable
-validity predicate which assigns shapes to positions. In Coq, we use
-a boolean function and a coercion from \coq{bool} to \coq{Prop} to represent
-the decidable predicate \coq{valid}, similarly to SSReflect~\cite{GonthierL09}. Given
-a \coq{Shape : Type}, and a type of \emph{all possible positions} \coq{APos : Type},
-the family of
-positions for a given shape can be defined as a dependent pair:
+validity predicate which assigns shapes to positions. In Coq, we use a boolean
+function and a coercion from \coq{bool} to \coq{Prop} to represent the decidable
+predicate \coq{valid}, similarly to SSReflect~\cite{GonthierL09}. Given a
+\coq{Shape : Type}, and a type of \emph{all possible positions} \coq{APos : Type},
+the family of positions for a given shape can be defined as a dependent pair:
 \begin{coqcode}
 Definition Pos (s : Shape) = { p : APos | valid s p }.
 \end{coqcode}
 Coq's code extraction will now be able to erase the validity predicate, and
 generate OCaml code that is free of unsafe casts. The OCaml code extracted for
-\coq{Pos} will now be exactly the code extracted for \coq{APos}.
-The decidability of the validity predicate is crucial for our purposes of 
-remaining axiom-free. To illustrate this, suppose that we need to show
-the equality of two container extensions. We will need to show that, for
-the same positions, they will produce the same result. In Coq, the goal
-would look as follows: 
+\coq{Pos} will now be exactly the code extracted for \coq{APos}.  The
+decidability of the validity predicate is crucial for our purposes of  remaining
+axiom-free. To illustrate this, suppose that we need to show the equality of two
+container extensions. We will need to show that, for the same positions, they
+will produce the same result. In Coq, the goal would look as follows:
 \begin{coqcode}
  k : Pos s -> X
  P1, P2 : valid s p
