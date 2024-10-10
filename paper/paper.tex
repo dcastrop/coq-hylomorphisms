@@ -376,7 +376,9 @@ class Functor f where
   fmap :: (a -> b) -> f a -> f b
 \end{minted}
 
-We now define the type of lists as usual and then show that it is an instance of the class \mintinline{haskell}{Functor} by implementing the \mintinline{haskell}{fmap} program:
+We now define the type of lists as usual and then show that it is an instance of
+the class \mintinline{haskell}{Functor} by implementing the
+\mintinline{haskell}{fmap} program:
 \begin{minted}{haskell}
 data List a = Nil | Cons a (List a)
 
@@ -460,7 +462,8 @@ follows
 sum :: Fix (ListF Int) -> Int
 sum xs = cata (\case { Nil -> 0; Cons n m -> n + m } )  xs
 \end{minted}
-In the program above, the code inside the lambda case is precisely the \mintinline{haskell}{ListF Int}-algebra for the catamorphism.
+In the program above, the code inside the lambda case is precisely the
+\mintinline{haskell}{ListF Int}-algebra for the catamorphism.
 
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
@@ -519,8 +522,7 @@ anamorphism on it:
 ana :: Functor b => (a -> b a) -> a -> CoFix b
 ana coalg = OutOp . fmap (ana coalg) . coalg
 \end{minted}
-
-For example, the streams of natural numbers can now be defined using an anamorphism
+For example, the stream of natural numbers can now be defined using an anamorphism
 \begin{minted}{haskell}
 nat :: CoFix (ListF Int)
 nat = ana (\x -> Cons x (x+1)) 0
@@ -590,8 +592,8 @@ hylo :: Functor f => (c -> f c) -> (f a -> a) -> c -> a
 hylo c a = a . fmap (hylo c a) . c
 \end{minted}
 
-A classic example of a divide-and-conquer algorithm that can be written as an hylomorphism is the quicksort program below:
-
+A classic example of a divide-and-conquer algorithm that can be written as an
+hylomorphism is the quicksort program below:
 \begin{minted}{haskell}
 partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r >= x])
 
@@ -600,9 +602,16 @@ quicksort [] = []
 quicksort (x:xs) = let (xs, x, ys) = partition x xs
                    in (quicksort xs) ++ [x] ++ (quicksort ys)
 \end{minted}
-The partition program takes an element \mintinline{haskell}{x} and a list and returns a triple consisting of a list with all the elements in the list smaller than \mintinline{haskell}{x}, the element itself and a list with all the elements in the list greater or equal than  \mintinline{haskell}{x}. The quicksort program first runs the partition program, which divides the list in three parts, calls itself recursively on the sublists and then puts the results together using the concatenation function.
+The partition program takes an element \mintinline{haskell}{x} and a list and
+returns a triple consisting of a list with all the elements in the list smaller
+than \mintinline{haskell}{x}, the element itself and a list with all the
+elements in the list greater or equal than  \mintinline{haskell}{x}. The
+quicksort program first runs the partition program, which divides the list in
+three parts, calls itself recursively on the sublists and then puts the results
+together using the concatenation function.
 
-To implement this as an hylo we define the functor representing trees where leaves are just empty and each node contains a value:
+To implement this as an hylo we define the functor representing trees where
+leaves are just empty and each node contains a value:
 \begin{minted}{haskell}
 data TreeF a k = Leaf | Branch k a k deriving Functor
 \end{minted}
@@ -736,23 +745,21 @@ represent families of positions. However, Ocaml's type system is not equipped to
 handle these, which will lead to extracting OCaml code with unsafe casts.
 
 Consider instead representing the positions of a container using a decidable
-validity predicate which assigns shapes to positions. In Coq, we use
-a boolean function and a coercion from \coq{bool} to \coq{Prop} to represent
-the decidable predicate \coq{valid}, similarly to SSReflect~\cite{GonthierL09}. Given
-a \coq{Shape : Type}, and a type of \emph{all possible positions} \coq{APos : Type},
-the family of
-positions for a given shape can be defined as a dependent pair:
+validity predicate which assigns shapes to positions. In Coq, we use a boolean
+function and a coercion from \coq{bool} to \coq{Prop} to represent the decidable
+predicate \coq{valid}, similarly to SSReflect~\cite{GonthierL09}. Given a
+\coq{Shape : Type}, and a type of \emph{all possible positions} \coq{APos : Type},
+the family of positions for a given shape can be defined as a dependent pair:
 \begin{coqcode}
 Definition Pos (s : Shape) = { p : APos | valid s p }.
 \end{coqcode}
 Coq's code extraction will now be able to erase the validity predicate, and
 generate OCaml code that is free of unsafe casts. The OCaml code extracted for
-\coq{Pos} will now be exactly the code extracted for \coq{APos}.
-The decidability of the validity predicate is crucial for our purposes of 
-remaining axiom-free. To illustrate this, suppose that we need to show
-the equality of two container extensions. We will need to show that, for
-the same positions, they will produce the same result. In Coq, the goal
-would look as follows: 
+\coq{Pos} will now be exactly the code extracted for \coq{APos}.  The
+decidability of the validity predicate is crucial for our purposes of  remaining
+axiom-free. To illustrate this, suppose that we need to show the equality of two
+container extensions. We will need to show that, for the same positions, they
+will produce the same result. In Coq, the goal would look as follows:
 \begin{coqcode}
  k : Pos s -> X
  P1, P2 : valid s p
@@ -1758,11 +1765,14 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 %        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 %\end{itemize}
 Encoding recursion schemes in Coq is not new. We compare our work with other
-encodings of program calculation techniques in Coq and recursion schemes in Coq
-(Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}). Additionally, we compare our
-encoding of recursion schemes to other forms of termination checking for
-nonstructural recursion (Section~\ref{sec:termcheck}), and we discuss other
-approaches to fusion in functional programs (Section~\ref{sec:fusion}).
+encodings of program calculation techniques and recursion schemes in Coq, and
+discuss other approaches to fusion and to termination of nonstructural
+recursion.
+% and recursion schemes in Coq
+% (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}). Additionally, we compare our
+% encoding of recursion schemes to other forms of termination checking for
+% nonstructural recursion (Section~\ref{sec:termcheck}), and we discuss other
+% approaches to fusion in functional programs (Section~\ref{sec:fusion}).
 
 \subsection{Program Calculation}\label{sec:calccoq}
 
@@ -1803,26 +1813,29 @@ The authors justify well the use of impredicative \coq{Set} and its
 compatibility with the functional extensionality axiom. In contrast, our
 development remains entirely \emph{axiom-free}. Another key difference with our
 approach is that they do not discuss what the resulting extracted code
-\emph{looks like} (that is, whether the extracted OCaml code resembles the
-natural formulation of the recursive function). Through experiments, we found
-that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
-structure that may be hard to understand or interface with other OCaml code.
-Due to the great benefit of entirely avoiding termination proofs, it would be
-interesting to extend their approach to improve code extraction.
+\emph{looks like}.
+% (that is, whether the extracted OCaml code resembles the
+% natural formulation of the recursive function).
+Through experiments, we found that their formalisation leads to
+\ocaml{Obj.magic}, and code with a complex structure that may be hard to
+understand or interface with other OCaml code. Due to the great benefit of
+entirely avoiding termination proofs, it would be interesting to extend their
+approach to improve code extraction.
 
-\subsection{Termination Checking}\label{sec:termcheck}
+\subsection{Termination Checking of Nonstructural Recursion}\label{sec:termcheck}
 
-Termination and productivity are non-trivial properties of programs, and various
-methods have been proposed for checking that these properties hold. A common
-approach is guardedness checking~\cite{Eduardo94}, which is a
-\emph{syntactic} check that definitions avoid the introduction of
-non-normalizable terms. This sort of check generally looks for a
-\emph{structural decrease} of arguments in the recursive calls of a function.
-Coq uses such a check, and it works for many classic functional programming
-patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
-definitions will not be accepted by such checks.
+% Termination and productivity are non-trivial properties of programs, and various
+% methods have been proposed for checking that these properties hold. A common
+% approach is guardedness checking~\cite{Eduardo94}, which is a
+% \emph{syntactic} check that definitions avoid the introduction of
+% non-normalizable terms. This sort of check generally looks for a
+% \emph{structural decrease} of arguments in the recursive calls of a function.
+% Coq uses such a check, and it works for many classic functional programming
+% patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
+% definitions will not be accepted by such checks.
 
-In particular, the problem of \emph{nonstructural recursion} (including
+%In particular,
+The problem of \emph{nonstructural recursion} (including
 divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % A distinction between standard and
 % nonstandard recursion lies in the fact that standard recursion adheres strictly
@@ -1858,21 +1871,28 @@ created between chained operations. A well-known method of deforestation is
 fusing list-producing functions (like \haskell{map} or \haskell{filter}) with
 list-consuming ones (like \haskell{foldr}), avoiding the creation of temporary
 lists.
-
+%
 Extending this idea, stream fusion generalizes the concept to handle other data
 types, using a lazy stream abstraction to represent sequences and fuse
-transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}. Both
-approaches eliminate redundant structures and ensure computations happen in a
-single efficient pass over the data.
+transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
+% Both approaches eliminate redundant structures and ensure computations happen in
+% a single efficient pass over the data.
 
-Another dimension of fusion is \emph{tupling}, a technique used to combine
-multiple recursive functions into a single function by grouping their results
-into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
-the same data structure when multiple operations are applied. In addition to
-techniques like \haskell{foldr/build} fusion and stream fusion, tupling
-complements deforestation by allowing multiple recursive functions to share a
-single traversal, further optimizing computations and minimizing intermediate
-data structures.
+% Another dimension of fusion is \emph{tupling}, a technique used to combine
+% multiple recursive functions into a single function by grouping their results
+% into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
+% the same data structure when multiple operations are applied.
+% In addition to
+% techniques like \haskell{foldr/build} fusion and stream fusion, tupling
+% complements deforestation by allowing multiple recursive functions to share a
+% single traversal, further optimizing computations and minimizing intermediate
+% data structures.
+
+In the context of Coq, Danvy explores the use of fold/unfold lemmas to mechanize
+equational reasoning about recursive programs in the Coq proof
+assistant~\cite{DANVY_2022}. By formalizing recursive program transformations,
+fold-unfold lemmas enable optimizations like fusion by allowing programs to be
+systematically simplified, eliminating intermediate structures.
 
 \section{Conclusions and Future Work}
 
