@@ -1891,11 +1891,13 @@ transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
 % single traversal, further optimizing computations and minimizing intermediate
 % data structures.
 
-In the context of Coq, Danvy explores the use of fold/unfold lemmas to mechanize
+In the context of Coq, Danvy explains the use of fold/unfold lemmas to mechanize
 equational reasoning about recursive programs in the Coq proof
 assistant~\cite{DANVY_2022}. By formalizing recursive program transformations,
 fold-unfold lemmas enable optimizations like fusion by allowing programs to be
-systematically simplified, eliminating intermediate structures.
+systematically simplified, eliminating intermediate structures. Additionally, an
+approach to deforestation called the worker/wrapper transformation~\cite{gill09}
+was formalised and mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}.
 
 \section{Conclusions and Future Work}
 
