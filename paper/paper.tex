@@ -872,7 +872,7 @@ Inductive AppR F `{setoid X} (x y : App F X) : Prop :=
 \end{coqcode}
 Note the use of \coq{=e} instead of Coq's standard equality.  For positions,
 however, we chose to use Coq's propositional equality, since this leads
-to simpler code. We explain why in Section~\ref{sec:algebras}, and the
+to simpler code. We explain why in Section~\ref{sec:coq-algebras}, and the
 mechanisation of initial algebras of container extensions.
 %The definitions in
 %Figure~\ref{fig:poly} are redefined to account for these changes in a
@@ -973,13 +973,13 @@ positions.
 \label{sec:recursion-schemes}
 Recursion schemes provide an abstract way to consume and generate data. We now
 proceed onto describing how to formalise hylomorphisms in Coq. We first
-formalise algebras for container extensions (Section~\ref{sec:algebras}), then
-we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together
+formalise algebras for container extensions (Section~\ref{sec:coq-algebras}), then
+we formalise coalgebras (Section~\ref{sec:coq-coalg}) and then we put together
 these notions to formalise recursive coalgebras and hylomorphisms
-(Section~\ref{sec:rec-coalgebras}).
+(Section~\ref{sec:coq-rec-coalgebras}).
 
 \subsection{Algebras and Catamorphisms for Containers}
-\label{sec:algebras}
+\label{sec:coq-algebras}
 
 Recall that an algebra is a set $A$ together with a morphism that defines the
 operations of the algebra $F\;A \to A$.  Given a type \coq{A} and a container
@@ -1048,7 +1048,7 @@ shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
 catamorphism.
 
 \subsection{Coalgebras and Anamorphisms}
-\label{sec:coalg}
+\label{sec:coq-coalg}
 
 In general, for a container \coq{F}, an \coq{F}-coalgebra is a pair of a carrier
 \coq{X} and a structure map \coq{X -> App F X}.  In our development we use the
@@ -1095,7 +1095,7 @@ that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the
 same coalgebra.
 
 \subsection{Mechanising Hylomorphisms}
-\label{sec:rec-coalgebras}
+\label{sec:coq-rec-coalgebras}
 Recall that hylomorphisms capture the concept of \emph{divide-and-conquer}
 algorithms where the input is first destructured (\emph{divide}) in smaller
 parts by means of a coalgebra which are computed recursively and then composed
@@ -1180,7 +1180,7 @@ uniqueness law of recursive hylomorphisms; (2) rewrite the goal using the
 property that functors preserve composition; (3) rewrite the goal using the
 condition of \coq{hylo_fusion_l}; (4) use the uniqueness law of hylomorphisms to
 fold $a \circ F \; f \circ c$ into $f$.
-\begin{figure}
+\begin{figure}[t!]
 \begin{coqcode}
 (* E2 : f2 \o g1 =e g2 \o fmap f2 *)
 (* ------------------------------------- *)
@@ -1188,10 +1188,10 @@ fold $a \circ F \; f \circ c$ into $f$.
 apply hylo_uniq.
        (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1        *)
 rewrite fmap_comp.
-(* rearranging by associativity *)
+rewrite ... (* rearranging by associativity *)
        (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
 rewrite <- E2.
-(* rearranging by associativity *)
+rewrite ... (* rearranging by associativity *)
        (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o fmap (hylo g1 h1)) \o h1)      *)
 rewrite <- hylo_unroll.
        (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1                             *)
@@ -2020,7 +2020,7 @@ Here, the position \coq{inl f} is impossible, as
 \coq{f} would need to be a proof of \coq{False}.
 Of the two remaining positions, the left one will return
 \coq{true}, and the right position \coq{false}.
-\begin{figure}
+\begin{figure}[t!]
 \begin{minipage}{.52\textwidth}
   \begin{minted}[linenos, fontsize=\small]{Coq}
 Context `(C1 : Cont S1 P1)
