@@ -446,7 +446,8 @@ cata :: Functor f => (f a -> a) -> Fix f -> a
 cata alg = alg . fmap (cata alg) . In
 \end{minted}
 
-As an example of how to construct inductive types we define the functor $X \mapsto 1 + A \times X$ as data type parameterized by a type:
+As an example of how to construct inductive types we define the functor
+$X \mapsto 1 + A \times X$ as data type parameterized by a type:
 \begin{minted}{haskell}
 data ListF a x = Nil | Cons a deriving Functor
 newtype List a = (Fix ListF) a
@@ -587,8 +588,35 @@ map f = foldr (\x xs -> (f x):xs) []
 
 
 \begin{minted}{haskell}
-hylo :: (c -> f c) -> (a -> f a) -> c -> a
-hylo c a = a . fmap (hylo c a). c
+hylo :: Functor f => (c -> f c) -> (f a -> a) -> c -> a
+hylo c a = a . fmap (hylo c a) . c
+\end{minted}
+
+ As an example, we the quicksort program can be written as an hylomorphism
+
+% quicksort :: [Int] -> [Int]
+% quicksort (x:xs) = let (xs, x, ys) = partition x xs
+%                in (quicksort xs) ++ [x] ++ (quicksort ys)
+%   where
+%     partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r > x])
+
+\begin{minted}{haskell}
+data TreeF a k = Leaf | Branch k a k deriving Functor
+\end{minted}
+
+\begin{minted}{haskell}
+divide :: [Int] -> TreeF Int [Int]
+divide [] = Leaf
+divide (p:xs) = Branch [l | l <- xs, l < p] p [r | r <- xs, r > p]
+\end{minted}
+
+\begin{minted}{haskell}
+conquer :: TreeF Int [Int] -> [Int]
+conquer Leaf = []
+conquer (Branch ls x rs) = ls ++ [x] ++ rs
+\end{minted}
+\begin{minted}{haskell}
+quicksort' = hylo divide conquer
 \end{minted}
 
 \subsubsection{Recursive Anamorphisms}
