@@ -281,8 +281,8 @@ schemes.
   \item In Section~\ref{sec:containers} we formalise the type of container
 functors ensuring the presence of least and greatest fixed-points for functors
 and suitably adapted for program extraction.
-  \item In Section~\ref{sec:recursion-schemes} we formalise folds, unfolds and
-hylomorhisms and their universal properties.
+  \item In Section~\ref{sec:recursion-schemes} we mechanise folds, unfolds, and
+hylomorphisms, as well as proving their uniqueness properties in Coq.
   \item In Section~\ref{sec:examples} we use the framework to formalise examples
 of divide-and-conquer, dynamic programming, and mutual recursion algorithms.
 Furthermore we verify the short-cut fusion optimisation and show the extracted
@@ -629,7 +629,7 @@ anamorphism}. We can show that recursive anamorphisms of type $X \to \nu F$
 can also be given the type $X \to \mu F$. Moreover, these anamorphisms are
 exactly hylomorphisms on the recursive $F$-coalgebra and the
 algebra $\InIso$ for the inductive data type $\nu F$. This fact falls out
-from the universality property of the hylomorphism and the fact that recursive
+from the uniqueness property of the hylomorphism and the fact that recursive
 anamorphisms satisfy the same equation.
 
 
@@ -1135,7 +1135,7 @@ hylo : forall F `{setoid A} `{setoid B}, Alg F B ~> RCoalg F A ~> A ~> B
 Finally, we show that recursive hylomorphisms are the unique solution to the
 hylomorphism equation.
 \begin{coqcode}
-Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
+Lemma hylo_uniq (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
 \end{coqcode}
 Hylomorphisms fusion falls out from this uniqueness property:
@@ -1166,7 +1166,7 @@ fold $a \circ F \; f \circ c$ into $f$.
 (* ------------------------------------- *)
 (* Goal : f2 \o hylo g1 h1 =e hylo g2 h1 *)
 
-apply hylo_univ.
+apply hylo_uniq.
        (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1        *)
 rewrite fmap_comp.
        (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
@@ -1185,10 +1185,10 @@ proof.}
 \label{fig:proof-fusion-l}
 \end{figure}
 % Qed.
-%   rewrite hylo_univ, fmap_comp, compA, <- E2,
+%   rewrite hylo_uniq, fmap_comp, compA, <- E2,
 %           <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
 
-  % rewrite hylo_univ, fmap_comp, compA, <- E2,
+  % rewrite hylo_uniq, fmap_comp, compA, <- E2,
   %         <- compA, <- compA, (compA g1), <- hylo_unr.  reflexivity.
 
   % (* f2 \o hylo g1 h1 =e hylo g2 h1 *)
