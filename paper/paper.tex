@@ -1128,8 +1128,13 @@ Lemma hylo_fusion_r
 
 \noindent
 It is important to highlight that, in our mechanisation, these proofs follow
-\emph{exactly} the steps that one would do in a pen-and-paper proof.
-We show the series of rewrite steps for \coq{hylo_fusion_l} in Figure~\ref{fig:proof-fusion-l}:
+\emph{exactly} the steps that one would do in a pen-and-paper proof.  We show
+the series of rewrite steps for \coq{hylo_fusion_l} in
+Figure~\ref{fig:proof-fusion-l}. The steps of this proof are: (1) apply the
+uniqueness law of recursive hylomorphisms; (2) rewrite the goal using the
+property that functors preserve composition; (3) rewrite the goal using the
+condition of \coq{hylo_fusion_l}; (4) use the uniqueness law of hylomorphisms to
+fold $a \circ F \; f \circ c$ into $f$.
 \begin{figure}
 \begin{coqcode}
 (* E2 : f2 \o g1 =e g2 \o fmap f2 *)
@@ -1558,7 +1563,8 @@ containers.
 \begin{coqcode}
 Definition MemoShape : Type := A * Sg.
 Definition MemoPos := Pg.
-Instance Memo : Cont MemoShape MemoPos := { valid := valid \o pair (snd \o fst) snd }.
+Instance Memo : Cont MemoShape MemoPos
+  := { valid := valid \o pair (snd \o fst) snd }.
 
 Definition Table := LFix Memo.
 \end{coqcode}
@@ -1618,7 +1624,10 @@ inlined to produce the following:
 \begin{ocamlcode}
 let knapsack wvs x = let (y, _) =
     (let rec f x0 =
-      if x0=0 then Uint63.of_int (0)
+      if x0=0 then
+        { lFix_out = {
+             shape = Uint63.of_int (0);
+             cont  = fun _ -> f 0 } }
       else let fn := f (x0-1) in { lFix_out = { 
            shape = (max_int (Uint63.of_int (0)) (memo_knap fn wvs), sx);
            cont = fun _ -> fn } }
@@ -1673,11 +1682,12 @@ Defined.
 \end{coqcode}
 From this, we extract the following OCaml code:
 \begin{ocamlcode}
-let rec sf1 f ys = function | [] -> let rec f0 = function
-                                      | [] -> (Uint63.of_int (0))
-                                      | _ :: t -> add (Uint63.of_int (1)) (f0 t)
-                                    in f0 ys
-                            | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
+let rec sf1 f ys =
+  function | [] -> let rec f0 = function
+                   | [] -> (Uint63.of_int (0))
+                   | _ :: t -> add (Uint63.of_int (1)) (f0 t)
+                   in f0 ys
+           | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
 \end{ocamlcode}
 
 We then prove that the length function fuses with
@@ -1774,8 +1784,6 @@ Coq uses such a check, and it works for many classic functional programming
 patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
 definitions will not be accepted by such checks.
 
-\mvol{Do we need to discuss this or can we cut it?}
-
 In particular, the problem of \emph{nonstructural recursion} (including
 divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % A distinction between standard and
@@ -1794,6 +1802,9 @@ library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
 mergesort''~\cite{AbreuDHJMS23}.
+There are common approaches in Coq to deal with termination, but none of these
+approaches address program calculation techniques, and the mechanisation of
+fusion laws.
 
 \section{Conclusions and Future Work}
 
