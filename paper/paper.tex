@@ -592,7 +592,7 @@ hylo c a = a . fmap (hylo c a) . c
 
 A classic example of a divide-and-conquer algorithm that can be written as an hylomorphism is the quicksort program below:
 
-\begin{minded}{haskell}
+\begin{minted}{haskell}
 partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r >= x])
 
 quicksort :: [Int] -> [Int]
@@ -622,9 +622,18 @@ Finally, quicksort can be rewritten as an hylomorphism
 \begin{minted}{haskell}
 quicksort = hylo divide conquer
 \end{minted}
-As an important remark we have used the in-built list type for keeping the code as tidy as possible, but it would have been possible to use the inductive \mintinline{haskell}{List} type we defined above and define both  \mintinline{haskell}{divide} and \mintinline{haskell}{conquer} via catamorphisms.
+As an important remark we have used the in-built list type for keeping the code
+as tidy as possible, but it would have been possible to use the inductive
+\mintinline{haskell}{List} type we defined above and define both
+\mintinline{haskell}{divide} and \mintinline{haskell}{conquer} via
+catamorphisms.
 
-Finally, it is important to note that both  \mintinline{haskell}{divide} and  \mintinline{haskell}{conquer} are not initial algebras or terminal coalgebras on \mintinline{haskell}{ListF}. These are rather (co)algebras on \mintinline{haskell}{ListF}.  Hence the terminating argument relies solely on the fact that \mintinline{haskell}{divide} is a recursive coalgebra thus there is an unique solution to \mintinline{haskell}{hylo divide conquer}.
+Finally, it is important to note that both  \mintinline{haskell}{divide} and
+\mintinline{haskell}{conquer} are not initial algebras or terminal coalgebras on
+\mintinline{haskell}{ListF}. These are rather (co)algebras on
+\mintinline{haskell}{ListF}.  Hence the terminating argument relies solely on
+the fact that \mintinline{haskell}{divide} is a recursive coalgebra thus there
+is an unique solution to \mintinline{haskell}{hylo divide conquer}.
 
 \subsubsection{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
