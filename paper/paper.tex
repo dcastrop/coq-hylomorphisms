@@ -578,46 +578,62 @@ allows us to prove that a recursive hylomorphism is the composition of a
 catamorphism and a recursive anamorphism.
 
 \subsubsection{Haskell Implementation of Hylomorphisms}
-which is very useful in list processing. As a fold, The frequently used function
-map is also a fold:
-\begin{minted}{haskell}
-map :: (a -> b) -> [a] -> [b]
-map f = foldr (\x xs -> (f x):xs) []
-\end{minted}
- and can be
-
-
+% which is very useful in list processing. As a fold, The frequently used function
+% map is also a fold:
+% \begin{minted}{haskell}
+% map :: (a -> b) -> [a] -> [b]
+% map f = foldr (\x xs -> (f x):xs) []
+% \end{minted}
+We implement the hylomorphism tightly following the theory explained above:
 \begin{minted}{haskell}
 hylo :: Functor f => (c -> f c) -> (f a -> a) -> c -> a
 hylo c a = a . fmap (hylo c a) . c
 \end{minted}
 
- As an example, we the quicksort program can be written as an hylomorphism
+A classic example of a divide-and-conquer algorithm that can be written as an hylomorphism is the quicksort program below:
 
-% quicksort :: [Int] -> [Int]
-% quicksort (x:xs) = let (xs, x, ys) = partition x xs
-%                in (quicksort xs) ++ [x] ++ (quicksort ys)
-%   where
-%     partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r > x])
+\begin{minted}{haskell}
+partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r >= x])
 
+quicksort :: [Int] -> [Int]
+quicksort [] = []
+quicksort (x:xs) = let (xs, x, ys) = partition x xs
+                   in (quicksort xs) ++ [x] ++ (quicksort ys)
+\end{minted}
+The partition program takes an element \mintinline{haskell}{x} and a list and returns a triple consisting of a list with all the elements in the list smaller than \mintinline{haskell}{x}, the element itself and a list with all the elements in the list greater or equal than  \mintinline{haskell}{x}. The quicksort program first runs the partition program, which divides the list in three parts, calls itself recursively on the sublists and then puts the results together using the concatenation function.
+
+To implement this as an hylo we define the functor representing trees where leaves are just empty and each node contains a value:
 \begin{minted}{haskell}
 data TreeF a k = Leaf | Branch k a k deriving Functor
 \end{minted}
-
+Now the partition program can be written as a  \mintinline{haskell}{TreeF}-coalgebra
 \begin{minted}{haskell}
 divide :: [Int] -> TreeF Int [Int]
 divide [] = Leaf
 divide (p:xs) = Branch [l | l <- xs, l < p] p [r | r <- xs, r > p]
 \end{minted}
-
+and the concatenation function can be written as  \mintinline{haskell}{TreeF}-algebra
 \begin{minted}{haskell}
 conquer :: TreeF Int [Int] -> [Int]
 conquer Leaf = []
 conquer (Branch ls x rs) = ls ++ [x] ++ rs
 \end{minted}
+Finally, quicksort can be rewritten as an hylomorphism
 \begin{minted}{haskell}
-quicksort' = hylo divide conquer
+quicksort = hylo divide conquer
 \end{minted}
+As an important remark we have used the in-built list type for keeping the code
+as tidy as possible, but it would have been possible to use the inductive
+\mintinline{haskell}{List} type we defined above and define both
+\mintinline{haskell}{divide} and \mintinline{haskell}{conquer} via
+catamorphisms.
+
+Finally, it is important to note that both  \mintinline{haskell}{divide} and
+\mintinline{haskell}{conquer} are not initial algebras or terminal coalgebras on
+\mintinline{haskell}{ListF}. These are rather (co)algebras on
+\mintinline{haskell}{ListF}.  Hence the terminating argument relies solely on
+the fact that \mintinline{haskell}{divide} is a recursive coalgebra thus there
+is an unique solution to \mintinline{haskell}{hylo divide conquer}.
 
 \subsubsection{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
