@@ -691,12 +691,15 @@ predicate, if we know that \coq{P1} and \coq{P2} are of type
 \coq{valid s p = true}, then we can prove without any axioms that 
 \coq{P1 = P2 = eq_refl}.
 
+Suppose that \coq{F} is a container represented in Coq. One can think of these
+\coq{F} as pairs containing the shapes and families of positions (which are, in
+turn, defined in terms of decidable validity predicates).
 An extension of a container \coq{F}, \coq{App F} in Coq, is then defined as
 follows:
 \begin{coqcode}
 Record App F (X : Type)
    := { shape : Shape F; cont : {p | valid shape p} -> X }.
-% \end{coqcode}
+\end{coqcode}
 
 This approach solves the problem of the unsafe casts, since the code extracted
 for \coq{{p | valid shape p}} will be an OCaml singleton type defined as the
@@ -721,7 +724,7 @@ value. This is to simplify (slightly) our proofs. This relation is trivially
 However, the use of a different equality for container extensions now forces us
 to deal with the fact that some types have different definitions of equality.
 In particular, we want to reason about the equality of functions of types such
-as \coq{App A -> B} (or \coq{B -> App A}).
+as \coq{App F A -> B} (or \coq{B -> App F A}).
 %
 Since these types now come with their own equivalence, any function that
 manipulates them needs to be \emph{respectful}; i.e.\ given
@@ -787,7 +790,7 @@ Inductive AppR F `{setoid X} (x y : App F X) : Prop :=
              (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
 \end{coqcode}
 Note the use of \coq{=e} instead of Coq's standard equality.  For positions,
-however, we chose to use Coq's propositional equality, since these would leads
+however, we chose to use Coq's propositional equality, since this leads
 to simpler code. We explain why in Section~\ref{sec:algebras}, and the
 mechanisation of initial algebras of container extensions.
 %The definitions in
@@ -879,6 +882,8 @@ Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
 {| shape := (shape (fst x), shape (snd x));
    cont := case_pos (cont (fst x)) (cont (snd x)) |}.
 \end{coqcode}
+
+\noindent
 Proving that the composition of these functions is the identity is
 straightforward using the fact that \coq{Prod} containers only have two valid
 positions.
@@ -905,7 +910,7 @@ Notation Alg F A := (App F A ~> A).
 \end{coqcode}
 
 \noindent
-For simplicity, we will abuse terminology, and we calling these
+For simplicity, we will abuse terminology, and call these
 \coq{F}-algebras, instead of `\coq{App F}'-algebras.
 
 The initial \coq{F}-algebra can be defined as follows, thanks to the use of
@@ -913,15 +918,19 @@ containers:
 \begin{coqcode}
 Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
+
+\noindent
 where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its inverse $\InOp$ (see Section~\ref{sec:rec-schemes}).
 As an example, the initial \coq{F}-algebra for the
-functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
+container that is isomorpic to the functor
+\coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
 being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
 operation \coq{Cons : A * LFix F -> LFix F}.
 
 We define \coq{LFix} as a setoid, where its equivalence relation can be
-described as the least fixed point of \coq{AppR}. We define smart
-constructors for the isomorphism of least fixed points as respectful morphisms:
+described as the least fixed point of \coq{AppR} (see
+Section~\ref{sec:types-morphisms}). We define smart constructors for the
+isomorphism of least fixed points as respectful morphisms:
 \begin{coqcode}
 l_in : App F (LFix F) ~> LFix F         l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
@@ -930,24 +939,30 @@ Catamorphisms are constructed, as expected, so that they structurally
 deconstruct the datatype, call themselves recursively, and then compose the
 result using an \coq{F}-algebra.
 \begin{coqcode}
-Definition cata_f F (alg : Alg F A) : LFix -> A
+Definition cata_f (alg : Alg F A) : LFix -> A
   := fix f (x : LFix)
      := match x with
         | LFix_in ax =>
              alg {shape := shape ax; cont := fun e => f (cont ax e)}
         end.
 \end{coqcode}
+
 It is easy to show that this function is a respectful morphism of
 \coq{F}-algebras. In fact, it is possible to define it as a map of the
 following type:
 \begin{coqcode}
-  cata : forall F `{setoid A}, Alg F A ~> LFix ~> A
+  cata : forall `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
-We prove that catamorphisms satisfy the universality property we explained previously:
+
+\noindent
+We prove that catamorphisms satisfy the universality property we explained in
+Section~\ref{sec:rec-schemes}:
 \begin{coqcode}
 Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
     : f =e cata alg <-> f =e alg \o fmap f \o l_out.
 \end{coqcode}
+
+\noindent
 In other words, if there is any other \coq{f} with the same structural recursive
 shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
 catamorphism.
@@ -973,7 +988,7 @@ where \coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix_in} is its
 inverse witnessing the isomorphism. Similarly to \coq{LFix}, \coq{GFix} is also
 defined as a setoid, with an equivalence relation that is the greatest fixpoint
 of \coq{AppR}. Additionally, we define smart constructors for the isomorphism of
-greatest fixed points
+greatest fixed points:
 \begin{coqcode}
 g_in : App F (GFix F) ~> GFix F          g_out : GFix F ~> App F (GFix F)
 \end{coqcode}
@@ -988,6 +1003,8 @@ Definition ana_f_ (c : Coalg F A) :=
 
 Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*...*)
 \end{coqcode}
+
+\noindent
 From this definition the universality property falls out:
 \begin{coqcode}
 Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix F)
@@ -997,19 +1014,19 @@ In words, for any \coq{F}-coalgebra, if there is any other function \coq{f}
 that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the
 same coalgebra.
 
-\subsection{Recursive Coalgebras and Hylomorphism}
+\subsection{Mechanising Hylomorphisms}
 \label{sec:rec-coalgebras}
 Recall that hylomorphisms capture the concept of \emph{divide-and-conquer}
 algorithms where the input is first destructured (\emph{divide}) in smaller
 parts by means of a coalgebra which are computed recursively and then composed
 back together (\emph{conquer}) by means of an algebra.
 
-In general given an $F$-algebra and $F$-coalgebra, the hylomorphism is the
-unique solution (when it exists) to the equation
-\begin{equation}
-  \label{eq:hylo}
+As we mentioned in Section~\ref{sec:rec-schemes}, given an $F$-algebra and
+$F$-coalgebra, the hylomorphism is the unique solution (when it exists) to the
+equation
+\[
   f = a \circ F\; f \circ c
-\end{equation}
+\]
 As we stated earlier, a solution to this equation does not exist for an
 arbitrary  algebra/coalgebra pair and, in fact, this definition cannot be
 accepted by Coq.
@@ -1027,8 +1044,11 @@ Inductive RecF (h : Coalg F A) : A -> Prop :=
 \end{coqcode}
 
 \noindent
-A recursive coalgebra of type \coq{RCoalg F A} is a coalgebra
-\coq{c} such that \coq{forall x, RecF c x}.
+For convenience, we package recursive coalgebras with their proofs that they
+terminate for all inputs:
+\begin{coqcode}
+Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
+\end{coqcode}
 Recursive hylomorphisms are implemented in Coq recursively on the structure of
 the proof for the type (\coq{RecF}) as follows:
 \begin{coqcode}
@@ -1038,19 +1058,14 @@ Definition hylo_def (a : Alg F B) (c : Coalg F A)
      := match c x as cx
           return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B
         with
-        | MkApp sx kx => fun H => a (MkApp sx (fun e => f (kx e) (H e)))
+        | cx => fun H =>
+            a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
         end (RecF_inv H).
 \end{coqcode}
 
 \noindent
 We use \coq{RecF_inv} to obtain the structurally smaller proof to use in
 the recursive calls.
-
-For convenience, we package coalgebras with their proofs that they terminate for
-all inputs:
-\begin{coqcode}
-Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
-\end{coqcode}
 
 \noindent
 As we did with catamorphisms and anamorphisms, we
