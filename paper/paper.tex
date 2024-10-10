@@ -1164,13 +1164,11 @@ Hylomorphisms fusion falls out from this uniqueness property:
 \begin{coqcode}
 Lemma hylo_fusion_l
   (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C) (f2 : B ~> C)
-  : f2 \o g1 =e g2 \o fmap f2 ->
-    f2 \o hylo g1 h1 =e hylo g2 h1.
+  : f2 \o g1 =e g2 \o fmap f2 -> f2 \o hylo g1 h1 =e hylo g2 h1.
 
 Lemma hylo_fusion_r
   (h1 : RCoalg F B) (g1 : Alg F C) (h2 : RCoalg F A) (f1 : A ~> B)
-  :  h1 \o f1 =e fmap f1 \o h2 ->
-     hylo g1 h1 \o f1 =e hylo g1 h2.
+  :  h1 \o f1 =e fmap f1 \o h2 -> hylo g1 h1 \o f1 =e hylo g1 h2.
 \end{coqcode}
 
 \noindent
@@ -1187,20 +1185,19 @@ fold $a \circ F \; f \circ c$ into $f$.
 (* E2 : f2 \o g1 =e g2 \o fmap f2 *)
 (* ------------------------------------- *)
 (* Goal : f2 \o hylo g1 h1 =e hylo g2 h1 *)
-
 apply hylo_uniq.
        (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1        *)
 rewrite fmap_comp.
-       (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
-rewrite [...]. (* rearranging by associativity *)
+(* rearranging by associativity *)
        (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
 rewrite <- E2.
-       (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1      *)
-rewrite [...]. (* rearranging by associativity *)
+(* rearranging by associativity *)
        (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o fmap (hylo g1 h1)) \o h1)      *)
 rewrite <- hylo_unroll.
        (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1                             *)
 \end{coqcode}
+
+  \vspace{-.5cm}
   \caption{Rewrite steps to prove \coq{hylo_fusion_l} in our mechanisation. The
 steps are exactly the same that woudld be required in a manual pen-and-paper
 proof.}
@@ -1468,7 +1465,6 @@ the following algebra and coalgebra.
            end
   )}|.
 Defined.
-
 Definition c_split : Coalg (TreeF unit int) (list int).
 |{ x ~> match x with
         | nil => a_leaf tt
@@ -1619,10 +1615,10 @@ Memoisation tables are the least fixed point of the container defined by shapes
 \coq{A * Sg} and positions \coq{Pg}, given a a container \coq{G : Cont Sg Pg}.
 We define a function to insert elements into the memo tables:
 \begin{coqcode}
-  Definition Cons : A * App G Table ~> App Memo Table := (* *)
+Definition Cons : A * App G Table ~> App Memo Table := (* *)
 \end{coqcode}
-And two functions to inspect the head of a memo table, and remove an
-element from it:
+And two functions, to inspect the head of a table, and remove an
+element:
 \begin{coqcode}
 Definition headT : Table ~> A := (* *)
 Definition tailT : Table ~> App G Table := (* *)
@@ -1633,7 +1629,7 @@ paths will be natural numbers.
 Using these definitions, a dynamorphism is defined as follows:
 \begin{coqcode}
 Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
-:= headT \o hylo (l_in \o Cons \o pair a id) c.
+  := headT \o hylo (l_in \o Cons \o pair a id) c.
 \end{coqcode}
 Note how, instead of an algebra \coq{App G A ~> A}, the algebra takes a
 memo table. The definition of the algebra can use this table to lookup
@@ -1649,15 +1645,13 @@ Fixpoint memo_knap table wvs :=
       | None => memo_knapsack table t
       end
   end.
-
 Definition knapsack_alg (wvs : list (nat * int))
   (x : App NatF (Table NatF int)) : int :=
   match x with | MkCont sx kx => match sx with
   | inl tt => fun kx => 0%sint63
   | inr tt => fun kx => let tbl := kx next_elem in max_int 0 (memo_knap tbl wvs)
   end kx end.
-Definition knapsackA wvs : App NatF (Table NatF int) ~> int := 
-  (* [knapsack_alg wvs] as a respecful morphism *)
+Definition knapsackA wvs : App NatF (Table NatF int) ~> int :=  (* ... *)
 \end{coqcode}
 The hylomorphism for knapsack is as follows, where \coq{out_nat} is the
 recursive coalgebra for \coq{nat}.
@@ -1669,13 +1663,10 @@ case. We have manually inlined the extracted code for simplicity. The reader
 can check in our artefact that the extracted code can be trivially
 inlined to produce the following:
 \begin{ocamlcode}
-let knapsack wvs x = let (y, _) =
-    (let rec f x0 =
+let knapsack wvs x = let (y, _) = (let rec f x0 =
       if x0=0 then
-        { lFix_out = {
-             shape = Uint63.of_int (0);
-             cont  = fun _ -> f 0 } }
-      else let fn := f (x0-1) in { lFix_out = { 
+        { lFix_out = {shape = Uint63.of_int (0); cont  = fun _ -> f 0 } }
+      else let fn := f (x0-1) in { lFix_out = {
            shape = (max_int (Uint63.of_int (0)) (memo_knap fn wvs), sx);
            cont = fun _ -> fn } }
      in f x).lFix_out.shape in y
@@ -1737,8 +1728,9 @@ let rec sf1 f ys =
            | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
 \end{ocamlcode}
 
-We then prove that the length function fuses with
-the naive quadratic \emph{reverse} function:
+\noindent
+We then prove that \ocaml{length} fuses with
+the naive quadratic \ocaml{reverse} function:
 \begin{coqcode}
 Definition sf2 : Ext (length \o reverse).
   calculate.  unfold length, reverse. rewrite hylo_fusion_l.
