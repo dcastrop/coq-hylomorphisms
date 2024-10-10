@@ -1186,16 +1186,13 @@ fold $a \circ F \; f \circ c$ into $f$.
 (* E2 : f2 \o g1 =e g2 \o fmap f2 *)
 (* ------------------------------------- *)
 (* Goal : f2 \o hylo g1 h1 =e hylo g2 h1 *)
-
 apply hylo_uniq.
        (* f2 \o hylo g1 h1 =e (g2 \o fmap (f2 \o hylo g1 h1)) \o h1        *)
 rewrite fmap_comp.
-       (* f2 \o hylo g1 h1 =e (g2 \o (fmap f2 \o fmap (hylo g1 h1))) \o h1 *)
-rewrite [...]. (* rearranging by associativity *)
+(* rearranging by associativity *)
        (* f2 \o hylo g1 h1 =e ((g2 \o fmap f2) \o fmap (hylo g1 h1)) \o h1 *)
 rewrite <- E2.
-       (* f2 \o hylo g1 h1 =e ((f2 \o g1) \o fmap (hylo g1 h1)) \o h1      *)
-rewrite [...]. (* rearranging by associativity *)
+(* rearranging by associativity *)
        (* f2 \o hylo g1 h1 =e f2 \o ((g1 \o fmap (hylo g1 h1)) \o h1)      *)
 rewrite <- hylo_unroll.
        (* f2 \o hylo g1 h1 =e f2 \o hylo g1 h1                             *)
@@ -1469,7 +1466,6 @@ the following algebra and coalgebra.
            end
   )}|.
 Defined.
-
 Definition c_split : Coalg (TreeF unit int) (list int).
 |{ x ~> match x with
         | nil => a_leaf tt
@@ -1650,7 +1646,6 @@ Fixpoint memo_knap table wvs :=
       | None => memo_knapsack table t
       end
   end.
-
 Definition knapsack_alg (wvs : list (nat * int))
   (x : App NatF (Table NatF int)) : int :=
   match x with | MkCont sx kx => match sx with
