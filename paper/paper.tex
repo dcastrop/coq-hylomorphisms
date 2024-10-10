@@ -1809,26 +1809,29 @@ The authors justify well the use of impredicative \coq{Set} and its
 compatibility with the functional extensionality axiom. In contrast, our
 development remains entirely \emph{axiom-free}. Another key difference with our
 approach is that they do not discuss what the resulting extracted code
-\emph{looks like} (that is, whether the extracted OCaml code resembles the
-natural formulation of the recursive function). Through experiments, we found
-that their formalisation leads to \ocaml{Obj.magic}, and code with a complex
-structure that may be hard to understand or interface with other OCaml code.
-Due to the great benefit of entirely avoiding termination proofs, it would be
-interesting to extend their approach to improve code extraction.
+\emph{looks like}.
+% (that is, whether the extracted OCaml code resembles the
+% natural formulation of the recursive function).
+Through experiments, we found that their formalisation leads to
+\ocaml{Obj.magic}, and code with a complex structure that may be hard to
+understand or interface with other OCaml code. Due to the great benefit of
+entirely avoiding termination proofs, it would be interesting to extend their
+approach to improve code extraction.
 
-\subsection{Termination Checking}\label{sec:termcheck}
+\subsection{Termination Checking of Nonstructural Recursion}\label{sec:termcheck}
 
-Termination and productivity are non-trivial properties of programs, and various
-methods have been proposed for checking that these properties hold. A common
-approach is guardedness checking~\cite{Eduardo94}, which is a
-\emph{syntactic} check that definitions avoid the introduction of
-non-normalizable terms. This sort of check generally looks for a
-\emph{structural decrease} of arguments in the recursive calls of a function.
-Coq uses such a check, and it works for many classic functional programming
-patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
-definitions will not be accepted by such checks.
+% Termination and productivity are non-trivial properties of programs, and various
+% methods have been proposed for checking that these properties hold. A common
+% approach is guardedness checking~\cite{Eduardo94}, which is a
+% \emph{syntactic} check that definitions avoid the introduction of
+% non-normalizable terms. This sort of check generally looks for a
+% \emph{structural decrease} of arguments in the recursive calls of a function.
+% Coq uses such a check, and it works for many classic functional programming
+% patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
+% definitions will not be accepted by such checks.
 
-In particular, the problem of \emph{nonstructural recursion} (including
+%In particular,
+The problem of \emph{nonstructural recursion} (including
 divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % A distinction between standard and
 % nonstandard recursion lies in the fact that standard recursion adheres strictly
@@ -1867,19 +1870,25 @@ lists.
 %
 Extending this idea, stream fusion generalizes the concept to handle other data
 types, using a lazy stream abstraction to represent sequences and fuse
-transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}. Both
-approaches eliminate redundant structures and ensure computations happen in a
-single efficient pass over the data.
+transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
+% Both approaches eliminate redundant structures and ensure computations happen in
+% a single efficient pass over the data.
 
-Another dimension of fusion is \emph{tupling}, a technique used to combine
-multiple recursive functions into a single function by grouping their results
-into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
-the same data structure when multiple operations are applied.
+% Another dimension of fusion is \emph{tupling}, a technique used to combine
+% multiple recursive functions into a single function by grouping their results
+% into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
+% the same data structure when multiple operations are applied.
 % In addition to
 % techniques like \haskell{foldr/build} fusion and stream fusion, tupling
 % complements deforestation by allowing multiple recursive functions to share a
 % single traversal, further optimizing computations and minimizing intermediate
 % data structures.
+
+In the context of Coq, Danvy explores the use of fold/unfold lemmas to mechanize
+equational reasoning about recursive programs in the Coq proof
+assistant~\cite{DANVY_2022}. By formalizing recursive program transformations,
+fold-unfold lemmas enable optimizations like fusion by allowing programs to be
+systematically simplified, eliminating intermediate structures.
 
 \section{Conclusions and Future Work}
 
