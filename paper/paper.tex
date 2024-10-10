@@ -688,11 +688,11 @@ predicate, if we know that \coq{P1} and \coq{P2} are of type
 \coq{valid s p = true}, then we can prove without any axioms that 
 \coq{P1 = P2 = eq_refl}.
 
-
-A container extension, \coq{App} in Coq, is then defined as follows:
+An extension of a container \coq{F}, \coq{App F} in Coq, is then defined as
+follows:
 \begin{coqcode}
-Record App (X : Type)
-   := { shape : Shape; contents : {p | valid shape p} -> X }.
+Record App F (X : Type)
+   := { shape : Shape F; cont : {p | valid shape p} -> X }.
 % \end{coqcode}
 
 This approach solves the problem of the unsafe casts, since the code extracted
@@ -709,7 +709,7 @@ following inductive proposition:
 \begin{coqcode}
 Inductive AppR (x y : App F X) : Prop :=
 | AppR_ext (shape x = shape y)
-           (forall p1 p2, projT1 e1 = projT1 e2 -> contents p1 = contents p2).
+           (forall p1 p2, projT1 e1 = projT1 e2 -> cont p1 = cont p2).
 \end{coqcode}
 Note that we do not care about the validity proof of the positions, only their
 value. This is to simplify (slightly) our proofs. This relation is trivially
@@ -780,7 +780,7 @@ shapes, and container equality now uses equivalences of shapes and contained
 elements: 
 \begin{coqcode}
 Class Cont `{setoid Shape} (Pos : Type) := { valid : Shape * Pos ~> bool }.
-Inductive AppR `{F : Cont Sf Pf} `{setoid X} (x y : App F X) : Prop :=
+Inductive AppR F `{setoid X} (x y : App F X) : Prop :=
   | AppR_ext (Es : shape x =e shape y)
              (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
 \end{coqcode}
@@ -891,45 +891,37 @@ we formalise coalgebras (Section~\ref{sec:coalg}) and then we put together
 these notions to formalise recursive coalgebras and hylomorphisms
 (Section~\ref{sec:rec-coalgebras}).
 
-\subsection{Algebras and Catamorphisms}
-\label{sec:algebras} An algebra is a set \coq{A} (the
-\emph{carrier} of the algebra) together with some operations on it sometimes
-subject to some equational laws. For example, given such a type \coq{A} we can
-define the monoid operations as \coq{u : unit -> A} for unit
-and \coq{m : A * A -> A} for multiplication. Notice
-that \coq{F X = unit + X * X} is a functor on \coq{X} which means we can
-equivalently describe these two maps as a single one of type \coq{F X -> X}
-which we call the algebra for the functor \coq{F} satisfying the unit and
-associative laws of the monoid. In this work we will be using algebras to
-describe the operations of a data type and so we will not be needing additional
-equations on these operations.
+\subsection{Algebras and Catamorphisms for Containers}
+\label{sec:algebras}
 
-Given a type \coq{A} and a functor \coq{F}, an \coq{F}-algebra is a pair given
-by a type \coq{A} called the \emph{carrier} of a \emph{structure map} of
-type \coq{App F A ~> A}:
+Recall that an algebra is a set $A$ together with a morphism that defines the
+operations of the algebra $F\;A \to A$.  Given a type \coq{A} and a container
+\coq{F}, an `\coq{App F}'-algebra is a pair given by the carrier \coq{A}, and the
+\emph{structure map} of type:
 \begin{coqcode}
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
-The least fixed-point for a functor \coq{F} is an instance of an \coq{F}-algebra
-where the structure map is an isomorphism. This is sometimes referred to as the
-\emph{initial algebra} for a functor \coq{F}. We will explain the reason behind this name shortly. \footnote[1]{To be more precise,
-initial algebras are isomorphisms by Lambek's lemma, but isomorphisms of
-functors do not necessarily correspond to initial algebras.}  We define the
-least fixed-point of \coq{F} as an inductive type:
+
+\noindent
+For simplicity, we will abuse terminology, and we calling these
+\coq{F}-algebras, instead of `\coq{App F}'-algebras.
+
+The initial \coq{F}-algebra can be defined as follows, thanks to the use of
+containers:
 \begin{coqcode}
-Inductive LFix `(F : Cont Sh P) : Type := LFix_in { LFix_out : App F (LFix F) }.
+Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
-where \coq{LFix_in} is the \coq{F}-algebra while \coq{LFix_out} is its inverse.
+where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its inverse $\InOp$ (see Section~\ref{sec:rec-schemes}).
 As an example, the initial \coq{F}-algebra for the
 functor \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
 being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
 operation \coq{Cons : A * LFix F -> LFix F}.
 
 We define \coq{LFix} as a setoid, where its equivalence relation can be
-described as the least fixed point of \coq{AppR} and we define smart
+described as the least fixed point of \coq{AppR}. We define smart
 constructors for the isomorphism of least fixed points as respectful morphisms:
 \begin{coqcode}
-l_in : App F (LFix F) ~> LFix F                l_out : LFix F ~> App F (LFix F)
+l_in : App F (LFix F) ~> LFix F         l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
 
 The least fixed-point for \coq{F} is the initial \coq{F}-algebra in the sense
