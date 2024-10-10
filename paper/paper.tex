@@ -36,6 +36,7 @@
 \newcolumntype{C}{>{$}c<{$}} % math-mode version of "l" column type
 \newcolumntype{L}{>{$}l<{$}} % math-mode version of "l" column type
 
+\usepackage{inconsolata}
 % \usepackage{draftwatermark}
 % \SetWatermarkText{Confidential}
 % \SetWatermarkScale{4}
@@ -480,20 +481,30 @@ An example of a recursive coalgebra is the \coq{partition} function in quicksort
 which destructures a list into a pivot and two sublist and as long as the
 sublists are smaller the partitioning function still yields a unique solution to
 the recursion scheme.
-The uniqueness property of the hylo yields the following fusion law:
-\begin{equation}
+The uniqueness property of the hylo yields the following fusion laws:
+\begin{align}
   \label{eq:hylo:fusion}
-  f \circ \hylo{c}{a}= \hylo{c'}{a}
-\end{equation}
-Using the hylo fusion law, we can prove the well-known \emph{deforestation
-optimisation}. This is when two consecutive recursive computations, one that
-builds a data structure, and another one that consumes it, can be fused together
-into a single recursive definition. This, in turn, allows us to prove that a
-recursive hylomorphism is the composition of a catamorphism and a recursive
-anamorphism.
+  f \circ \hylo{c}{a} & = \hylo{c}{a'}
+  \hspace{1cm}
+  \Longleftarrow
+  \hspace{1cm}
+  f \circ a = a' \circ F(f) \\
+  \hylo{c}{a} \circ f & = \hylo{c'}{a}
+  \hspace{1cm}
+  \Longleftarrow
+  \hspace{1cm}
+  c \circ f = F(f) \circ c'
+\end{align}
+Using the hylo fusion laws, we can prove the well-known \emph{deforestation
+optimisation}, also known as the \emph{composition
+law}~\cite{DBLP:conf/ifl/HinzeHJ10}. This is when two consecutive recursive
+computations, one that builds a data structure, and another one that consumes
+it, can be fused together into a single recursive definition. This, in turn,
+allows us to prove that a recursive hylomorphism is the composition of a
+catamorphism and a recursive anamorphism.
 
-$(A, c_{1})$ is an recursive coalgebra
-$(B, c_{2})$ is an recursive coalgebra
+$(A, c_{1})$ is a recursive coalgebra
+$(B, c_{2})$ is a recursive coalgebra
 
 $(C, a_{2})$ is an algebra
 $(B, a_{1})$ is an algebra
@@ -504,12 +515,6 @@ $c_{2} \circ a_{1} = id$
   \label{eq:hylo:deforestation}
   \hylo{a_{2}}{c_{2}} \circ \hylo{a_{1}}{c_{1}} = \hylo{a_{2}}{c_{1}}
 \end{equation}
-
-\begin{coqcode}
-Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
-  (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
-  : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
-\end{coqcode}
 
 \subsection{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
@@ -639,12 +644,10 @@ cases for the family of positions:  $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because
 there are no occurrences of $X$ in the left case; and
 $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence of $X$ in the
 right hand side. It is easy to see that
-$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
-
-In general, every polynomial functor has an equivalent container, with an
-isomorphic extension, and we have mechanised this result.
-% and this can  be found in the accompanying code (file Container.v).
-% 
+$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.  In general, every
+polynomial functor has an equivalent container, and we have mechanised this
+result.
+%
 %Generally, any functor that
 %is isomorphic to a container extension is called a \emph{container functor}.
 %Here we will call \emph{container functor} the functors defined by a specific
@@ -755,7 +758,7 @@ equivalence relations \coq{eA : A -> A -> Prop} and
 \coq{A ~> B} to represent \emph{proper} morphisms of the
 respectfulness relation of \coq{R} to \coq{R'}.
 \begin{coqcode}
-Structure morph A {eA : setoid A} B {eB : setoid B} :=
+Record morph A {eA : setoid A} B {eB : setoid B} :=
   MkMorph { app :> A -> B; app_eq : forall x y, x =e y -> app x =e app y }.
 Notation "A ~> B" := (@morph A _ B _).
 \end{coqcode}
@@ -790,16 +793,16 @@ mechanisation of initial algebras of container extensions.
 %straightforward way, i.e. we prove that validity predicates are indeed proper
 %morphisms. 
 
-This definition leads to the well-known ``setoid hell'', which we mitigate by
-providing tactics and notations to automatically discharge proofs of
-\coq{app_eq} for morphisms, whenever the types use the standard propositional
-equality, or a combination of propositional and extensional equality. However,
-our compositional approach allows us to build morphisms by plugging in other
-morphisms to our combinators. In our framework, our expectation is that the
-user-provided functions remain small, with relatively straightforward proofs of
-\coq{app_eq}.
+Our definition of morphisms, and the use of different equivalences leads to the
+well-known ``setoid hell''. We mitigate this problem by providing tactics and
+notations to automatically discharge proofs of \coq{app_eq} for morphisms,
+whenever the types use the standard propositional equality, or a combination of
+propositional and extensional equality. However, our compositional approach
+allows us to build morphisms by plugging in other morphisms to our combinators.
+In our framework, our expectation is that the user-provided functions remain
+small, with relatively straightforward proofs of \coq{app_eq}.
 
-However, by using this mechanisation, we gain simplified proofs via the use of
+However, by using this mechanisation, we gain simplified proofs via
 Coq's \emph{Generalised Rewriting}. Since every morphism \coq{f : A ~> B}
 satisfies the property that if \coq{x =e y}, then \coq{f x =e f y}, we can add
 every morphism as a proper element of Coq's respectfulness relation. In
