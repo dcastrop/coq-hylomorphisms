@@ -742,3 +742,73 @@ title = {An Ssreflect Tutorial}
   biburl       = {https://dblp.org/rec/conf/ifl/HinzeHJ10.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
+
+@article{wadler88,
+author = {Wadler, Philip},
+title = {Deforestation: transforming programs to eliminate trees},
+year = {1988},
+issue_date = {June 22, 1990},
+publisher = {Elsevier Science Publishers Ltd.},
+address = {GBR},
+volume = {73},
+number = {2},
+issn = {0304-3975},
+url = {https://doi.org/10.1016/0304-3975(90)90147-A},
+doi = {10.1016/0304-3975(90)90147-A},
+journal = {Theor. Comput. Sci.},
+month = jan,
+pages = {231–248},
+numpages = {18}
+}
+
+@inproceedings{coutts07,
+author = {Coutts, Duncan and Leshchinskiy, Roman and Stewart, Don},
+title = {Stream fusion: from lists to streams to nothing at all},
+year = {2007},
+isbn = {9781595938152},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1291151.1291199},
+doi = {10.1145/1291151.1291199},
+abstract = {This paper presents an automatic deforestation system, stream fusion, based on equational transformations, that fuses a wider range of functions than existing short-cut fusion systems. In particular, stream fusion is able to fuse zips, left folds and functions over nested lists, including list comprehensions. A distinguishing feature of the framework is its simplicity: by transforming list functions to expose their structure, intermediate values are eliminated by general purpose compiler optimisations.We have reimplemented the Haskell standard List library on top of our framework, providing stream fusion for Haskell lists. By allowing a wider range of functions to fuse, we see an increase in the number of occurrences of fusion in typical Haskell programs. We present benchmarks documenting time and space improvements.},
+booktitle = {Proceedings of the 12th ACM SIGPLAN International Conference on Functional Programming},
+pages = {315–326},
+numpages = {12},
+keywords = {program transformation, program optimisation, program fusion, functional programming, deforestation},
+location = {Freiburg, Germany},
+series = {ICFP '07}
+}
+
+@inproceedings{gill93,
+author = {Gill, Andrew and Launchbury, John and Peyton Jones, Simon L.},
+title = {A short cut to deforestation},
+year = {1993},
+isbn = {089791595X},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/165180.165214},
+doi = {10.1145/165180.165214},
+booktitle = {Proceedings of the Conference on Functional Programming Languages and Computer Architecture},
+pages = {223–232},
+numpages = {10},
+location = {Copenhagen, Denmark},
+series = {FPCA '93}
+}
+
+@article{hughes89,
+author = {Hughes, J.},
+title = {Why functional programming matters},
+year = {1989},
+issue_date = {April 1989},
+publisher = {Oxford University Press, Inc.},
+address = {USA},
+volume = {32},
+number = {2},
+issn = {0010-4620},
+url = {https://doi.org/10.1093/comjnl/32.2.98},
+doi = {10.1093/comjnl/32.2.98},
+journal = {Comput. J.},
+month = apr,
+pages = {98–107},
+numpages = {10}
+}

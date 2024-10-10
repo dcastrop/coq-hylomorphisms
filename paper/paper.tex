@@ -1747,9 +1747,9 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 Encoding recursion schemes in Coq is not new. We compare our work with other
 encodings of program calculation techniques in Coq and recursion schemes in Coq
 (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}). Additionally, we compare our
-encoding of recursion schemes to other forms of termination checking
-(Section~\ref{sec:termcheck}, as a way to guarantee termination of nonstructural
-recursion.
+encoding of recursion schemes to other forms of termination checking for
+nonstructural recursion (Section~\ref{sec:termcheck}), and we discuss other
+approaches to fusion in functional programs (Section~\ref{sec:fusion}).
 
 \subsection{Program Calculation}\label{sec:calccoq}
 
@@ -1830,6 +1830,36 @@ mergesort''~\cite{AbreuDHJMS23}.
 There are common approaches in Coq to deal with termination, but none of these
 approaches address program calculation techniques, and the mechanisation of
 fusion laws.
+
+\subsection{Fusion}\label{sec:fusion}
+
+Fusion in functional programming is a general technique for combining multiple
+computations into a single pass to eliminate intermediate data structures and
+improve efficiency. The fusion we have discussed in this paper relating to
+program calculation is one form of fusion, but there are other approaches.
+
+\emph{Deforestation}, introduced by Wadler~\cite{wadler88}, is a specific
+approach to fusion that aims to remove intermediate trees (such as lists)
+created between chained operations. A well-known method of deforestation is
+\haskell{foldr/build} fusion~\cite{gill93}, which optimizes list-processing by
+fusing list-producing functions (like \haskell{map} or \haskell{filter}) with
+list-consuming ones (like \haskell{foldr}), avoiding the creation of temporary
+lists.
+
+Extending this idea, stream fusion generalizes the concept to handle other data
+types, using a lazy stream abstraction to represent sequences and fuse
+transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}. Both
+approaches eliminate redundant structures and ensure computations happen in a
+single efficient pass over the data.
+
+Another dimension of fusion is \emph{tupling}, a technique used to combine
+multiple recursive functions into a single function by grouping their results
+into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
+the same data structure when multiple operations are applied. In addition to
+techniques like \haskell{foldr/build} fusion and stream fusion, tupling
+complements deforestation by allowing multiple recursive functions to share a
+single traversal, further optimizing computations and minimizing intermediate
+data structures.
 
 \section{Conclusions and Future Work}
 
