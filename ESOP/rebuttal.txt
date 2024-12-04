@@ -1,46 +1,35 @@
 We would like to thank the reviewers for their constructive feedback, which has
 helped us clarify our contributions and refine the positioning of our work.
-Below, we address the concerns raised by each reviewer, emphasizing the novelty,
-motivation, and significance of our contributions.
 
-Overall we think the reviewers have a sound understanding of the paper. We would
-like to emphasize that our approach uniquely combines a formal and sound OCaml
-extraction of recursion schemes within Coq, addressing termination challenges
-without relying on axioms. This is the first formalisation of recursion schemes
-within a type theory which ensures termination of definitions as opposed to
-current presentations of recursion schemes in, e.g., Haskell which can be broken
-by using non-terminating arguments to the recursion scheme.
+A common theme among the reviewers is the need for a clearer presentation of the
+motivation behind our work, which we address here in summary.
 
-Using Coq extraction mechanism we can provide the functional programmer with a
-termination guarantee and at the same time provide the Coq programmer with a
-library which accepts more recursive definitions.
+While the individual components of this work are well-known, as correctly noted
+by Reviewer A, their integration into a cohesive framework has not been
+previously studied. Although this might initially seem like a limitation, we
+argue that it represents an essential necessary step forward in the area of
+recursion schemes in the context of type theory.
 
-Revisions will highlight practical insights for Coq programming, expand on
-termination handling, and articulate the broader significance of bridging formal
-reasoning with practical code generation.
+In fact, recursion schemes have been explored extensively in the context of
+functional programming languages like Haskell, where their theoretical soundness
+has been shown by Hinze, Wu and Gibbons. However, in practice, these schemes
+have never been used in practice to guarantee termination, simply because
+Haskell allows invalid algebras and functors to be used with them.
 
-We will refine the introduction to clearly summarize these
-contributions and position the work within the broader landscape.
+To address this gap, our work encodes recursion schemes within a proof assistant
+-- Coq -- ensuring termination by design and enabling extraction to executable
+code in a programming language. Containers and setoids are used as standard
+tools to achieve this goal.
 
-Summary of Planned Revisions
----------------------------------------------------------------------------
-In response to the reviewers' comments, we will make the following changes:
+We believe this approach benefits both the programming and type theory
+communities. For programmers, it offers a practical library that ensures
+termination and correctness. For type theorists, it contributes to addressing
+the long-standing challenge of defining recursive constructions in systems like
+Coq or Agda.
 
-- Clarify Motivation and Contributions: Revise the introduction to clearly
-articulate the motivation, contributions, and broader significance of the work,
-positioning it as both a methodological advancement and a practical framework.
-
-- Highlight Novelty: Emphasize how our work goes beyond prior formalizations by
-addressing specific challenges in Coq related to termination and extraction,
-which have not been explored in depth in Agda or other systems.
-
-- Explanation of Termination: Include a detailed and self-contained discussion of
-termination issues and how our framework resolves them.  Future Work: Add a
-discussion on extending the framework for better integration with standard OCaml
-datatypes and libraries.
-
-We hope these clarifications address the reviewers' concerns and demonstrate the
-value of our contributions. Thank you for your thoughtful and detailed feedback.
+We believe our work is a first step in try to understand how recursion schemes
+can be integrated in type theories to tackle termination challenges. We intend
+to have a more theoretical follow up addressing corecursive algorithms.
 
 Reviewer A
 ------------------------------------
