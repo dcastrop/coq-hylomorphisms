@@ -1,0 +1,200 @@
+Review #72A
+===========================================================================
+
+Overall merit
+-------------
+2. Weak reject
+
+Reviewer expertise
+------------------
+2. Some familiarity
+
+Paper summary
+-------------
+This paper investigates the challenges of formalizing reasoning about recursion schemes (cata, ana, hylomorphisms) in Coq in a way that is compatible with code extraction.  Other approaches have run into problems, first because the natural setups of the relevant types and theory of recursion schemes does not satisfy strict positivity, and secondly relies on axioms or on uses of function extensionality or dependent types which complicate code extraction and/or result in extracting code with unchecked casts (Obj.magic in OCaml).  This paper contributes an alternative formalization that avoids all of these issues by using containers instead of structure functors directly, and managing them in such a way that constraints appear as refinements of ordinary types rather than dependent type constraints.  This necessitates setoid-style reasoning which is generally experienced as unpleasant (so-called setoid hell), but is mitigated to some extent here by using type classes to automate some of the necessary parameters.  
+
+The paper first recapitulates the key definitions of algebras/coalgebras, ana/catamorphisms and hylomorphisms, then revisits each of them to explain the problems of a direct approach to formalization in Coq and show how to avoid the problems.  After presenting the main definitions and results, the paper continues with a section on examples showing that common examples can be accommodated and presenting the extracted code.  The paper concludes with a discussion of related work.
+
+Comments for authors
+--------------------
+Although the topic is not one where I have much expertise, I was mostly able to follow the paper along with the accompanying Coq formalizaton in the supplementary material.  There were a number of typos or wording issues that made some parts harder to follow, particularly in section 2 which I understood as restating the main background.
+
+I didn't get a clear sense from the paper of the depth and signiicance of the contribution.  Setoid based reasoning is well understood (if painful).  Containers have been studied and also formalized before, though I think mostly in Agda and perhaps mostly in settings assuming axioms that might complicate code extraction.  The material on hylomorphims and exampls itself is not new.  So it seems what is new is how to put the pieces together to avoid the various pitfalls in formalizing hylomorphisms in Coq to maintain the ability to generate OCaml code.  The code that is generated still looks like it would need additional work to incorporate into a program dealing with say ordinary lists or trees defined using OCaml datatypes rather than as container equivalents.  So I'm not fully persuaded that the benefits of the end results make the paper compelling on their own either. 
+
+That said, this looks like a complete and useful formalization, and I don't want to discount the effort involved and potential value of such a formalization, just that I'm not fully persuaded is compelling for presentation/publication at a broad/general PL conference such as ESOP.  I would not stand in the way of acceptance if reviewers who are more knowledgeable about the matters formalized or the significance of the choice of formalization techniques favor it.
+
+Detailed comments
+
+p1, abstract "therefore ," extra space
+
+p2, "code extration" sp.
+
+p3. "the use **of** program calculation"
+
+p4, "The initial object... the terminal object" as the last sentence of this paragraph clarifies, initial and terminal objects are not necessarily uniquely defined, I would say "an" in both places.
+
+p4.  "The terminal object in Set ... *: 1" - this seems already explained earlier.  You could perhaps say that we fix a choice of some canoncal terminal object 1 with single element * (whose exact identity does not matter).
+
+p5. (|\beta|) - what is beta here?  Later it is a_X inside the (| |) brackets.
+
+p6. "ListF a x = ... | Cons a deriving Functor"  this looks wrong, is there a missing x after Cons a?
+
+p7.  "this definition cannot be accepted by Coq"  please say why, it is clarified later this is due to violating strict positivity.
+
+p7.  "hylo" begins to be used as an abbreviation without comment.
+
+p7. "two sublist**s**"
+
+p8.  Definition of hylp in Haskell.  If I am following correctly, this is specific to the "recursive" coalgebras just discussed?  Please clarify.
+
+p9. "divide is a recursive coalgebra" - this may be, but it does not seem to be established based on what is said in the paper.  If this is a restatement of a standard result or observation please indicate where to look for the proof/justification.
+
+p12.  I the definition of comp, I was surprised that the arrows between (B ~> C) and (A ~> B) and (A ~> C) are not ordinary function arrows.  I see this is also the way it is in the formalization, is there a particular reason it has to be this way or just for convenience?
+
+p13.  "proofs that they are proper morphisms is" -> "... are"
+
+p18. "is isomorphic **to** its" ?
+
+p19. "an hylomorphisms"  case mismatch
+
+
+
+Review #72B
+===========================================================================
+
+Overall merit
+-------------
+3. Weak accept
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+This paper provides a Coq implementation of the "hylomorphism" method of specifying divide-and-conquer algorithms. It appears to be successful in this, and the program extraction is neat. 
+If I understand correctly, the main thing is to implement these constructions via recursive coalgebras and to use containers to model the strictly positive functor types. I am not sure that either is at all surprising but they are good general lessons. 
+
+A criticism is that I am struggling to position this work in a particular area. Is this an elaborate new Coq library that's going to be useful to lots of people? Does it provide any major take-away lessons for Coq programming? I'm not sure. Above I have guessed what the take-aways are, but this is not summarized in the introduction. 
+
+On the other hand, termination is a very important foundational topic, but does this contribute something profound there? Again I'm not sure, since recursive coalgebras are a long-established topic.
+
+Comments for authors
+--------------------
+In the abstract and through the introduction you emphasise that this is "the first". Please don't over-emphasise this, it's a bit cringey. 
+
+Section 2.2. Several fixable issues: 
+* The initial object might not exist 
+* "least" fixed point, what does "least" mean here? and anyway that is not what Lambek's lemma says.
+* "pronounced catamorphism" I think this is functional programming terminology, not category theory
+* "for any other", omit other because it does not need to be "other" 
+* "initial F-Algebra is clearly the set of lists". Omit clearly. 
+* "Note that since Haskell". I didn't understand the point of this paragraph. I do think Haskell is a bad language for demonstrating this. 
+
+Section 2.3. Again, the terminal object might not exist, "greatest" doesn't make sense, etc..
+But also, I don't think this section is actually relevant -- I don't think you need final coalgebras in the rest of the development. Please streamline this and stick to what is needed. You don't need to expand to fill the page limit.  
+
+Page 8. "TreeF". This is not a tree, and it's never used as a tree. It's just a pair of lists with a midpoint. 
+
+Page 9. Quicksort is not a solution to this equation, rather, "sort" is a solution. These are functions between sets, and so cannot distinguish intensional algorithmic specifics. 
+
+I did not understand the recursive anamorphisms paragraph, but it seems to be a digression. 
+
+Page 20. This quicksort is different from page 8, because the mid-point is not explicitly included separately. Is that essential? If not, please make them line up. 
+
+Does the extra variable x0 have a performance cost? 
+
+Section 6.2. Explain Obj.magic for non-Coq experts. 
+
+Several spelling issues (Inuitively, dynnamic). 
+
+Title. I suggest to put "divide-and-conquer algorithms", instead of "hylomorphisms". For people outside the Haskell community, I don't think hylomorphisms means anything, whereas these kind of algorithm are very well known.
+
+
+
+Review #72C
+===========================================================================
+
+Overall merit
+-------------
+3. Weak accept
+
+Reviewer expertise
+------------------
+2. Some familiarity
+
+Paper summary
+-------------
+The paper mechanizes in Coq the hylomorphism, an important technique for (co)inductive types.
+The characteristic point is that they design the mechanization so that we can extract from the Coq code an OCaml code.
+To do this, they had to bridge the gap between the language features of OCaml and of Coq.
+One is the termination problem in Coq and another is the lack of dependent types in OCaml, from which there are also many derived problems, too.
+The author(s) address such problems well by using several existing techniques from Coq.
+
+Comments for authors
+--------------------
+Pros
+
+The paper utilizes various existing techniques of Coq appropriately for each subgoal.
+
+The paper is written for a wide range of readers, giving a gentle explanation of the prerequisite knowledge.
+
+Cons
+
+I could not understand what is the real motivation of this study.
+Is it a case study of various Coq features, including the OCaml-code extraction function?
+Or, in a real situation, does an OCaml programmer use this to write a program?
+For the latter, why does using Coq help with which problem of hylomorphisms?
+
+Although the paper gives gentle explanations here and there, I felt that there is little self-contained and detailed explanation on the termination issue.
+
+Overall, I felt that the explanation of the motivation is insufficient, while there seems to be no serious problem in the paper, and the authors at least work out some amount of a case study on OCaml extraction from Coq.
+I have no strong opinion for rejection or acceptance, and I think that there seems to be no problem if this paper is accepted.
+
+
+
+
+
+
+
+* Minor Comments
+
+p.10
+Another common solution is to the strict positivity problem is the use containers [1].
+->
+Another common solution to the strict positivity problem is the use of containers [1].
+
+p.11
+(forall p1 p2, projT1 e1 = projT1 e2 -> cont p1 = cont p2)
+->(probably)
+(forall e1 e2, projT1 e1 = projT1 e2 -> cont e1 = cont e2)
+
+Section 3.2
+This needs example, e.g., of the binary tree type given in Section 5.1.
+Especially, for the part:
+"This approach solves the problem of the unsafe casts, since the code extracted
+for {p | valid shape p} will be an OCaml singleton type defined as the OCaml
+equivalent to Pos."
+Why will this become "an OCaml singleton type"?
+If we consider the container for the binary tree type, I guess that APos should be a type containing at least two elements, and for shape s of inductive case (rather than base case), the OCaml counterpart to {p | valid shape p} should be a type containing exactly two values, not a "singleton type".
+
+p.12
+(Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2)
+->(probably)
+(Ek : forall e1 e2, projT1 e1 = projT1 e2 -> cont x e1 =e cont y e2)
+(What is "val"?)
+
+p.12
+"We explain why in Section 4.1, and the mechanisation of initial algebras of container extensions."
+This seems to be grammatically incorrect.
+
+p.19
+There seems a bit of code inconsistency:
+
+Some use ":= | ..." and some use ":= ...".
+
+ITreeF use N but Tshape use A for the same role.
+
+Definition merge : App (TreeF unit int) (list int) ~> list int.
+Definition c_split : Coalg (TreeF unit int) (list int).
+Why "Alg" is not used for the former?

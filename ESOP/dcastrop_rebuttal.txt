@@ -1,0 +1,133 @@
+We would like to thank the reviewers for their constructive feedback, which has
+helped us clarify our contributions and refine the positioning of our work.
+
+A common theme among the reviewers is the need for a clearer presentation of the
+motivation behind our work, which we address here in summary.
+
+The main motivation of our work is to build a verified framework for program
+calculation and code extraction. The state-of-the art does not address
+divide-and-conquer algorithms, and does not address the extraction of idiomatic
+code.
+
+While the individual components of this work are well-known, as correctly noted
+by Reviewer A, their integration into a cohesive framework has not been
+previously studied. Moreover, their use to formalise a divide-and-conquer
+recursion scheme (hylomorphisms) in a type theory has also never been explored.
+One key benefit of our approach is that we allow the use of regular Coq proofs
+to do program calculation, i.e. derive efficient implementations from simple
+specifications. Unlike previous work, we can encode divide-and-conquer
+computations, and our mechanisation extracts idiomatic OCaml code. We note in
+Section 6.1 that previous formalisations of recursion schemes in proof
+assistants focus on maps and folds. Only Abreu et al. (2023) encode divide and
+conquer computations, but in a way that does not lead to idiomatic code
+extraction (Section 6.2). Code extraction is not straightforward, and it
+requires the careful selection of the representations of containers, functors,
+etc, such as the use of decidable predicates to define indexed families of
+types. 
+
+Furthermore, the use of hylomorphisms in a type theory has some benefits
+regarding termination proofs. Unlike common approaches to encode non-structural
+recursion in a proof assistant, the use of hylomorphisms allows to focus the
+proofs on showing that the coalgebra is recursive. This means that termination
+proofs become more modular, and can be plugged in to build different
+divide-and-conquer computations. Our framework allows programmers to build
+libraries of recursive coalgebras for different datatypes, which can be reused
+when building other non-structural recursive functions. The encoding of
+recursive coalgebras to prove termination has not been explored before.
+
+Our work allows to encode program calculation proofs in a natural way that,
+until today, are not machine-checked. Furthermore, we believe our work is a
+first step in try to understand how recursion schemes can be integrated in type
+theories to tackle termination challenges. We intend to have a more theoretical
+follow up addressing corecursive algorithms.
+
+
+Review A
+===========================================================================
+
+> This paper investigates the challenges of formalizing reasoning about
+> recursion schemes (cata, ana, hylomorphisms) in Coq in a way that is
+> compatible with code extraction.  Other approaches have run into problems,
+> first because [...]
+
+It is important to note that, as we point out in Section 6.1, other approaches
+do not formalise divide-and-conquer computations. We allow them due to our
+encoding of recursive coalgebras.
+
+> The code that is generated still looks like it would need additional work to
+> incorporate into a program dealing with say ordinary lists or trees defined
+> using OCaml datatypes rather than as container equivalents.
+
+The use of ordinary lists and trees is not only possible, but easy. In fact,
+containers are only used internally in our examples, the input/output types use
+regular OCaml datatypes. We do that by defining them as initial algebras of the
+respective container extension (e.g. ListF, or TreeF in Section 5). By doing
+that, we get (for free) that OCaml lists/trees/etc are isomorphic to `Fix
+ListF` or `Fix TreeF`.  To further simplify interacting with these container
+extensions, it should be straightforward (even if tedious) to automate the
+translation between a strictly positive datatype and its container equivalent
+(e.g. Section 6 of Abott et al. (2005), or our own encoding of polynomial
+functors as containers in Coq).
+
+> p12.  I the definition of comp, I was surprised that the arrows between (B ~>
+> C) and (A ~> B) and (A ~> C) are not ordinary function arrows.  I see this is
+> also the way it is in the formalization, is there a particular reason it has
+> to be this way or just for convenience?
+
+It simplifies the proofs. In particular, if we have that `f =e g`, then we can
+trivially conclude that `f \o h =e g \o h`. Otherwise, we would need to do this
+proof manually every time it is required.
+
+
+Review B
+===========================================================================
+
+> * "least" fixed point, what does "least" mean here? and anyway that is not what Lambek's lemma says.
+
+[TODO MARCO]
+
+> * "pronounced catamorphism" I think this is functional programming terminology, not category theory
+
+[TODO MARCO]
+
+> * "Note that since Haskell". I didn't understand the point of this paragraph. I do think Haskell is a bad language for demonstrating this. 
+
+> Section 2.3. Again, the terminal object might not exist, "greatest" doesn't make sense, etc..
+
+[TODO MARCO: does "greatest" not make sense?? I thought it was standard terminology]
+
+> Page 8. "TreeF". This is not a tree, and it's never used as a tree. It's just a pair of lists with a midpoint. 
+
+The least/greatest fixpoint of TreeF is an inductive/coinductive tree.
+
+> Page 9. Quicksort is not a solution to this equation, rather, "sort" is a
+> solution. These are functions between sets, and so cannot distinguish
+> intensional algorithmic specifics. 
+
+The solution to this equation behaves exactly as the naive implementation of
+Quicksort in Haskell/OCaml.
+
+I did not understand the recursive anamorphisms paragraph, but it seems to be a digression. 
+
+> Does the extra variable x0 have a performance cost? 
+
+The extra `x0` can be trivially inlined in a compiler pass. We are also
+considering extending Coq's code extraction with manual inlining hints.
+
+Review C
+===========================================================================
+
+> I could not understand what is the real motivation of this study.
+> does an OCaml programmer use this to write a program?
+
+Our end goal is to build a framework for program verification based on program
+calculation techniques. In that sense, our framework is meant to make the use
+of program calculation more accessible to programmers. Prior to this work,
+using program calculation for divide-and-conquer computations would require
+pen-and-paper proofs and a manual translation to Haskell/OCaml code.
+
+> For the latter, why does using Coq help with which problem of hylomorphisms?
+
+Hylomorphisms are not guaranteed to exist, or to be unique, due to termination
+issues. If a hylomorphism can be encoded in our framework in Coq, it must exist
+and be unique. 
