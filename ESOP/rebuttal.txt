@@ -1,39 +1,139 @@
+We would like to thank the reviewers for their constructive feedback, which has
+helped us clarify our contributions and refine the positioning of our work.
+Below, we address the concerns raised by each reviewer, emphasizing the novelty,
+motivation, and significance of our contributions.
+
+Overall we think the reviewers have a sound understanding of the paper. We would
+like to emphasize that our approach uniquely combines a formal and sound OCaml
+extraction of recursion schemes within Coq, addressing termination challenges
+without relying on axioms. This is the first formalisation of recursion schemes
+within a type theory which ensures termination of definitions as opposed to
+current presentations of recursion schemes in, e.g., Haskell which can be broken
+by using non-terminating arguments to the recursion scheme.
+
+Using Coq extraction mechanism we can provide the functional programmer with a
+termination guarantee and at the same time provide the Coq programmer with a
+library which accepts more recursive definitions.
+
+Revisions will highlight practical insights for Coq programming, expand on
+termination handling, and articulate the broader significance of bridging formal
+reasoning with practical code generation.
+
+We will refine the introduction to clearly summarize these
+contributions and position the work within the broader landscape.
+
+Summary of Revisions
+---------------------------------------------------------------------------
+In response to the reviewers' comments, we will make the following changes:
+
+- Clarify Motivation and Contributions: Revise the introduction to clearly
+articulate the motivation, contributions, and broader significance of the work,
+positioning it as both a methodological advancement and a practical framework.
+
+- Highlight Novelty: Emphasize how our work goes beyond prior formalizations by
+addressing specific challenges in Coq related to termination and extraction,
+which have not been explored in depth in Agda or other systems.
+
+- Explanation of Termination: Include a detailed and self-contained discussion of
+termination issues and how our framework resolves them.  Future Work: Add a
+discussion on extending the framework for better integration with standard OCaml
+datatypes and libraries.
+
+We hope these clarifications address the reviewers' concerns and demonstrate the
+value of our contributions. Thank you for your thoughtful and detailed feedback.
+
 Reviewer A
 ------------------------------------
-I didn't get a clear sense from the paper of the depth and signiicance of the
-contribution.  Setoid based reasoning is well understood (if painful).
-Containers have been studied and also formalized before, though I think mostly
-in Agda and perhaps mostly in settings assuming axioms that might complicate
-code extraction.  The material on hylomorphims and exampls itself is not new.
-So it seems what is new is how to put the pieces together to avoid the various
-pitfalls in formalizing hylomorphisms in Coq to maintain the ability to generate
-OCaml code.  The code that is generated still looks like it would need
-additional work to incorporate into a program dealing with say ordinary lists or
-trees defined using OCaml datatypes rather than as container equivalents.  So
-I'm not fully persuaded that the benefits of the end results make the paper
-compelling on their own either.
+Comment:
+> Setoid-based reasoning is well understood (if painful). Containers have been
+> studied and also formalized before, though I think mostly in Agda...The material
+> on hylomorphisms and examples itself is not new...So it seems what is new is how
+> to put the pieces together to avoid the various pitfalls in formalizing
+> hylomorphisms in Coq to maintain the ability to generate OCaml code.
+
+We agree with the reviewer that setoid reasoning, hylomorphisms and containers
+are established topics. As correctly pointed out by the reviewer however they
+have never been pieced together. In particular, the whole area of recursion
+schemes has only been considered within the broader realm of functional
+programming. In this setting, it is still possible to introduce non-termination,
+e.g. by feeding the recursion scheme with invalid non-terminating algebras.
+Hence recursion scheme have mostly been used to structure programs for reasoning
+rather than ensuring formally that they define terminating functions.
+
+This work can be viewed as a first step towards considering the use of recursion
+ schemes to help proof assistants to accept more recursive definitions.
+
+The issue of extracting runnable code is perhaps tangential but still helpful
+from a programming point of view as 1) OCaml does not have full access to
+recursion schemes since there is no way of declaring a functor as easily as for
+example in Haskell and 2) it provides
+
+Comment: "The code that is generated still looks like it would need additional
+work to incorporate into a program dealing with, say, ordinary lists or trees
+defined using OCaml datatypes rather than as container equivalents."
+
+[DAVID TO DO]
 
 
 Reviewer B
 ------------------------------------
-A criticism is that I am struggling to position this work in a particular area.
-Is this an elaborate new Coq library that's going to be useful to lots of
-people? Does it provide any major take-away lessons for Coq programming? I'm not
-sure. Above I have guessed what the take-aways are, but this is not summarized
-in the introduction.
+Comment:
+> I am struggling to position this work in a particular area...Is this
+> an elaborate new Coq library that’s going to be useful to lots of people? Does
+> it provide any major take-away lessons for Coq programming?
+
+Our primary goal is to provide a framework that advances the formalization and
+practical usability of recursive schemes like hylomorphisms in Coq, particularly
+with a focus on sound OCaml code extraction. While this work includes the
+implementation of a Coq library, its broader significance lies in showcasing how
+termination-sensitive constructs like hylomorphisms can be handled rigorously
+within Coq's framework, offering insights into programming techniques that
+balance formal reasoning with practical usability.
+
+Comment:
+> Above I have guessed what the take-aways are, but this is not
+> summarized in the introduction.
+
+Thank you for highlighting this. We will revise the introduction to explicitly
+summarize the key contributions and take-away lessons from our work, including:
+
+A novel approach to formalizing hylomorphisms in Coq while preserving code
+extraction capabilities.  A case study demonstrating practical challenges and
+solutions in Coq's termination handling.  Insights into bridging the gap between
+formal proof systems and practical programming.
 
 Reviewer C
 ------------------------------------
-I could not understand what is the real motivation of this study. Is it a case
-study of various Coq features, including the OCaml-code extraction function? Or,
-in a real situation, does an OCaml programmer use this to write a program? For
-the latter, why does using Coq help with which problem of hylomorphisms?
+Comment:
+> I could not understand what is the real motivation of this study. Is
+> it a case study of various Coq features, including the OCaml-code extraction
+> function?
 
-Although the paper gives gentle explanations here and there, I felt that there
-is little self-contained and detailed explanation on the termination issue.
+The primary motivation for this work is to address the challenge of formalizing
+recursive schemes like hylomorphisms in a manner compatible with Coq’s rigorous
+type system and termination requirements, while enabling sound and practical
+code extraction to OCaml. This is not merely a case study of Coq features but
+rather a contribution to the methodology of combining formal reasoning with
+executable code generation, particularly for functional programming constructs.
 
-Overall, I felt that the explanation of the motivation is insufficient, while
-there seems to be no serious problem in the paper, and the authors at least work
-out some amount of a case study on OCaml extraction from Coq. I have no strong
-opinion for rejection or acceptance, and I think that there seems to be no
-problem if this paper is accepted.
+Comment:
+> In a real situation, does an OCaml programmer use this to write a
+> program? For the latter, why does using Coq help with which problem of
+> hylomorphisms?
+
+
+Using Coq to formalize and extract hylomorphisms addresses critical issues of
+correctness and termination that are often left informal in direct OCaml
+implementations. By using Coq, we ensure that recursive schemes are well-founded
+and free from subtle bugs or inconsistencies. While the extracted code might
+require adaptation for direct use by OCaml programmers, the guarantees provided
+by Coq add significant value in contexts requiring high assurance.
+
+Comment:
+> I felt that there is little self-contained and detailed explanation on
+> the termination issue.
+
+We acknowledge this and will expand the paper to include a more self-contained
+explanation of the termination handling in our approach, detailing how Coq's
+type system and proof obligations are leveraged to ensure well-foundedness in
+recursive constructs.
