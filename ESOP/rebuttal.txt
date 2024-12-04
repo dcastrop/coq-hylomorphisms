@@ -94,13 +94,8 @@ Comment:
 > Above I have guessed what the take-aways are, but this is not
 > summarized in the introduction.
 
-Thank you for highlighting this. We will revise the introduction to explicitly
-summarize the key contributions and take-away lessons from our work, including:
+Thank you for highlighting this. We will revise the introduction accordingly.
 
-A novel approach to formalizing hylomorphisms in Coq while preserving code
-extraction capabilities.  A case study demonstrating practical challenges and
-solutions in Coq's termination handling.  Insights into bridging the gap between
-formal proof systems and practical programming.
 
 Reviewer C
 ------------------------------------
@@ -109,12 +104,6 @@ Comment:
 > it a case study of various Coq features, including the OCaml-code extraction
 > function?
 
-The primary motivation for this work is to address the challenge of formalizing
-recursive schemes like hylomorphisms in a manner compatible with Coq’s rigorous
-type system and termination requirements, while enabling sound and practical
-code extraction to OCaml. This is not merely a case study of Coq features but
-rather a contribution to the methodology of combining formal reasoning with
-executable code generation, particularly for functional programming constructs.
 
 Comment:
 > In a real situation, does an OCaml programmer use this to write a
@@ -122,18 +111,7 @@ Comment:
 > hylomorphisms?
 
 
-Using Coq to formalize and extract hylomorphisms addresses critical issues of
-correctness and termination that are often left informal in direct OCaml
-implementations. By using Coq, we ensure that recursive schemes are well-founded
-and free from subtle bugs or inconsistencies. While the extracted code might
-require adaptation for direct use by OCaml programmers, the guarantees provided
-by Coq add significant value in contexts requiring high assurance.
-
 Comment:
 > I felt that there is little self-contained and detailed explanation on
 > the termination issue.
 
-We acknowledge this and will expand the paper to include a more self-contained
-explanation of the termination handling in our approach, detailing how Coq's
-type system and proof obligations are leveraged to ensure well-foundedness in
-recursive constructs.
