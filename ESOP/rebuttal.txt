@@ -1,0 +1,39 @@
+Reviewer A
+------------------------------------
+I didn't get a clear sense from the paper of the depth and signiicance of the
+contribution.  Setoid based reasoning is well understood (if painful).
+Containers have been studied and also formalized before, though I think mostly
+in Agda and perhaps mostly in settings assuming axioms that might complicate
+code extraction.  The material on hylomorphims and exampls itself is not new.
+So it seems what is new is how to put the pieces together to avoid the various
+pitfalls in formalizing hylomorphisms in Coq to maintain the ability to generate
+OCaml code.  The code that is generated still looks like it would need
+additional work to incorporate into a program dealing with say ordinary lists or
+trees defined using OCaml datatypes rather than as container equivalents.  So
+I'm not fully persuaded that the benefits of the end results make the paper
+compelling on their own either.
+
+
+Reviewer B
+------------------------------------
+A criticism is that I am struggling to position this work in a particular area.
+Is this an elaborate new Coq library that's going to be useful to lots of
+people? Does it provide any major take-away lessons for Coq programming? I'm not
+sure. Above I have guessed what the take-aways are, but this is not summarized
+in the introduction.
+
+Reviewer C
+------------------------------------
+I could not understand what is the real motivation of this study. Is it a case
+study of various Coq features, including the OCaml-code extraction function? Or,
+in a real situation, does an OCaml programmer use this to write a program? For
+the latter, why does using Coq help with which problem of hylomorphisms?
+
+Although the paper gives gentle explanations here and there, I felt that there
+is little self-contained and detailed explanation on the termination issue.
+
+Overall, I felt that the explanation of the motivation is insufficient, while
+there seems to be no serious problem in the paper, and the authors at least work
+out some amount of a case study on OCaml extraction from Coq. I have no strong
+opinion for rejection or acceptance, and I think that there seems to be no
+problem if this paper is accepted.
