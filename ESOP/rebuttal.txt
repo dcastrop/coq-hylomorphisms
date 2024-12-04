@@ -22,7 +22,7 @@ reasoning with practical code generation.
 We will refine the introduction to clearly summarize these
 contributions and position the work within the broader landscape.
 
-Summary of Revisions
+Summary of Planned Revisions
 ---------------------------------------------------------------------------
 In response to the reviewers' comments, we will make the following changes:
 
