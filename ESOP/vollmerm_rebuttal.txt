@@ -1,11 +1,3 @@
 ## Reviewer A
 
-On the topic of the extracted OCaml code:
-
-> The code that is generated still looks like it would need additional work to incorporate into a program
-
-This is a valid observation, in that the use of containers in our examples results in a slight mismatch between the extracted OCaml code and, for example, existing code/libraries that are expecting more ordinary datatypes for trees or lists. This could be ameliorated with either a minor amount of marshalling, or even a straightforward automatic translation. However, the fact that this extracted code contains no unsafe coercions, and contains minimal noise imposed by the details of the Coq formalism, make it possible at all for the resulting OCaml code to be usable. As we detail in the paper, prior related work does not meet those criteria.
-
 ## Reviewer C
-
-We appreciate Reviewer C's thoughtful question regarding the motivation of our study. To clarify, the central contribution of our work lies in proposing a cohesive framework for recursion schemes in a proof assistant such as Coq, and the primary *application* of this framework is the verification of divide-and-conquer algorithms in Coq with clean extraction to readable and idiomatic OCaml. In contrast, prior work on recursion schemes in Haskell has largely relied on informal, pen-and-paper proofs and manual, unverified implementations in Haskell, leaving a gap in the ability to produce formally verified and automatically extracted implementations. Our framework addresses this gap by integrating formal verification and code generation into a single, cohesive process.

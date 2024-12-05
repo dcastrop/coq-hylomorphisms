@@ -58,7 +58,18 @@ encoding of recursive coalgebras.
 > incorporate into a program dealing with say ordinary lists or trees defined
 > using OCaml datatypes rather than as container equivalents.
 
-The use of ordinary lists and trees is not only possible, but easy. In fact,
+
+@@MIKE: This is a valid observation, in that the use of containers in our examples
+results in a slight mismatch between the extracted OCaml code and, for example,
+existing code/libraries that are expecting more ordinary datatypes for trees or
+lists. This could be ameliorated with either a minor amount of marshalling, or
+even a straightforward automatic translation. However, the fact that this
+extracted code contains no unsafe coercions, and contains minimal noise imposed
+by the details of the Coq formalism, make it possible at all for the resulting
+OCaml code to be usable. As we detail in the paper, prior related work does not
+meet those criteria.
+
+@@David: The use of ordinary lists and trees is not only possible, but easy. In fact,
 containers are only used internally in our examples, the input/output types use
 regular OCaml datatypes. We do that by defining them as initial algebras of the
 respective container extension (e.g. ListF, or TreeF in Section 5). By doing
@@ -77,6 +88,8 @@ functors as containers in Coq).
 It simplifies the proofs. In particular, if we have that `f =e g`, then we can
 trivially conclude that `f \o h =e g \o h`. Otherwise, we would need to do this
 proof manually every time it is required.
+
+
 
 
 Review B
@@ -146,6 +159,18 @@ considering extending Coq's code extraction with manual inlining hints.
 
 Review C
 ===========================================================================
+We appreciate Reviewer C's thoughtful question regarding the motivation of our
+study. To clarify, the central contribution of our work lies in proposing a
+cohesive framework for recursion schemes in a proof assistant such as Coq, and
+the primary *application* of this framework is the verification of
+divide-and-conquer algorithms in Coq with clean extraction to readable and
+idiomatic OCaml. In contrast, prior work on recursion schemes in Haskell has
+largely relied on informal, pen-and-paper proofs and manual, unverified
+implementations in Haskell, leaving a gap in the ability to produce formally
+verified and automatically extracted implementations. Our framework addresses
+this gap by integrating formal verification and code generation into a single,
+cohesive process.
+
 
 > I could not understand what is the real motivation of this study.
 > does an OCaml programmer use this to write a program?
