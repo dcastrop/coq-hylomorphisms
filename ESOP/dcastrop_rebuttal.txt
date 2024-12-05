@@ -58,27 +58,23 @@ encoding of recursive coalgebras.
 > incorporate into a program dealing with say ordinary lists or trees defined
 > using OCaml datatypes rather than as container equivalents.
 
-
-@@MIKE: This is a valid observation, in that the use of containers in our examples
-results in a slight mismatch between the extracted OCaml code and, for example,
-existing code/libraries that are expecting more ordinary datatypes for trees or
-lists. This could be ameliorated with either a minor amount of marshalling, or
-even a straightforward automatic translation. However, the fact that this
-extracted code contains no unsafe coercions, and contains minimal noise imposed
-by the details of the Coq formalism, make it possible at all for the resulting
-OCaml code to be usable. As we detail in the paper, prior related work does not
-meet those criteria.
-
-@@David: The use of ordinary lists and trees is not only possible, but easy. In fact,
+The use of ordinary lists and trees is not only possible, but easy. In fact,
 containers are only used internally in our examples, the input/output types use
 regular OCaml datatypes. We do that by defining them as initial algebras of the
 respective container extension (e.g. ListF, or TreeF in Section 5). By doing
 that, we get (for free) that OCaml lists/trees/etc are isomorphic to `Fix
-ListF` or `Fix TreeF`.  To further simplify interacting with these container
-extensions, it should be straightforward (even if tedious) to automate the
-translation between a strictly positive datatype and its container equivalent
-(e.g. Section 6 of Abott et al. (2005), or our own encoding of polynomial
-functors as containers in Coq).
+ListF` or `Fix TreeF`.
+
+It is, however, a valid observation, in that the use of containers may result
+in a slight mismatch between the extracted OCaml code and, for example,
+existing code/libraries that are expecting more ordinary datatypes for trees or
+lists. This could be ameliorated with either a minor amount of marshalling, or
+even a straightforward automatic translation (e.g. relying on an encoding of
+polynomial functors as containers -- we provide one in our implementation).
+However, the fact that this extracted code contains no unsafe coercions, and
+contains minimal noise imposed by the details of the Coq formalism, make it
+possible at all for the resulting OCaml code to be usable. As we detail in the
+paper, prior related work does not meet those criteria.
 
 > p12.  I the definition of comp, I was surprised that the arrows between (B ~>
 > C) and (A ~> B) and (A ~> C) are not ordinary function arrows.  I see this is
@@ -89,13 +85,11 @@ It simplifies the proofs. In particular, if we have that `f =e g`, then we can
 trivially conclude that `f \o h =e g \o h`. Otherwise, we would need to do this
 proof manually every time it is required.
 
-
-
-
 Review B
 ===========================================================================
 
-> * "least" fixed point, what does "least" mean here? and anyway that is not what Lambek's lemma says.
+> * "least" fixed point, what does "least" mean here? and anyway that is not
+> what Lambek's lemma says.
 
 We don't quite understand this comment.
 
@@ -109,7 +103,7 @@ An initial F-algebra is also a fixed-point for F and in particular is also the l
 
 > * "pronounced catamorphism" I think this is functional programming terminology, not category theory
 
-we agree, although despite the FP community has adopted their own terminology
+We agree, although despite the FP community has adopted their own terminology
 what they're indeed referring to the exact same thing.
 
 > * "Note that since Haskell". I didn't understand the point of this paragraph.
