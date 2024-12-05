@@ -33,13 +33,15 @@ proofs become more modular, and can be plugged in to build different
 divide-and-conquer computations. Our framework allows programmers to build
 libraries of recursive coalgebras for different datatypes, which can be reused
 when building other non-structural recursive functions. The encoding of
-recursive coalgebras to prove termination has not been explored before.
+recursive coalgebras to prove termination in a proof assistant has not been
+explored before.
 
-Our work allows to encode program calculation proofs in a natural way that,
-until today, are not machine-checked. Furthermore, we believe our work is a
-first step in try to understand how recursion schemes can be integrated in type
-theories to tackle termination challenges. We intend to have a more theoretical
-follow up addressing corecursive algorithms.
+Our work allows to encode program calculation proofs in a natural way (i.e.
+equivalent to pen-and-paper proofs) that, until today, are not machine-checked.
+Furthermore, we believe our work is a first step in try to understand how
+recursion schemes can be integrated in type theories to tackle termination
+challenges. We intend to have a more theoretical follow up addressing
+corecursive algorithms.
 
 
 Review A
