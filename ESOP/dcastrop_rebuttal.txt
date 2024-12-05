@@ -84,21 +84,39 @@ Review B
 
 > * "least" fixed point, what does "least" mean here? and anyway that is not what Lambek's lemma says.
 
-[TODO MARCO]
+We don't quite understand this comment.
+
+We define least fixed-point for F as the initial object in the category F-iso of
+fixed-points for F and F-iso homomorphisms.  By Lambek's lemma an initial
+F-algebra is a fixed-point, but in particular also the least fixed-point,
+because we can take any iso X ~ FX, and prove that there exists a unique F-iso
+morphism (mu F ---> X) simply because X is an F-algebra.
+
+An initial F-algebra is also a fixed-point for F and in particular is also the least.
 
 > * "pronounced catamorphism" I think this is functional programming terminology, not category theory
 
-[TODO MARCO]
+we agree, although despite the FP community has adopted their own terminology
+what they're indeed referring to the exact same thing.
 
-> * "Note that since Haskell". I didn't understand the point of this paragraph. I do think Haskell is a bad language for demonstrating this. 
+> * "Note that since Haskell". I didn't understand the point of this paragraph.
+    I do think Haskell is a bad language for demonstrating this.
+
+The point here is that Haskell has equi-recursive types which are both inductive
+and coinductive data types.  However, when programming with recursion schemes it
+is common to make inductive/coinductive types distinguished by defining a Fix
+and CoFix operator and then imposing that catamorphisms are used on Fix and
+anamorphisms are used on CoFix.
 
 > Section 2.3. Again, the terminal object might not exist, "greatest" doesn't make sense, etc..
 
-[TODO MARCO: does "greatest" not make sense?? I thought it was standard terminology]
+The argument might just be the dual of what we explained earlier.
+The terminal F-coalgebra might not exist, but if it does it corresponds to the greatest fixed-point of the functor F.
 
 > Page 8. "TreeF". This is not a tree, and it's never used as a tree. It's just a pair of lists with a midpoint. 
 
-The least/greatest fixpoint of TreeF is an inductive/coinductive tree.
+The least/greatest fixpoint of TreeF is an inductive/coinductive tree. The name TreeF it refers
+to the fact that it is the functor giving rise to the a tree via the fixed-point operator.
 
 > Page 9. Quicksort is not a solution to this equation, rather, "sort" is a
 > solution. These are functions between sets, and so cannot distinguish
@@ -107,7 +125,19 @@ The least/greatest fixpoint of TreeF is an inductive/coinductive tree.
 The solution to this equation behaves exactly as the naive implementation of
 Quicksort in Haskell/OCaml.
 
-I did not understand the recursive anamorphisms paragraph, but it seems to be a digression. 
+> I did not understand the recursive anamorphisms paragraph, but it seems to be a digression.
+
+We do use recursive anamorphisms in page 18, paragraph "On the subtype of finite
+elements".  In particular an anamorphism applied to a recursive coalgebra yields
+a finite F-tree (for a functor F).
+
+Consider the Coq type
+
+Inductive FinF : GFix F -> Prop
+
+Then {x : GFix F | FinF x} is the subtype of finite elements (of a coinductive
+data type) which is isomorphic to its inductive counterpart.
+
 
 > Does the extra variable x0 have a performance cost? 
 
