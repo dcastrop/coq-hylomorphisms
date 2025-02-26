@@ -98,10 +98,10 @@ Section MemoTable.
   Qed.
   Definition tailT := Eval unfold tailT_ in MkMorph tailT_morph.
 End MemoTable.
-Arguments Table {Sg}%type_scope {Esh} {Pg}%type_scope G A%type_scope {H}.
-Arguments Cons & {Sg}%type_scope {Esh} {Pg}%type_scope {G} {A}%type_scope {_}.
-Arguments headT {Sg}%type_scope {Esh} {Pg}%type_scope {G} {A}%type_scope {H}.
-Arguments tailT {Sg}%type_scope {Esh} {Pg}%type_scope {G} {A}%type_scope {H}.
+Arguments Table {Sg}%_type_scope {Esh} {Pg}%_type_scope G A%_type_scope {H}.
+Arguments Cons & {Sg}%_type_scope {Esh} {Pg}%_type_scope {G} {A}%_type_scope {_}.
+Arguments headT {Sg}%_type_scope {Esh} {Pg}%_type_scope {G} {A}%_type_scope {H}.
+Arguments tailT {Sg}%_type_scope {Esh} {Pg}%_type_scope {G} {A}%_type_scope {H}.
 
 Definition dyna `{setoid A} `{setoid B} `{C : Cont Sc Pc}
   (a : App C (Table C A) ~> A) (c : RCoalg C B) : B ~> A

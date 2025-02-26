@@ -92,7 +92,7 @@ Section FCoalgDef.
     {B} (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
     (c : Coalg F A) (RR : respects_relation c m R) : RCoalg A :=
     Rec c (wf_coalg_rec WF RR).
-  Arguments mk_wf_coalg {A}%type_scope {eA} {B}%type_scope m [R] WF [c] RR.
+  Arguments mk_wf_coalg {A}%_type_scope {eA} {B}%_type_scope m [R] WF [c] RR.
 
   (* Finite Trees *)
   Inductive FinF : GFix F -> Prop :=
@@ -215,9 +215,9 @@ Section FCoalgDef.
 End FCoalgDef.
 Arguments RCoalg {Sh Esh P} F A {eA}.
 
-Arguments rana & {Sh}%type_scope {Esh} {P}%type_scope {F} {A}%type_scope {eA}.
+Arguments rana & {Sh}%_type_scope {Esh} {P}%_type_scope {F} {A}%_type_scope {eA}.
 
-Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
+Arguments f_out & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
 
 Section CAlgDef.
   Context `{F : Cont Sh Po}.

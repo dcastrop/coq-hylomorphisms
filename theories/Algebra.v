@@ -174,6 +174,6 @@ Section AlgDef.
   Qed.
 End AlgDef.
 
-Arguments l_in & {Sh}%type_scope {Esh} {Po}%type_scope {F}.
-Arguments l_out & {Sh}%type_scope {Esh} {Po}%type_scope {F}.
-Arguments cata & {Sh}%type_scope {Esh} {Po}%type_scope {F} {A}%type_scope {eA}.
+Arguments l_in & {Sh}%_type_scope {Esh} {Po}%_type_scope {F}.
+Arguments l_out & {Sh}%_type_scope {Esh} {Po}%_type_scope {F}.
+Arguments cata & {Sh}%_type_scope {Esh} {Po}%_type_scope {F} {A}%_type_scope {eA}.

@@ -102,7 +102,7 @@ Proof with eauto with ffix.
   apply (@ MkSetoid _ (fun px py => proj1_sig px =e proj1_sig py))...
 Defined.
 
-Class equivs (A : list Type) : Type.
+Class equivs (A : list Type) : Prop.
 #[export] Instance e_nil : equivs (@nil Type).
 Defined.
 #[export] Instance e_cons `{setoid A} `{equivs B} : equivs (A::B).

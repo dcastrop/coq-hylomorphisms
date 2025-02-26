@@ -7,13 +7,13 @@ Require Import HYLO.Morphism.
 Require Import HYLO.Container.
 
 Definition Alg `{F : Container Sh P} A {eA : equiv A} := App F A ~> A.
-Arguments Alg {Sh}%type_scope {Esh} {P}%type_scope F A {eA}.
+Arguments Alg {Sh}%_type_scope {Esh} {P}%_type_scope F A {eA}.
 
 Unset Elimination Schemes.
 Inductive LFix `(F : Container Sh P) : Type :=
   LFix_in { LFix_out : App F (LFix F) }.
 Set Elimination Schemes.
-Arguments LFix {Sh}%type_scope {Esh} {P}%type_scope F.
+Arguments LFix {Sh}%_type_scope {Esh} {P}%_type_scope F.
 
 Lemma LFix_rect [Sh : Type] [Esh : equiv Sh] [Po : Type]
   [F : Container Sh Po] [P : LFix F -> Type]
@@ -371,7 +371,7 @@ Definition cata `{F : Container Sh P} A {eA : equiv A} (g : Alg F A)
            g ((fun x => MkCont (F:=F) (shape x)
                           (fun e => f (cont x e))) (LFix_out (F:=F) x));
        f_eq := cata_arr g |}.
-Arguments cata {Sh}%type_scope {Esh} {P}%type_scope {F} [A]%type_scope {eA} g.
+Arguments cata {Sh}%_type_scope {Esh} {P}%_type_scope {F} [A]%_type_scope {eA} g.
 
 Lemma cata_univ_r `{F : Container Sh P} `{eA : equiv A} (g : Alg F A)
       (f : LFix F ~> A)
@@ -593,7 +593,7 @@ Proof. induction x as [s Ih]. constructor. apply Ih. Qed.
 
 Definition f_out `(F : Container Sh P) : FCoAlg F (LFix F) :=
   exist _ _ (fin_out (F:=F)).
-Arguments f_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
+Arguments f_out & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
 
 Lemma hylo_cata `{F : Container Sh P} B {eB : equiv B} (g : Alg F B)
   : cata g =e hylo g f_out.

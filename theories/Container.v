@@ -276,7 +276,7 @@ Section Nest.
   #[export]
     Instance Nest : Cont (App F X) Pg := { valid := nest_v }.
 End Nest.
-Arguments Nest {Shape}%type_scope {SS} {Pf Pg}%type_scope F G X {SX}.
+Arguments Nest {Shape}%_type_scope {SS} {Pf Pg}%_type_scope F G X {SX}.
 
 Section NaturalTransformation.
   Context `(F : Cont S1 P1) `(G : Cont S2 P2).
@@ -315,9 +315,9 @@ Section NaturalTransformation.
   Qed.
 End NaturalTransformation.
 
-Arguments eta {S1}%type_scope {Esh} {P1}%type_scope [F] {S2}%type_scope {Esh0}
-  {P2}%type_scope [G eta_S] [eta_P]%function_scope eta_C%function_scope
-  X%type_scope {Ex}.
+Arguments eta {S1}%_type_scope {Esh} {P1}%_type_scope [F] {S2}%_type_scope {Esh0}
+  {P2}%_type_scope [G eta_S] [eta_P]%_function_scope eta_C%_function_scope
+  X%_type_scope {Ex}.
 
 Section NatShape.
   Context `(F : Cont S1 P) `{SS2 : setoid S2} (G : Cont S2 P).
@@ -436,5 +436,5 @@ Section EtaMap.
   Qed.
 End EtaMap.
 
-Arguments cmap & {Sf}%type_scope {H} {Pf Pg}%type_scope {F G} {X}%type_scope
-                   {H0} {Y}%type_scope {H1} {A}%type_scope {H2}.
+Arguments cmap & {Sf}%_type_scope {H} {Pf Pg}%_type_scope {F G} {X}%_type_scope
+                   {H0} {Y}%_type_scope {H1} {A}%_type_scope {H2}.

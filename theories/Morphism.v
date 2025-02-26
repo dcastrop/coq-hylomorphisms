@@ -254,7 +254,7 @@ Section PredSubty.
     := MkMorph (liftP_f_arr Pf).
 End PredSubty.
 
-Arguments liftP {A}%type_scope {eA} {B}%type_scope {eB} f {P} Pf%function_scope.
+Arguments liftP {A}%_type_scope {eA} {B}%_type_scope {eB} f {P} Pf%_function_scope.
 
 (* Solves stuff of the shape App F X =e App F X where (=e) for shapes of F is
 Coq's [=].

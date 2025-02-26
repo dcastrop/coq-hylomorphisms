@@ -70,10 +70,6 @@ Proof.
   eq_args.
 Qed.
 
-(* YAY! quicksort in Coq as a divide-and-conquer "finite" hylo :-) *)
-(* UPDATE 12/09/2023 by DC: this used to be mergesort, and at some
- * point I simply changed the implementation ...
- *)
 Definition qsort : Ext (cata merge \o rana tsplit).
   calculate.
   (* rewrite <- ana_rana. *)

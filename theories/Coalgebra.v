@@ -197,6 +197,6 @@ Section CoalgDef.
   Proof. rewrite <- ana_univ. reflexivity. Qed.
 End CoalgDef.
 
-Arguments ana {Sh}%type_scope {Esh} {P}%type_scope {F} {A}%type_scope {eA}.
-Arguments g_in & {Sh}%type_scope {Esh} {P}%type_scope {F}.
-Arguments g_out & {Sh}%type_scope {Esh} {P}%type_scope {F}.
+Arguments ana {Sh}%_type_scope {Esh} {P}%_type_scope {F} {A}%_type_scope {eA}.
+Arguments g_in & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
+Arguments g_out & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
