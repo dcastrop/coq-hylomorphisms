@@ -184,7 +184,7 @@ Section CoalgDef.
   Proof.
     intros H. rewrite H. intros x. simpl.
     apply paco2_fold. constructor; simpl; try reflexivity.
-    rewrite unfold_ana_f. simpl. intros e1 e2 Hv.
+    intros e1 e2 Hv.
     rewrite (elem_val_eq Hv). left. apply GFixR_refl.
   Qed.
 

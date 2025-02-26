@@ -106,7 +106,7 @@ Section FCoalgDef.
   Proof.
     simpl. intros x. generalize (Rc x).
     intros Rcx. induction Rcx as [x _ Ih]. constructor. simpl in *.
-    rewrite unfold_ana_f. simpl. exact Ih.
+    exact Ih.
   Qed.
 
   Lemma fin_ana_rcoalg `{setoid A}
@@ -115,7 +115,7 @@ Section FCoalgDef.
     intros x. specialize (FT x). revert FT.
     generalize (eq_refl (ana h x)). generalize (ana h x) at -1. intros g Eg HF.
     revert x Eg. induction HF as [g _ Ih]. intros x Eg. subst. simpl in *.
-    rewrite unfold_ana_f in *. simpl in *. constructor. intros e.
+    simpl in *. constructor. intros e.
     specialize (Ih e _ eq_refl). trivial.
   Qed.
 

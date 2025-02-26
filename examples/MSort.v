@@ -43,7 +43,9 @@ Fixpoint splitL (x : list int) (accL accR : list int) :=
   | cons x xs => splitL xs accR (cons x accL)
   end.
 
-Definition len_pair (p : list int * list int)
+Notation max := Nat.max.
+
+Definition len_pair (p : list int * list int) : nat
   := max (length (fst p)) (length (snd p)).
 
 Lemma splitL_len : forall x a1 a2,
