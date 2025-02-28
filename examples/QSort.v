@@ -34,7 +34,7 @@ Definition c_split : Coalg (TreeF unit int) (list int) :=
   ltac:(|{ x ~> match x with
              | nil => a_leaf tt
              | cons h t =>
-                 let (l, r) := List.partition (fun x => x <=? h) t in
+                 let (l, r) := List.partition (fun x => x <? h) t in
                  a_node h l r
              end}|).
 Close Scope uint63_scope.
@@ -123,3 +123,68 @@ Extraction Inline posR.
 Set Extraction Flag 2047.
 Recursive Extraction qsort.
 Recursive Extraction qsort_times_two.
+
+Section QSortOK.
+Inductive Sorted {A : Type} (R : A -> A -> bool) : list A -> Prop :=
+  | Sorted_nil : Sorted R nil
+  | Sorted_cons {a} {v : list A} : All (R a) v -> Sorted R v -> Sorted R (a :: v).
+
+  Definition Permutation {A : Type} (l r : list A) := forall x, In x l <-> In x r.
+
+  Definition leb x y : bool := (x <=? y)%uint63.
+
+  Lemma sorted_app p :
+    forall l r,
+      Sorted leb l -> Sorted leb r ->
+      All (fun x => x <? p)%uint63 l -> All (fun x => negb (x <? p))%uint63 r ->
+      Sorted leb (l ++ r).
+  Proof.
+    induction l as [|h t Ih]; simpl; auto.
+    intros r Sh Sr A B. inversion_clear Sh as [|h' t' Aleb Sl].
+    constructor.
+    + intros x H. apply in_app_or in H. destruct H; auto.
+      specialize (B _ H); simpl in *.
+      specialize (A h (or_introl eq_refl)). simpl in A.
+      clear H Sl Aleb Sr Ih. unfold leb. apply negb_lt_le in B.
+      apply lt_le in A; apply (leb_trans A B).
+    + apply Ih; auto. intros x e.
+      apply (A _ (or_intror e)).
+  Qed.
+
+  Lemma hylo_correct : forall (l : list int),
+      Sorted leb (hylo merge tsplit l) /\ Permutation l (hylo merge tsplit l).
+  Proof.
+    Opaque hylo.
+    intros l. induction (recP tsplit l) as [l _ Ih]; rewrite hylo_unr; simpl.
+    destruct l as [|h t]; simpl in *.
+    + do ! constructor; auto with *.
+    + rewrite partition_as_filter in *; simpl in *.
+      pose proof (Ih (posL h)) as IhL; specialize (Ih (posR h)).
+      rename Ih into IhR; simpl in *.
+      destruct IhR as [IhSr IhPr].
+      destruct IhL as [IhSl IhPl].
+      split.
+      - apply (@sorted_app h).
+        * exact IhSl.
+        * constructor; try exact IhSr.
+          intros x e. apply IhPr in e. rewrite filter_In in e.
+          destruct e as [_ negb_lt]. apply negb_lt_le; trivial.
+        * intros x e. apply IhPl in e. rewrite filter_In in e.
+          destruct e as [_ lt]; trivial.
+        * intros x e. destruct e as [xh | e]; [subst; apply negb_lt_x_x|].
+          apply IhPr in e. rewrite filter_In in e.
+          destruct e as [_ lt]; trivial.
+      - intros x. split.
+        * intros [xh | e]; [subst; apply In_middle|].
+          apply in_or_app.
+          destruct (ltbP x h) as [l | n].
+          rewrite <- ltb_spec in l; rewrite <- (IhPl x), filter_In; auto.
+          rewrite <- ltb_spec in n. apply Bool.eq_true_not_negb in n.
+          right; right. rewrite <- (IhPr x), filter_In; auto.
+        * intros H; apply in_app_or in H; destruct H  as [inL|[eqh|inR]].
+          right. rewrite <- (IhPl x), filter_In in inL. destruct inL; trivial.
+          subst. left; trivial.
+          right. rewrite <- (IhPr x), filter_In in inR. destruct inR; trivial.
+    Transparent hylo.
+    Qed.
+End QSortOK.

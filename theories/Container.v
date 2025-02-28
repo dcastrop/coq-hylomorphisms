@@ -4,6 +4,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
+Require Import Util.Utils.
 Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.
 
@@ -44,8 +45,6 @@ Class Cont `{Esh : setoid Sh} (P : Type) :=
   { valid : Sh * P ~> bool
   }.
 Arguments Cont Sh {Esh} P.
-
-Coercion is_true b : Prop := b = true.
 
 Record Pos `{Cont Sh P} (s : Sh) :=
   MkElem {
