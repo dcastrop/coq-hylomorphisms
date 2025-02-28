@@ -161,8 +161,7 @@ Inductive Sorted {A : Type} (R : A -> A -> bool) : list A -> Prop :=
     + rewrite partition_as_filter in *; simpl in *.
       pose proof (Ih (posL h)) as IhL; specialize (Ih (posR h)).
       rename Ih into IhR; simpl in *.
-      destruct IhR as [IhSr IhPr].
-      destruct IhL as [IhSl IhPl].
+      destruct IhR as [IhSr IhPr]; destruct IhL as [IhSl IhPl].
       split.
       - apply (@sorted_app h).
         * exact IhSl.
@@ -177,9 +176,9 @@ Inductive Sorted {A : Type} (R : A -> A -> bool) : list A -> Prop :=
       - intros x. split.
         * intros [xh | e]; [subst; apply In_middle|].
           apply in_or_app.
-          destruct (ltbP x h) as [l | n].
-          rewrite <- ltb_spec in l; rewrite <- (IhPl x), filter_In; auto.
-          rewrite <- ltb_spec in n. apply Bool.eq_true_not_negb in n.
+          destruct (ltbP x h) as [l | l]; rewrite <- ltb_spec in l.
+          rewrite <- (IhPl x), filter_In; auto.
+          apply Bool.eq_true_not_negb in l.
           right; right. rewrite <- (IhPr x), filter_In; auto.
         * intros H; apply in_app_or in H; destruct H  as [inL|[eqh|inR]].
           right. rewrite <- (IhPl x), filter_In in inL. destruct inL; trivial.
