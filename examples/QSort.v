@@ -151,11 +151,21 @@ Inductive Sorted {A : Type} (R : A -> A -> bool) : list A -> Prop :=
       apply (A _ (or_intror e)).
   Qed.
 
+
+  Lemma hylo_ind `{eA : setoid A} `{eB : setoid B} `{F : Cont Sh Pp}
+    (P : A -> B -> Prop)
+    : forall (a : Alg F B) (c : RCoalg F A),
+      (forall x (Ih : forall e, P (cont (c x) e) (hylo a c (cont (c x) e))), P x (hylo a c x)) ->
+      forall x, P x (hylo a c x).
+  Proof.
+    intros a c H x. induction (recP c x) as [x _ Ih]. apply H, Ih.
+  Qed.
+
   Lemma hylo_correct : forall (l : list int),
       Sorted leb (hylo merge tsplit l) /\ Permutation l (hylo merge tsplit l).
   Proof.
     Opaque hylo.
-    intros l. induction (recP tsplit l) as [l _ Ih]; rewrite hylo_unr; simpl.
+    intros l. apply hylo_ind. clear l. intros l Ih. rewrite hylo_unr; simpl.
     destruct l as [|h t]; simpl in *.
     + do ! constructor; auto with *.
     + rewrite partition_as_filter in *; simpl in *.
