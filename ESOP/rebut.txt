@@ -1,0 +1,38 @@
+We thank the reviewers for their constructive feedback, which helped clarify our contributions and refine the positioning of our work. Below, we summarise the main motivation behind our work.
+
+Our main motivation is to build a verified framework for program calculation and code extraction, addressing gaps in existing approaches. The state-of-the-art does not address divide-and-conquer algorithms nor the extraction of idiomatic code. While individual components of our work are well-known, their integration into a cohesive framework has not been studied.  Additionally, using these components to formalise hylomorphisms in a type theory is a novel contribution. A key benefit of our approach is that it allows the use of regular Coq proofs for program calculation in a natural way (i.e.  almost identical to pen-and-paper proofs). Prior work mostly relied on pen-and-paper proofs and unverified Haskell implementations, leaving a gap in the ability to produce formally verified and automatically extracted implementations. Our framework addresses this by integrating formal verification and code generation into a single process.
+
+The use of hylomorphisms in a type theory offers advantages for termination proofs. Unlike common approaches to encode non-structural recursion in a proof assistant, using hylomorphisms allows us to focus termination proofs on the fact that the coalgebra is recursive. This makes termination proofs more modular and reusable. Programmers could build a reusable library of recursive coalgebras for different datatypes. We believe our work is a first step toward understanding how recursion schemes can be integrated into type theories to address termination challenges.
+
+**Review-A:**
+-------------------------------------------------------------------------------
+
+> Usability of the generated code
+
+The use of ordinary lists and trees is easy and possible. Our examples only use containers internally. The input/output types of the extracted code use regular OCaml datatypes, thanks to their definition as initial algebras of the respective container extension (ListF, TreeF in Section 5).
+
+> definition of comp using ~>
+
+This choice allows us to conclude trivially that, e.g. if `f =e g`, then `f \o h =e g \o h`, avoiding the need for a manual proof every time.
+
+**Review-B:**
+-------------------------------------------------------------------------------
+
+> Does the extra x0 have a performance cost?
+
+No, it can be trivially inlined during a compiler pass, e.g. using inlining hints.
+
+> Least/greatest fixed-points.
+
+We will clarify this in the paper. We define least fixed-point for F as the initial object in the category F-iso of fixed-points for F and F-iso homomorphisms. By Lambek's lemma, an initial F-algebra is a fixed-point, but in particular also the least fixed-point, because we can take any iso X ~ FX, and prove that there exists a unique F-iso morphism (μ F ---> X) simply because X is an F-algebra.
+
+> "TreeF" is not a tree.
+
+The name refers to the fact that it is a functor whose fixed-point gives rise to a tree.
+
+**Review-C:**
+-------------------------------------------------------------------------------
+
+> How does using Coq help with hylomorphisms?
+
+Hylomorphisms may not always exist or be unique due to termination issues. If a hylomorphism is encoded in Coq, it must exist and be unique.

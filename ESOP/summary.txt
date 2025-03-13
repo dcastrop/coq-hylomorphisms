@@ -1,0 +1,31 @@
+We would like to thank the reviewers for their constructive feedback, which has
+helped us clarify our contributions and refine the positioning of our work.  We
+summarise here the main motivation behind our work
+
+Our main motivation is to build a verified framework for program calculation
+and code extraction. The state-of-the art does not address divide-and-conquer
+algorithms, and does not address the extraction of idiomatic code.
+
+While the individual components of this work are well-known, their integration
+into a cohesive framework has not been previously studied. Moreover, their use
+to formalise hylomorphisms in a type theory has also never been explored.  One
+key benefit of our approach is that we allow the use of regular Coq proofs to
+do program calculation in a natural way (i.e.  equivalent to pen-and-paper
+proofs).  Prior work largely relied on pen-and-paper proofs and unverified
+implementations in Haskell, leaving a gap in the ability to produce formally
+verified and automatically extracted implementations. Our framework addresses
+this gap by integrating formal verification and code generation into a single,
+cohesive process.  Only Abreu et al. (2023) encode divide and conquer
+computations, but in a way that does not allow for program calculation, and
+does not lead to idiomatic code extraction (Section 6.2).
+
+Furthermore, the use of hylomorphisms in a type theory has some benefits
+regarding termination proofs. Unlike common approaches to encode non-structural
+recursion in a proof assistant, the use of hylomorphisms allows to focus the
+proofs on showing that the coalgebra is recursive. This means that termination
+proofs become more modular and reusable, and can be plugged in to build
+different divide-and-conquer computations.  We believe our work is a first step
+to try to understand how recursion schemes can be integrated in type theories
+to tackle termination challenges.
+
+
