@@ -201,17 +201,18 @@ compromises affecting the resulting code, such as imposing performance
 penalties, requiring the assumption of additional axioms, or introducing unsafe
 casts into extracted code (e.g. \ocaml{Obj.magic} in OCaml).
 
-This paper presents the first Coq formalisation of
-a recursion scheme, called the \emph{hylomorphism}, along with its algebraic
-laws allowing for the mechanisation of all recognised (terminating) recursive
-algorithms. The key contribution of this paper is that this formalisation is
-fully axiom-free allowing for the extraction of safe, idiomatic OCaml code. We
-exemplify the framework by formalising a series of algorithms based on different
-recursive paradigms such as divide-and conquer, dynamic programming, and mutual
-recursion and demonstrate that the extracted OCaml code for the programs
-formalised in our framework is efficient, resembles code that a human programmer
-would write, and contains no occurrences of \ocaml{Obj.magic}.  We also present
-a machine-checked proof of the well-known short-cut fusion optimisation.
+This paper presents the first Coq formalisation of a recursion scheme, called
+the \emph{hylomorphism}, along with its algebraic laws allowing for the
+mechanisation of all recognised (terminating) recursive algorithms. The key
+contribution of this paper is that this formalisation is fully axiom-free
+allowing for the extraction of safe, idiomatic OCaml code. We exemplify the
+framework by formalising a series of algorithms based on different recursive
+paradigms such as divide-and conquer, dynamic programming, and mutual recursion
+and demonstrate that the extracted OCaml code for the programs formalised in our
+framework is efficient, resembles code that a human programmer would write, and
+contains no occurrences of \ocaml{Obj.magic}.  Furthermore, we show the use of
+the machine-checked proofs of the laws of hylomorphisms to do program
+optimisations.
 \end{abstract}
 
 \section{Introduction}
@@ -247,24 +248,22 @@ equivalences and algebraic laws to rewrite it to an optimised version  (e.g.\
 the fused OCaml implementation above). We will revisit a similar example
 in Section~\ref{sec:sorting}.
 
-Despite the rigorous set of algebraic laws that are satisfied by recursion
-schemes, there is a lack of tool support for their use in the context of program
-calculation. In fact, most of the work on applying program calculation is done
-by performing pen-and-paper proofs, and then translating the result to specific
-instances of recursion schemes, implemented in a programming language (generally
-Haskell). There are some examples of implementations of program calculation
-techniques, but these implementations are scarce, not up to date, and not
-verified in a proof assistant. For example, Cunha et al.~\cite{DrHylo} automated
-program calculation techniques by a custom Haskell implementation.
+There is not much tool support to use program calculation techniques. In fact,
+uses of program calculation are done by  pen-and-paper proofs, and then
+translating the result to specific instances of recursion schemes, implemented
+in a programming language (generally Haskell).  There are some examples of
+implementations of program calculation techniques, but these implementations are
+scarce, not up to date, and not verified in a proof assistant. For example,
+Cunha et al.~\cite{DrHylo} automated program calculation techniques by a custom
+Haskell implementation.
 
 Several authors build tools for applying program calculation techniques by
-\emph{mechanising} them as part of a proof assistant. However, most of the work
-in mechanising recursion schemes focuses on a narrow subset of the known
-recursion schemes due to termination issues, or do not focus on proving
-algebraic laws of generic recursion
-schemes~\cite{10.1007/978-3-642-17796-5_10,MurataE19,larchey2022braga}.  Indeed,
-most of the mechanisations of generic recursion schemes focus on \emph{maps} and
-\emph{folds}, and few authors focus on the \emph{unfolds}. Omitting
+\emph{mechanising} them as part of a proof assistant. However, most of the
+existing work only mechanises a narrow subset of the know recursion schemes, or
+do not prove their algebraic
+laws~\cite{10.1007/978-3-642-17796-5_10,MurataE19,larchey2022braga}.  Indeed,
+most of the mechanisations of generic recursion schemes cover \emph{maps} and
+\emph{folds}, and few authors focus implement \emph{unfolds}. Omitting
 \emph{unfolds} severely limits the expressivity of the resulting mechanisations,
 and prevent them from being able to mechanise the most general recursion scheme:
 a divide-and-conquer algorithm which goes under the name of
@@ -281,34 +280,24 @@ not allow for extraction of idiomatic OCaml code, and it is not well-suited for
 program calculation. This is unfortunate since code extration is what allows the
 execution of code that has been verified in
 Coq~\cite{OnoHTNH11,Larchey-Wendling23,MiculanP12,Sakaguchi20}.  In Abreu et
-al's approach, extraction (1) does not preserve the recursive structure of
-common implementations; and (2) leads to unsafe casts like \ocaml{Obj.magic} in
-the generated code. This latter is also problematic in that, for higher-order
-programs, simple interoperations can lead to incorrect behaviour or even
-segfaults~\cite{forster:hal-04329663} and, moreover, it invalidates the
-fast-and-loose principle~\cite{DanielssonHJG06}.
+al's approach, extraction (1) does not produce code with the same recursive
+structure  as existing manual implementations; and (2) leads to unsafe casts
+like \ocaml{Obj.magic} in the generated code. This latter is also problematic in
+that, for higher-order programs, simple interoperations can lead to incorrect
+behaviour or even segfaults~\cite{forster:hal-04329663} and, moreover, it
+invalidates the fast-and-loose principle~\cite{DanielssonHJG06}.
 
-The contributions of this paper are as follows.  This work presents the first
-Coq formalisation \emph{hylomorphisms} that (1) is \emph{fully axiom-free}; (2)
+The contributions of this paper are as follows.  This work presents a Coq
+formalisation of \emph{hylomorphisms} that (1) is \emph{fully axiom-free}; (2)
 allows the extraction of idiomatic OCaml code; and (3) can use regular Coq
 equalities to do program calculation, derive correct implementations, and apply
-optimisations.
-The full mechanisation is open source.
+optimisations.  The full mechanisation is open source.
 %can be found on
 %Github\footnote{https://github.com/dcastrop/coq-hylomorphisms}\dcas{I SHOULD
 %  ANONYMISE THIS}.
 While programmers still need to reason about the termination of their programs,
 the use \emph{program calculation} can ease this task by allowing the use of
 fusion on programs that have already been proven to terminate.
-% As an example, our mechanisation of \ocaml{qsort} as a
-% hylomorphism will produce the following code:
-% \begin{coqcode}
-% let rec qsort = function | [] -> []
-%   | h :: t -> let (l, r) = partition (fun x0 -> (<=) x0 h) t in
-%               let cx = fun p -> match p with | Lbranch -> l | Rbranch -> r in
-%               app (qsort (cx Lbranch)) (h :: (qsort (cx Rbranch)))
-% \end{coqcode}
-%
 
 The remainder of the paper is structured as follows:
 \begin{itemize}
@@ -326,15 +315,15 @@ optimised code to OCaml.
 \end{itemize}
 
 \section{Recursion Schemes}\label{sec:rec-schemes}
-The structure of data is very similar to the structure of an
-algorithm which processes that data. This relationship manifests in the form of
-structured recursion schemes which are widely used in functional languages such
-Haskell. Canonical examples are folds (catamorphisms), which consume data, and
-unfolds (anamorphisms), which produce it. While some implementations of
-recursion schemes like $\operator{foldr}$ in Haskell are specific to a particular
-data structure, in this case $\operator{List}$s, we can generalise further these
-ideas to account for generic (co)inductive data types and generic algorithms
-operating on them.
+The structure of data is very similar to the structure of an algorithm which
+processes that data. This relationship manifests in the form of structured
+recursion schemes which are widely used in functional languages such Haskell.
+Canonical examples are folds (catamorphisms), which consume data, and unfolds
+(anamorphisms), which produce it. While some implementations of recursion
+schemes like $\operator{foldr}$/$\operator{unfoldr}$ in Haskell are specific to
+a particular data structure, in this case $\operator{List}$s, we can generalise
+further these ideas to account for generic (co)inductive data types and generic
+algorithms operating on them.
 
 Furthermore folds and unfolds can be shown to capture a wide
 range of recursion schemes such as primitive recursion, mutual recursion,
@@ -384,44 +373,19 @@ In $\Set$, we can define the set of lists
 \[
   \List{A} \iso 1 + A \times \List{A}
 \]
-as the set inductively generated by the
-constructors $\nil : 1 \to \List{A}$ and
-$\cons : A \times \List{A} \to \List{A}$.
-The terminal object in $\Set$ is the \emph{unit} type, that only has one
-inhabitant, $* : 1$.
-The $\List{-}$ type is a functor. Its action on objects is to take any set
-$A$ to $\List{A}$, and its functorial
-action $\List{f} : \List{A} \to \List{B}$ is given by $\List{f}(*) = *$ and
+as the set inductively generated by the constructors $\nil : 1 \to \List{A}$ and
+$\cons : A \times \List{A} \to \List{A}$.  The terminal object in $\Set$ is the
+\emph{unit} type, that only has one inhabitant, $* : 1$.  The $\List{-}$ type is
+a functor from  $\Set \to \Set$. When a functor maps a category to itself, it is
+called an \textbf{endofunctor}. The action of $\List{-}$ is to take any set $A$
+to the set $\List{A}$, and its functorial action
+$\List{f} : \List{A} \to \List{B}$ is given by $\List{f}(\nil(*)) = \nil(*)$ and
 $\List{f}(\cons(a,xs)) = \cons(f(a), \List{f}(xs))$. Notice that the definition
 $\List{f}$ is well-defined as it recursively calls on a smaller argument.
 However, there is a more general way of proving these type of definitions are
 well-defined. Similarly, the set of streams $\Str{A} \iso A \times \Str{A}$ is
 the greatest set generated by the constructor
 $\cons : A \times \Str{A} \to \Str{A}$.
-
-\subsubsection{Functors in Haskell}
-It is often helpful for functional programmers to think of categorical
-constructions in terms of Haskell thereby assuming that Haskell types are sets
-and programs are functions~\cite{DanielssonHJG06}.
-
-We can declare the class of types which are functors. This is done by imposing
-that a function \mintinline{haskell}{f : * -> *} comes with a functorial action
-given by function \mintinline{haskell}{fmap}:
-\begin{minted}{haskell}
-class Functor f where
-  fmap :: (a -> b) -> f a -> f b
-\end{minted}
-
-We now define the type of lists as usual and then show that it is an instance of
-the class \mintinline{haskell}{Functor} by implementing the
-\mintinline{haskell}{fmap} program:
-\begin{minted}{haskell}
-data List a = Nil | Cons a (List a)
-
-instance Functor List where
- fmap f Nil = Nil
- fmap f (Cons x xs) = Cons (f x) (fmap f xs)
-\end{minted}
 
 \subsection{Algebras and Catamorphisms}
 \label{sec:algebras}
@@ -432,7 +396,7 @@ The category of $F$-algebras, denoted by $F\Alg(\CatC)$, is the category where
 objects are $F$-algebras and arrows $f : (X, a_{X}) \to (Y, a_{Y})$ are
 \emph{$F$-algebra homomorphisms}  $f : X \to Y$ in $\CatC$ such that they
 respect the structure of the algebra, that is
-$f \circ a_{X} = A_{Y} \circ F(f)$. The initial object in this category is
+$f \circ a_{X} = a_{Y} \circ F(f)$. The initial object in this category is
 called the \emph{initial $F$-algebra}, that is the $F$-algebra which has a
 unique $F$-algebra homomorphism into any other $F$-algebra. By Lambek's lemma
 the initial $F$-algebra is precisely the \emph{least fixed-point} for the
@@ -444,7 +408,7 @@ homomorphism, denoted by $\cata{\beta} : (\mu F, \InIso) \to (X, a_{X})$ and
 pronounced ``\emph{catamorphism}'' satisfying:
 \begin{equation}
   \label{eq:cata:unique}
-  f = \cata{a_{X}} \iff f = a_{X} \circ F(f) \circ \InIso
+  f = \cata{a_{X}} \iff f = a_{X} \circ F(f) \circ \InOp
 \end{equation}
 In words, any $F$-algebra homomorphism from the initial $F$-algebra is a
 catamorphism. As a result of the uniqueness property we can derive the fusion
@@ -467,39 +431,6 @@ $[\nil,\cons]$ into the algebra $[b, i]$.
 In functional programming this is commonly referred to as
 $\foldr : (1 \to B) \to (A \times B \to B) \to B$. We can in fact set
 $\foldr\;base\;ind = \cata{[base, ind]}$.
-
-\subsubsection{Inductive Types and Catamorphisms in Haskell }
-We now implment the least fixed-point of a functor \mintinline{haskell}{f}.
-Inuitively this is the type of \mintinline{haskell}{f}-branching trees of finite depth:
-\begin{minted}{haskell}
-newtype Fix f = In {inOp :: f (Fix f )}
-\end{minted}
-Note that since Haskell is a lazy language with general recursion this type can
-also represent infinite trees. However, the point of using recursion schemes is
-precisely that of avoid using general recursion in the first place.
-
-A catamorphism can be readily implemented as follows
-\begin{minted}{haskell}
-cata :: Functor f => (f a -> a) -> Fix f -> a
-cata alg = alg . fmap (cata alg) . In
-\end{minted}
-
-As an example of how to construct inductive types we define the functor
-$X \mapsto 1 + A \times X$ as data type parameterized by a type:
-\begin{minted}{haskell}
-data ListF a x = Nil | Cons a deriving Functor
-newtype List a = (Fix ListF) a
-\end{minted}
-It should be easy now to see that a foldr is precisely a catamorphism over the
-type \mintinline{haskell}{List} which we have just defined.  For example,
-summing up the elements of a list can be implemented using a catamorphism as
-follows
-\begin{minted}{haskell}
-sum :: Fix (ListF Int) -> Int
-sum xs = cata (\case { Nil -> 0; Cons n m -> n + m } )  xs
-\end{minted}
-In the program above, the code inside the lambda case is precisely the
-\mintinline{haskell}{ListF Int}-algebra for the catamorphism.
 
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
@@ -544,28 +475,6 @@ $f : (X, c_{X}) \to (Y, c_{Y})$ we have
   \ana{c_{Y}} \circ f = \ana{c_{X}}
 \end{equation}
 
-\subsubsection{Coinductive Types and Anamorphisms in Haskell }
-Similarly to the inductive case, we can implement coinductive types and
-catamorphisms as follows:
-\begin{minted}{haskell}
-newtype CoFix f = OutOp {out :: f (Fix f )}
-\end{minted}
-As mentioned above, this type is similar to the data type
-\mintinline{haskell}{Fix} we already defined. However, this time we are going to
-use this assuming that it is the coinductive fixed-point by defining an
-anamorphism on it:
-\begin{minted}{haskell}
-ana :: Functor b => (a -> b a) -> a -> CoFix b
-ana coalg = OutOp . fmap (ana coalg) . coalg
-\end{minted}
-For example, the stream of natural numbers can now be defined using an anamorphism
-\begin{minted}{haskell}
-nat :: CoFix (ListF Int)
-nat = ana (\x -> Cons x (x+1)) 0
-\end{minted}
-where the argument to the anamorphism is the
-\mintinline{haskell}{ListF Int}-coalgebra.
-
 \subsection{Recursive Coalgebras and Hylomorphism}
 \label{sec:rec-coalgebras}
 Recursion schemes provide an abstract way to consume and generate data capturing
@@ -581,9 +490,8 @@ it satisfies
   \label{eq:hylo}
   h = a \circ F(h) \circ c
 \end{equation}
-As we stated earlier, a solution to this equation does not exist for an
-arbitrary algebra and coalgebra pair and, in fact, this definition cannot be
-accepted by Coq.
+A solution to this equation does not exist for an arbitrary algebra and
+coalgebra pair and, in fact, a definition like this cannot be accepted by Coq.
 
 A coalgebra $(C,c)$ is \emph{recursive} if for every algebra $(A, a)$ there is a
 \emph{unique} hylo $(C,c ) \rightarrowtail (A, a)$. We denote these type of
@@ -615,395 +523,94 @@ it, can be fused together into a single recursive definition. This, in turn,
 allows us to prove that a recursive hylomorphism is the composition of a
 catamorphism and a recursive anamorphism.
 
-\subsubsection{Haskell Implementation of Hylomorphisms}
-% which is very useful in list processing. As a fold, The frequently used function
-% map is also a fold:
-% \begin{minted}{haskell}
-% map :: (a -> b) -> [a] -> [b]
-% map f = foldr (\x xs -> (f x):xs) []
-% \end{minted}
-We implement the hylomorphism tightly following the theory explained above:
-\begin{minted}{haskell}
-hylo :: Functor f => (c -> f c) -> (f a -> a) -> c -> a
-hylo c a = a . fmap (hylo c a) . c
-\end{minted}
-
-A classic example of a divide-and-conquer algorithm that can be written as an
-hylomorphism is the quicksort program below:
-\begin{minted}{haskell}
-partition x xs = ([l | l <- xs, l < x], x, [r | r <- xs, r >= x])
-
-quicksort :: [Int] -> [Int]
-quicksort [] = []
-quicksort (x:xs) = let (xs, x, ys) = partition x xs
-                   in (quicksort xs) ++ [x] ++ (quicksort ys)
-\end{minted}
-The partition program takes an element \mintinline{haskell}{x} and a list and
-returns a triple consisting of a list with all the elements in the list smaller
-than \mintinline{haskell}{x}, the element itself and a list with all the
-elements in the list greater or equal than  \mintinline{haskell}{x}. The
-quicksort program first runs the partition program, which divides the list in
-three parts, calls itself recursively on the sublists and then puts the results
-together using the concatenation function.
-
-To implement this as an hylo we define the functor representing trees where
-leaves are just empty and each node contains a value:
-\begin{minted}{haskell}
-data TreeF a k = Leaf | Branch k a k deriving Functor
-\end{minted}
-Now the partition program can be written as a  \mintinline{haskell}{TreeF}-coalgebra
-\begin{minted}{haskell}
-divide :: [Int] -> TreeF Int [Int]
-divide [] = Leaf
-divide (p:xs) = Branch [l | l <- xs, l < p] p [r | r <- xs, r > p]
-\end{minted}
-and the concatenation function can be written as  \mintinline{haskell}{TreeF}-algebra
-\begin{minted}{haskell}
-conquer :: TreeF Int [Int] -> [Int]
-conquer Leaf = []
-conquer (Branch ls x rs) = ls ++ [x] ++ rs
-\end{minted}
-Finally, quicksort can be rewritten as an hylomorphism
-\begin{minted}{haskell}
-quicksort = hylo divide conquer
-\end{minted}
-As an important remark we have used the in-built list type for keeping the code
-as tidy as possible, but it would have been possible to use the inductive
-\mintinline{haskell}{List} type we defined above and define both
-\mintinline{haskell}{divide} and \mintinline{haskell}{conquer} via
-catamorphisms.
-
-Finally, it is important to note that both  \mintinline{haskell}{divide} and
-\mintinline{haskell}{conquer} are not initial algebras or terminal coalgebras on
-\mintinline{haskell}{ListF}. These are rather (co)algebras on
-\mintinline{haskell}{TreeF}.  Hence the terminating argument relies solely on
-the fact that \mintinline{haskell}{divide} is a recursive coalgebra thus there
-is an unique solution to \mintinline{haskell}{hylo divide conquer}.
-
-\subsubsection{Recursive Anamorphisms}
+\paragraph{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
 inductive data type in the following way. A recursive coalgebra
 can be applied only finitely many times, therefore when this is applied to an
-anamorphism the only possible traces it can produce from the seed function are
-the finite ones. We denote this special kind of recursion scheme \emph{recursive
+anamorphism the only possible types it can produce from the seed are
+the finite ones. We call this special kind of recursion scheme \emph{recursive
 anamorphism}. We can show that recursive anamorphisms of type $X \to \nu F$
 can also be given the type $X \to \mu F$. Moreover, these anamorphisms are
 exactly hylomorphisms on the recursive $F$-coalgebra and the
-algebra $\InIso$ for the inductive data type $\nu F$. This fact falls out
+algebra $\InIso$ for the inductive data type $\mu F$. This fact falls out
 from the uniqueness property of the hylomorphism and the fact that recursive
 anamorphisms satisfy the same equation.
 
-
-
 \section{Mechanising Extractable Container Functors}
 \label{sec:containers}
-
-In this section, we focus on mechanising \emph{container functors} in a way that
-is suitable for code extraction. Recall from Section~\ref{sec:rec-schemes} that
-we need to be able to abstract away from particular shape of the data, and we
-can do this using \emph{functors} that have suitable fixed-point properties;
-i.e.\ those which have a initial algebras.
-%
-A common approach to construct such functors is to use
-\emph{containers}~\cite{AbbottAG05}. However, reasoning about container equality
-will require us to consider both functional extensionality and heterogeneous
-equality. We avoid these axioms by introducing a custom equivalence relation on
-types (Section~\ref{sec:types-morphisms}).
-
-\subsection{Functors and Containers}
-\label{sec:functors}
 
 A straightforward mechanisation of functors as defined in
 Section~\ref{sec:rec-schemes} does not work in Coq due to the strict positivity
 condition. In fact, if we simply require that functors are functions
 \coq{F : Type -> Type}
-satisfying the necessary identity and composition properties, then we will not
-be able to construct least/greatest fixed points of this type, and we will not
-be able to mechanise recursion schemes that follow this structure:
-\begin{coqcode}
-(* REJECTED due to negative occurrence of (LFix F) *)
-Inductive LFix (F : Type -> Type) := LFix_in (lfix_out : F (LFix F)).
-\end{coqcode}
-
-\noindent
-One common workaround for this is the use of Mendler-style
-recursion~\cite{Mendler91}. Roughly, the idea is to ``pack'' an abstract type
-together with the functor that captures the structure of the recursion. From
-this abstract type, we will be able to ``extract'' the contents of the functor.
-This is, for example, the solution used by the PaCo library~\cite{PaCo}, and a
-simplified version of it is the following:
-\begin{coqcode}
-Inductive MendlerLFix (F : Type -> Type) :=
-  In Y (next : Y -> MendlerLFix F) (in_op : F Y).
-\end{coqcode}
-
-\noindent
-While this definition solves the strict positivity problem, it does not solve
-the problems of: (1) reasoning about data/program equalities; and (2) extraction
-to idiomatic OCaml code. To reason about program equalities, we would need to
-reason about equalities of functions with \emph{some abstract} \coq{Y} as their
-domain.  Furthermore, the extraction of \coq{F Y} will lead to unsafe casts in
-the extracted OCaml code.
-
-% \paragraph{Containers}
-Another common solution is to the strict positivity
-problem is the use \emph{containers}~\cite{AbbottAG05}.  A container
-$S \triangleright P$ is defined by a type of \emph{shapes} $S : \Type$ and a
-\emph{family of position types} indexed by shapes $P : S \to \Type$.  An
-\emph{extension} of this container is a functor
-$\llbracket S \triangleright P \rrbracket$, whose action on objects is given by
+satisfying the necessary identity and composition properties, then
+we will not be able to construct least/greatest fixed points of this type.  A
+common solution to the strict positivity problem is the use
+\emph{containers}~\cite{AbbottAG05}.  A container $S \triangleright P$ is
+defined by a type of \emph{shapes} $S : \Type$ and a \emph{family of position
+types} indexed by shapes $P : S \to \Type$.  An \emph{extension} of this
+container is a functor $\llbracket S \triangleright P \rrbracket$, whose action
+on objects is given by
 $\llbracket S \triangleright P \rrbracket \; X = \Sigma s : S.\; P\;s \to X$,
 and on morphisms is given by post-composition, keeping the shape the same
 $\llbracket S \triangleright P \rrbracket \; f = \lambda (s,\;g).\;(s,\;f\circ g)$.
+Intuitively, the type of shapes captures the different ``cases'' of an algebraic
+datatype, and the positions of a shape are used to identify the elements inside
+a container of the given shape.
 
+Any polynomial functor can be represented as a container (see accompanying code
+for a mechanisation).  For example, a container that is equivalent to
+$F\; X = 1 + A \times X$ requires a shape that can distinguish two cases,
+indicating that there are two constructors to build an object of type $F\;X$,
+e.g. $S_{F} = 1 + A$. We need to consider two cases for the family of positions:
+$P_{F}(\mathsf{inj}_{1}\;*) = 0$, because there are no occurrences of $X$ in the
+left case; and $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence
+of $X$ in the right hand side. It is easy to see that
+$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
-To explain the role of shapes and positions in containers, consider the functor
-$F\; X = 1 + A \times X$.  An equivalent container, i.e.\ a container with an
-extension that is isomorphic to $F$, requires a shape that can distinguish two
-cases, indicating that there are two constructors to build an object of type
-$F\;X$. For example, we could define $S_{F} = 1 + A$. We need to consider two
-cases for the family of positions:  $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because
-there are no occurrences of $X$ in the left case; and
-$P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence of $X$ in the
-right hand side. It is easy to see that
-$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.  In general, every
-polynomial functor has an equivalent container, and we have mechanised this
-result.
-%
-%Generally, any functor that
-%is isomorphic to a container extension is called a \emph{container functor}.
-%Here we will call \emph{container functor} the functors defined by a specific
-%container extension.
+The straightforward mechanisation of containers and container extensions is
+still not enough for our goals of remaining axiom-free, extracting to idiomatic
+OCaml code, and avoiding \ocaml{Obj.magic} in the extracted code. The main
+problem is that a container extension requires a function from a family of
+positions to a type: $\forall s : S.\; P\;s \to X$. On the Coq side, dealing
+with the equality of objects that contain (dependent) function types would force
+us to add the functional extensionality axiom, and axiom K (or equivalent) to
+deal with the heterogeneous equality of position.  For extraction, OCaml's type
+system is not powerful enough to represent such dependencies in the general
+case, which will lead to \ocaml{Obj.magic}.
 
-\subsection{Extractable Containers}
-A straightforward encoding of containers in Coq would use dependent types to
-represent families of positions. However, Ocaml's type system is not equipped to
-handle these, which will lead to extracting OCaml code with unsafe casts.
-
-Consider instead representing the positions of a container using a decidable
-validity predicate which assigns shapes to positions. In Coq, we use a boolean
-function and a coercion from \coq{bool} to \coq{Prop} to represent the decidable
-predicate \coq{valid}, similarly to SSReflect~\cite{GonthierL09}. Given a
-\coq{Shape : Type}, and a type of \emph{all possible positions} \coq{APos : Type},
-the family of positions for a given shape can be defined as a dependent pair:
+To avoid the functional extensionality axiom, we require that all the types used
+in our definitions are \emph{setoids}, where we will use \coq{x =e y} to
+represent setoid equality. All morphisms need to be \emph{proper} morphisms with respect
+to the function \emph{respectfulness} relation. In our development, we use
 \begin{coqcode}
-Definition Pos (s : Shape) = { p : APos | valid s p }.
+Notation "A ~> B" := (* proper morphisms  s.t. forall x y, x =e y -> f x =e f y *).
 \end{coqcode}
-Coq's code extraction will now be able to erase the validity predicate, and
-generate OCaml code that is free of unsafe casts. The OCaml code extracted for
-\coq{Pos} will now be exactly the code extracted for \coq{APos}.  The
-decidability of the validity predicate is crucial for our purposes of  remaining
-axiom-free. To illustrate this, suppose that we need to show the equality of two
-container extensions. We will need to show that, for the same positions, they
-will produce the same result. In Coq, the goal would look as follows:
-\begin{coqcode}
- k : Pos s -> X
- P1, P2 : valid s p
- ---------------------------
- k (existT _ p P1) = k (existT _ p P2)
-\end{coqcode}
-If \coq{valid} was a regular proposition in \coq{Prop}, it would not possible
-to prove the equality of \coq{P1} and \coq{P2}. However, by using a decidable
-predicate, if we know that \coq{P1} and \coq{P2} are of type 
-\coq{valid s p = true}, then we can prove without any axioms that 
-\coq{P1 = P2 = eq_refl}.
+We add an automatic coercion from \coq{A ~> B} to \coq{A -> B}, provide tactics
+to automatically discharge proofs that \coq{forall x y, x =e y -> f x =e f y}
+for the simplest cases of \coq{f}, and we provide a library with
+definitions for basic building blocks: sum and product types, exponentials,
+composition, identity,
+\ldots
 
-Suppose that \coq{F} is a container represented in Coq. One can think of these
-\coq{F} as pairs containing the shapes and families of positions (which are, in
-turn, defined in terms of decidable validity predicates).
-An extension of a container \coq{F}, \coq{App F} in Coq, is then defined as
-follows:
+To avoid axiom K, and extract containers to idiomatic OCaml code, we
+define containters in terms of shapes, \emph{base} positions (\coq{APos : Set}),
+and \emph{decidable validity predicates} that
+specify when a base position is valid in a shape. Since validity predicates are in
+\coq{Prop}, they will be erased during extraction, and their decidability
+will make unnecessary the use of axiom K.
 \begin{coqcode}
-Record App F (X : Type)
-   := { shape : Shape F; cont : {p | valid shape p} -> X }.
+Record App F (X : Type) := {shape : Shape F; cont : {p : APos | valid s p = true} -> X}.
 \end{coqcode}
 
-This approach solves the problem of the unsafe casts, since the code extracted
-for \coq{{p | valid shape p}} will be an OCaml singleton type defined as the
-OCaml equivalent to \coq{Pos}.
-
-\subsubsection{Equality of Container Extensions}
-Reasoning about the equality of container extensions is not entirely solved by
-using decidable validity predicates to define the families of positions. In
-general, we want to equate container extensions that have the same shape, and
-that, for equal shape and position, they return the same element. To avoid the
-use of the functional extensionality axiom, we capture this relation with the
-following inductive proposition:
+Since we require every type to be a setoid, we need to define a setoid equality
+(\coq{=e}) for container functors. Given two \coq{x y : App F X}, we define
+\coq{x =e y} as the setoid equality of the shapes, and the extensional equality of
+the contents, given equal shapes. I.e.\ \coq{x =e y} iff
 \begin{coqcode}
-Inductive AppR (x y : App F X) : Prop :=
-| AppR_ext (shape x = shape y)
-           (forall p1 p2, projT1 e1 = projT1 e2 -> cont p1 = cont p2).
-\end{coqcode}
-Note that we do not care about the validity proof of the positions, only their
-value. This is to simplify (slightly) our proofs. This relation is trivially
-\emph{reflexive}, \emph{transitive}, and \emph{symmetric}.
-
-However, the use of a different equality for container extensions now forces us
-to deal with the fact that some types have different definitions of equality.
-In particular, we want to reason about the equality of functions of types such
-as \coq{App F A -> B} (or \coq{B -> App F A}).
-%
-Since these types now come with their own equivalence, any function that
-manipulates them needs to be \emph{respectful}; i.e.\ given
-\coq{R : X -> X -> Prop} and \coq{R' : Y -> Y -> Prop},
-we want functions (morphisms) that satisfy the following property:
-\begin{coqcode}
-forall (x y : X), R x y -> R' (f x) (f y)
+shape x =e shape y /\ (forall p p', projT1 p = projT1 p' -> cont x p =e cont y p')
 \end{coqcode}
 
-\subsection{Types and Morphisms}
-\label{sec:types-morphisms}
-We address the different forms of equality by defining a class of
-\emph{setoids}, types with an associated equivalence relation, and considering
-only functions that respect the associated equivalences, or \emph{proper}
-morphisms with respect to the function \emph{respectfulness} relation. We use
-the type-class mechanism, instead of setoids in Coq's standard library, to help
-Coq's code extraction mechanism remove any occurence of custom equivalence
-relations in the extracted OCaml code. We use \coq{=e} to denote the equivalence
-relation of a setoid. By default, we associate every Coq type with the standard
-propositional equality, unless a different equivalence is specified (we allow
-overlapping instances, and Coq's propositional equality takes the lowest
-priority).
-%\begin{coqcode}
-%Reserved Notation "f =e g" (at level 70, no associativity).
-%Class setoid A : Type :=
-%  MkEquiv
-%    { eqRel : A -> A -> Prop;
-%      e_refl : forall x, eqRel x x;
-%      e_sym : forall x y, eqRel x y -> eqRel y x;
-%      e_trans : forall x y z, eqRel x y -> eqRel y z -> eqRel x z;
-%    }.
-%Notation "f =e g" := (eqRel f g).
-%\end{coqcode}
-Given types \coq{A} and  \coq{B}, with their respective
-equivalence relations \coq{eA : A -> A -> Prop} and
-\coq{eB : B -> B -> Prop}, the we define the type
-\coq{A ~> B} to represent \emph{proper} morphisms of the
-respectfulness relation of \coq{R} to \coq{R'}.
-\begin{coqcode}
-Record morph A {eA : setoid A} B {eB : setoid B} :=
-  MkMorph { app :> A -> B; app_eq : forall x y, x =e y -> app x =e app y }.
-Notation "A ~> B" := (@morph A _ B _).
-\end{coqcode}
-We rely on Coq's type class mechanism to fill in the necessary equivalence
-relations. Coq's code extraction mechanism will erase any occurrence
-of \coq{Prop} in the code, so objects of type \coq{A ~> B} will be extracted to
-the OCaml equivalent to \coq{A -> B}. Note the implicit coercion
-from \coq{A ~> B} to \coq{A -> B}.
-On top of this, we define basic function composition and identity functions:
-\begin{coqcode}
-Notation "f \o g" = (comp f g).
-Definition comp : (B ~> C) ~> (A ~> B) ~> A ~> C := ...
-Definition id : A ~> A := ...
-\end{coqcode}
-Using custom equivalences and proper morphisms, we redefine the definitions of
-container extensions and container equality. In particular, container
-extensions require a proper morphism to check the validity of positions in
-shapes, and container equality now uses equivalences of shapes and contained
-elements: 
-\begin{coqcode}
-Inductive AppR F `{setoid X} (x y : App F X) : Prop :=
-  | AppR_ext (Es : shape x =e shape y)
-             (Ek : forall e1 e2, val e1 = val e2 -> cont x e1 =e cont y e2).
-\end{coqcode}
-Note the use of \coq{=e} instead of Coq's standard equality.  For positions,
-however, we chose to use Coq's propositional equality, since this leads
-to simpler code. We explain why in Section~\ref{sec:coq-algebras}, and the
-mechanisation of initial algebras of container extensions.
-%The definitions in
-%Figure~\ref{fig:poly} are redefined to account for these changes in a
-%straightforward way, i.e. we prove that validity predicates are indeed proper
-%morphisms. 
-
-Our definition of morphisms, and the use of different equivalences leads to the
-well-known ``setoid hell''. We mitigate this problem by providing tactics and
-notations to automatically discharge proofs of \coq{app_eq} for morphisms,
-whenever the types use the standard propositional equality, or a combination of
-propositional and extensional equality. However, our compositional approach
-allows us to build morphisms by plugging in other morphisms to our combinators.
-In our framework, our expectation is that the user-provided functions remain
-small, with relatively straightforward proofs of \coq{app_eq}.
-
-However, by using this mechanisation, we gain simplified proofs via
-Coq's \emph{Generalised Rewriting}. Since every morphism \coq{f : A ~> B}
-satisfies the property that if \coq{x =e y}, then \coq{f x =e f y}, we can add
-every morphism as a proper element of Coq's respectfulness relation. In
-practice, this means that we can use the \coq{rewrite} tactic on proofs of
-type \coq{A =e B}, for arbitrary \coq{A} and \coq{B}, whenever they are used as
-arguments of morphisms, as well as Coq's \coq{reflexivity}, \coq{symmmetry},
-and \coq{transitivity} tactics. For example:
-\begin{coqcode}
-Goal forall `(f : A ~> B) `(g : B ~> C) `(h : C ~> D) (H : h \o g =e id), 
-  h \o (g \o f) =e f.
-Proof.  rewrite compA, H.  reflexivity. Qed.
-\end{coqcode}
-
-\subsubsection{Polynomial Types}
-We define a number of equivalences for polynomial types.
-%These equivalences are
-%be used when building proper morphisms that manipulate their respective types.
-\begin{coqcode}
-Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
-Instance pair_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A * B).
-Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
-Instance prop_eq : setoid Prop.
-Instance pred_sub `{eA : setoid A} {P : A -> Prop} : setoid {a : A | P a}.
-\end{coqcode}
-Most of the definitions that involve functions and polynomial types are
-straightworward.  Identity and composition are defined as 
-\coq{fun x => x} and \coq{fun f g x => f (g x)} 
-respectively, and the proofs that they are proper morphisms is straightforward,
-and automatically discharged by Coq. 
-Products are built using function \coq{fun f g x => (f x, g x)},
-with the projections being the standard Coq  \coq{fst} and
-\coq{snd} functions. Similarly, sum injections are encoded using
-Coq's \coq{inl} and \coq{inr} constructors, and
-pattern matching on them uses the function:
-\begin{coqcode}
-fun f g x => match x with | inl y => f y | inr y => g y end
-\end{coqcode}
-The proofs that these morphisms are proper are straightforward.  Finally, we
-also provide functions for currying/uncurrying, and  flipping the arguments of
-a proper morphism. We force most of our definitions to be inlined, to help
-Coq's code extraction mechanism to inline as many of these combinators as
-possible.
-
-We prove the isomorphisms of polynomial types and the equivalent 
-container extensions. As an example, we will consider the isomorphisms
-of pairs with their equivalent container extensions. Suppose that we
-know that \coq{App F X} is isomorphic to \coq{A}, and
-\coq{App G X} is isomorphic to \coq{B}. Then we can
-show that \coq{App (Prod F G) X} is isomorphic to
-\coq{A * B}.  If we have an element of type 
-\coq{App (Prod F G) X},
-using the \coq{inl} position, we can obtain
-\coq{App F X}.  Similarly, using \coq{inr}, we can
-obtain \coq{App G X}. Since these are the only two valid positions
-in the shape of pairs, we have finished. It is now sufficient to use the
-isomorphisms of \coq{App F X} and \coq{App G X} to
-obtain \coq{A * B}. Similarly if we have \coq{A * B},
-we can first use the isomorphisms of 
-\coq{A} and
-\coq{B} to obtain
-\coq{App F X * App G X}, and then construct the necessary container
-extension. Given \coq{p_inl : Pos l -> Pos (l * r)} (resp. \coq{p_inr}) that
-act as \coq{inl} (resp.\ \coq{inr}) on product positions, and
-\coq{case_pos : (Pos l -> X) -> (Pos r -> X) -> Pos (l * r) -> X} that pattern
-matches on the product positions, the functions that witness the isomorphism
-are:
-\begin{coqcode}
-Definition iso_pair (x : App (Prod F G) X) : App F X * App G X :=
-  ({| shape := shape (fst x); cont := fun e => cont x (p_inl e) |}, 
-   {| shape := shape (snd x); cont := fun e => cont x (p_inr e) |}).
-Definition iso_prod (x : App F X * App G X) : App (Prod F G) X :=
-{| shape := (shape (fst x), shape (snd x));
-   cont := case_pos (cont (fst x)) (cont (snd x)) |}.
-\end{coqcode}
-
-\noindent
-Proving that the composition of these functions is the identity is
-straightforward using the fact that \coq{Prod} containers only have two valid
-positions.
 
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
