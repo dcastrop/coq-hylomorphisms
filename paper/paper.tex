@@ -1438,25 +1438,51 @@ parallel programs from specifications. Their work focuses on parallelism, and
 they do not formalise their approach in a proof assistant, and the laws of
 hylomorphisms are axioms in their system.
 
+\subsection{Fusion Optimisation}\label{sec:fusion}
+
+Fusion in functional programming is a general technique for combining multiple
+computations into a single pass to eliminate intermediate data structures or
+repeated traversals, improving efficiency. The fusion we have discussed in this
+paper relating to program calculation is one form of fusion, but there are other
+approaches, and prior research has explored the mechanisation and verification
+of fusion transformations.
+
+Fusion has been applied to recursive tree traversals, in order to reduce the
+number of times each section of the tree must be visited. Research has
+demonstrated that this sort of fusion can be performed automatically by a
+compiler~\cite{10.1145/3133900}, and the correctness of tree traversal fusion
+has been verified mechanically in Coq~\cite{10.1145/3377555.3377884}.
+
+Another related family transformations are worker/wrapper
+transformations~\cite{gill09}, which have been used in the context of optimising
+compilers, and have been mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}. This
+technique has been applied to improving the performance of programs defined
+using folds via fusion~\cite{hutton10}. Their work does not focus on the use of
+an interactive proof assistant, but rather on the manual use of equational
+reasoning to re-write programs and on the automatic transformation of functional
+programs by a compiler.
+
 %\mvol{Need more general citations for program calculation.}
 \subsection{Divide and Conquer Recursion}\label{sec:reccoq}
 
 Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
 using a recursion scheme in which termination is entirely enforced by its
-typing.  This is a significant advance, since it avoids \emph{completely} the
+typing. This is a significant advance, since it avoids \emph{completely} the
 need for termination proofs. Their work differs from ours in that they require
-the functional extensionality axiom, and the use of impredicative \coq{Set}.
-The authors justify well the use of impredicative \coq{Set} and its
-compatibility with the functional extensionality axiom. In contrast, our
-development remains entirely \emph{axiom-free}. Another key difference with our
-approach is that they do not discuss what the resulting extracted code
-\emph{looks like}.
+the functional extensionality axiom, and the use of impredicative \coq{Set}. The
+authors justify well the use of impredicative \coq{Set} and its compatibility
+with the functional extensionality axiom. In contrast, our development remains
+entirely \emph{axiom-free}, and we retain the ability to extract natural-looking
+OCaml code.
+% Another key difference with our
+% approach is that they do not discuss what the resulting extracted code
+% \emph{looks like}.
 % (that is, whether the extracted OCaml code resembles the
 % natural formulation of the recursive function).
-Through experiments, we found that their formalisation leads to
-\ocaml{Obj.magic}, and code with a complex structure that may be hard to
-understand or interface with other OCaml code. Due to the great benefit of
-entirely avoiding termination proofs, it would be interesting to extend their
+Through experiments, we found that code extracted from their formalisation makes
+heavy use of \ocaml{Obj.magic} and has a generally complex structure that may be
+hard to understand and integrate with other OCaml code. Due to the great benefit
+of entirely avoiding termination proofs, it would be interesting to extend their
 approach to improve code extraction.
 
 \subsection{Termination Checking of Nonstructural Recursion}\label{sec:termcheck}
@@ -1494,24 +1520,24 @@ There are common approaches in Coq to deal with termination, but none of these
 approaches address program calculation techniques, and the mechanisation of
 fusion laws.
 
-\subsection{Fusion}\label{sec:fusion}
+% \subsection{Fusion}\label{sec:fusion}
 
-Fusion in functional programming is a general technique for combining multiple
-computations into a single pass to eliminate intermediate data structures and
-improve efficiency. The fusion we have discussed in this paper relating to
-program calculation is one form of fusion, but there are other approaches.
+% Fusion in functional programming is a general technique for combining multiple
+% computations into a single pass to eliminate intermediate data structures and
+% improve efficiency. The fusion we have discussed in this paper relating to
+% program calculation is one form of fusion, but there are other approaches.
 
-\emph{Deforestation}, introduced by Wadler~\cite{wadler88}, is a specific
-approach to fusion that aims to remove intermediate trees (such as lists)
-created between chained operations. A well-known method of deforestation is
-\haskell{foldr/build} fusion~\cite{gill93}, which optimizes list-processing by
-fusing list-producing functions (like \haskell{map} or \haskell{filter}) with
-list-consuming ones (like \haskell{foldr}), avoiding the creation of temporary
-lists.
-%
-Extending this idea, stream fusion generalizes the concept to handle other data
-types, using a lazy stream abstraction to represent sequences and fuse
-transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
+% \emph{Deforestation}, introduced by Wadler~\cite{wadler88}, is a specific
+% approach to fusion that aims to remove intermediate trees (such as lists)
+% created between chained operations. A well-known method of deforestation is
+% \haskell{foldr/build} fusion~\cite{gill93}, which optimizes list-processing by
+% fusing list-producing functions (like \haskell{map} or \haskell{filter}) with
+% list-consuming ones (like \haskell{foldr}), avoiding the creation of temporary
+% lists.
+% %
+% Extending this idea, stream fusion generalizes the concept to handle other data
+% types, using a lazy stream abstraction to represent sequences and fuse
+% transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
 % Both approaches eliminate redundant structures and ensure computations happen in
 % a single efficient pass over the data.
 
@@ -1525,13 +1551,13 @@ transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
 % single traversal, further optimizing computations and minimizing intermediate
 % data structures.
 
-In the context of Coq, Danvy explains the use of fold/unfold lemmas to mechanize
-equational reasoning about recursive programs~\cite{DANVY_2022}. Fold-unfold
-lemmas enable optimizations like fusion by allowing programs to be
-systematically simplified, including eliminating intermediate structures.
-Additionally, an approach to fusion called the worker/wrapper
-transformation~\cite{gill09} was formalised and mechanised in
-Agda~\cite{SCULTHORPE_HUTTON_2014}.
+% In the context of Coq, Danvy explains the use of fold/unfold lemmas to mechanize
+% equational reasoning about recursive programs~\cite{DANVY_2022}. Fold-unfold
+% lemmas enable optimizations like fusion by allowing programs to be
+% systematically simplified, including eliminating intermediate structures.
+% Additionally, an approach to fusion called the worker/wrapper
+% transformation~\cite{gill09} was formalised and mechanised in
+% Agda~\cite{SCULTHORPE_HUTTON_2014}.
 
 \section{Conclusions and Future Work}
 
