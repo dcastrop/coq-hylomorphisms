@@ -1,13 +1,12 @@
 %%% TeX-command-extra-options: "-shell-escape"
-%\documentclass{llncs}
-\documentclass[anonymous]{lipics-v2021}
+% \documentclass{llncs}
+\documentclass[a4paper,anonymous, UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
 % \documentclass[llncs, a4paper, UKenglish, cleveref, autoref, thm-restate]{article}
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
 % \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
 % \usepackage[backend=bibtex,style=alphabetic,natbib=true]{biblatex}
 % \addbibresource{references.bib}
-\pagestyle{plain}
 
 \usepackage{amsmath, mathpartir, stmaryrd}
 %, amssymb, amsfonts, stmaryrd}
@@ -181,8 +180,35 @@
 \authorrunning{D. Castro Perez et al.}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\ccsdesc{}
-\keywords{}
+% \author{Jane {Open Access}}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional. Use additional curly braces to indicate the correct name splitting when the last name consists of multiple name parts.
+
+% \author{Joan R. Public\footnote{Optional footnote, e.g. to mark corresponding author}}{Department of Informatics, Dummy College, [optional: Address], Country}{joanrpublic@dummycollege.org}{[orcid]}{[funding]}
+
+\Copyright{Jane Open Access and Joan R. Public} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
+
+\ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm
+
+\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+
+\category{} %optional, e.g. invited paper
+
+\acknowledgements{I want to thank \dots}%optional
+
+%\nolinenumbers %uncomment to disable line numbering
+
+%Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\EventEditors{}
+\EventNoEds{2}
+\EventLongTitle{ITP 2025)}
+\EventShortTitle{ITP 2025}
+\EventAcronym{ITP}
+\EventYear{2025}
+\EventDate{December 24--27, 2016}
+\EventLocation{Little Whinging, United Kingdom}
+\EventLogo{}
+\SeriesVolume{42}
+\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
