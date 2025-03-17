@@ -327,7 +327,7 @@ fusion on programs that have already been proven to terminate.
 
 The remainder of the paper is structured as follows:
 \begin{itemize}
-  \item In Section~\ref{sec:rec-schemes} we give an overview about recursion
+  \item In Section~\ref{sec:category-theory} we give an overview about recursion
 schemes.
   \item In Section~\ref{sec:containers} we formalise the type of container
 functors ensuring the presence of least and greatest fixed-points for functors
@@ -340,7 +340,7 @@ Furthermore we verify the short-cut fusion optimisation and show the extracted
 optimised code to OCaml.
 \end{itemize}
 
-\section{Recursion Schemes}\label{sec:rec-schemes}
+\section{Recursion Schemes}\label{sec:category-theory}
 The structure of data is very similar to the structure of an algorithm which
 processes that data. This relationship manifests in the form of structured
 recursion schemes which are widely used in functional languages such Haskell.
@@ -549,44 +549,39 @@ catamorphism and a recursive anamorphism.
 
 \paragraph{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
-inductive data type in the following way. A recursive coalgebra
-can be applied only finitely many times, therefore when this is applied to an
-anamorphism the only possible types it can produce from the seed are
-the finite ones. We call this special kind of recursion scheme \emph{recursive
-anamorphism}. We can show that recursive anamorphisms of type $X \to \nu F$
-can also be given the type $X \to \mu F$. Moreover, these anamorphisms are
-exactly hylomorphisms on the recursive $F$-coalgebra and the
-algebra $\InIso$ for the inductive data type $\mu F$. This fact falls out
-from the uniqueness property of the hylomorphism and the fact that recursive
-anamorphisms satisfy the same equation.
-
+inductive data type in the following way. A recursive coalgebra can be applied
+only finitely many times, therefore when this is applied to an anamorphism the
+only possible types it can produce from the seed are the finite ones. We call
+this special kind of recursion scheme \emph{recursive anamorphism}. We can show
+that recursive anamorphisms of type $X \to \nu F$ can also be given the type
+$X \to \mu F$. Moreover, these anamorphisms are exactly hylomorphisms on the
+recursive $F$-coalgebra and the algebra $\InIso$ for the inductive data type
+$\mu F$. This fact falls out from the uniqueness property of the hylomorphism
+and the fact that recursive anamorphisms satisfy the same equation.
 
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
 Recursion schemes provide an abstract way to consume and generate data. We now
 proceed onto describing how to formalise hylomorphisms in Coq. We first
-formalise container functors as a tool to represent polynomial functors (Section~\ref{sec:containers}).
-Then we formalise algebras for container extensions (Section~\ref{sec:coq-algebras}), then
-we formalise coalgebras (Section~\ref{sec:coq-coalg}) and then we put together
-these notions to formalise recursive coalgebras and hylomorphisms
+formalise container functors as a tool to represent polynomial functors
+(Section~\ref{sec:containers}). Then we formalise algebras for container
+extensions (Section~\ref{sec:coq-algebras}), then we formalise coalgebras
+(Section~\ref{sec:coq-coalg}) and then we put together these notions to
+formalise recursive coalgebras and hylomorphisms
 (Section~\ref{sec:coq-rec-coalgebras}).
-
 
 \subsection{Mechanising Extractable Container Functors}
 \label{sec:containers}
+Recursion schemes are defined using generic functors representing the scheme
+behind the recursive operator.  However, as not all functors possess enough
+fixed-points we need to be able to restrict to those mappings \coq{F : Type -> Type}
+that are so called \emph{strictly positive}.
 
-A straightforward mechanisation of functors as defined in
-Section~\ref{sec:rec-schemes} does not work in Coq due to the strict positivity
-condition. In fact, if we simply require that functors are functions
-\coq{F : Type -> Type}
-satisfying the necessary identity and composition properties, then
-we will not be able to construct least/greatest fixed points of this type.  A
-common solution to the strict positivity problem is the use
-\emph{containers}~\cite{AbbottAG05}.  A container $S \triangleright P$ is
-defined by a type of \emph{shapes} $S : \Type$ and a \emph{family of position
-types} indexed by shapes $P : S \to \Type$.  An \emph{extension} of this
-container is a functor $\llbracket S \triangleright P \rrbracket$, whose action
-on objects is given by
+A common solution is to consider \emph{containers}~\cite{AbbottAG05}.  A
+container $S \triangleright P$ is defined by a type of \emph{shapes} $S : \Type$
+and a \emph{family of position types} indexed by shapes $P : S \to \Type$.  An
+\emph{extension} of this container is a functor
+$\llbracket S \triangleright P \rrbracket$, whose action on objects is given by
 $\llbracket S \triangleright P \rrbracket \; X = \Sigma s : S.\; P\;s \to X$,
 and on morphisms is given by post-composition, keeping the shape the same
 $\llbracket S \triangleright P \rrbracket \; f = \lambda (s,\;g).\;(s,\;f\circ g)$.
@@ -604,45 +599,29 @@ left case; and $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence
 of $X$ in the right hand side. It is easy to see that
 $\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
-The straightforward mechanisation of containers and container extensions is
-still not enough for our goals of remaining axiom-free, extracting to idiomatic
-OCaml code, and avoiding \ocaml{Obj.magic} in the extracted code. The main
-problem is that a container extension requires a function from a family of
-positions to a type: $\forall s : S.\; P\;s \to X$. On the Coq side, dealing
-with the equality of objects that contain (dependent) function types would force
-us to add the functional extensionality axiom, and axiom K (or equivalent) to
-deal with the heterogeneous equality of position.  For extraction, OCaml's type
-system is not powerful enough to represent such dependencies in the general
-case, which will lead to \ocaml{Obj.magic}.
-
-To avoid the functional extensionality axiom, we require that all the types used
-in our definitions are \emph{setoids}, where we will use \coq{x =e y} to
-represent setoid equality. All morphisms need to be \emph{proper} morphisms with respect
-to the function \emph{respectfulness} relation. In our development, we use
+Note however, that the type $\forall s : S.\; P\;s \to X$ would force us to add
+the functional extensionality axiom to deal with the heterogeneous equality of
+position. Thus, we require that all the types used in our definitions are
+\emph{setoids}, where we will use \coq{x =e y} to represent setoid equality. All
+morphisms need to be \emph{proper} morphisms with respect to the function
+\emph{respectfulness} relation. In our development, we use
 \begin{coqcode}
 Notation "A ~> B" := (* proper morphisms  s.t. forall x y, x =e y -> f x =e f y *).
 \end{coqcode}
-We add an automatic coercion from \coq{A ~> B} to \coq{A -> B}, provide tactics
+We add an automatic coercion from \coq{A ~> B} to \coq{A -> B} and provide tactics
 to automatically discharge proofs that \coq{forall x y, x =e y -> f x =e f y}
-for the simplest cases of \coq{f}, and we provide a library with
-definitions for basic building blocks: sum and product types, exponentials,
-composition, identity,
-\ldots
+for the simplest cases of \coq{f}.
 
-To avoid axiom K, and extract containers to idiomatic OCaml code, we
-define containters in terms of shapes, \emph{base} positions (\coq{APos : Set}),
+We define containers in terms of shapes, \emph{base} positions (\coq{APos : Set}),
 and \emph{decidable validity predicates} that
 specify when a base position is valid in a shape. Since validity predicates are in
-\coq{Prop}, they will be erased during extraction, and their decidability
-will make unnecessary the use of axiom K.
+\coq{Prop}, they will be erased during extraction:
 \begin{coqcode}
 Record App F (X : Type) := {shape : Shape F; cont : {p : APos | valid s p = true} -> X}.
 \end{coqcode}
 
-Since we require every type to be a setoid, we need to define a setoid equality
-(\coq{=e}) for container functors. Given two \coq{x y : App F X}, we define
-\coq{x =e y} as the setoid equality of the shapes, and the extensional equality of
-the contents, given equal shapes. I.e.\ \coq{x =e y} iff
+Given two \coq{x y : App F X}, we define
+\coq{x =e y} as the setoid equality of the shapes as
 \begin{coqcode}
 shape x =e shape y /\ (forall p p', projT1 p = projT1 p' -> cont x p =e cont y p')
 \end{coqcode}
@@ -670,7 +649,7 @@ Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
 
 \noindent
-where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its inverse $\InOp$ (see Section~\ref{sec:rec-schemes}).
+where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its inverse $\InOp$ (see Section~\ref{sec:category-theory}).
 As an example, the initial \coq{F}-algebra for the
 container that is isomorpic to the functor
 \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
@@ -706,7 +685,7 @@ following type:
 
 \noindent
 We prove that catamorphisms satisfy the universality property we explained in
-Section~\ref{sec:rec-schemes}:
+Section~\ref{sec:category-theory}:
 \begin{coqcode}
 Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
     : f =e cata alg <-> f =e alg \o fmap f \o l_out.
@@ -771,7 +750,7 @@ algorithms where the input is first destructured (\emph{divide}) in smaller
 parts by means of a coalgebra which are computed recursively and then composed
 back together (\emph{conquer}) by means of an algebra.
 
-As we mentioned in Section~\ref{sec:rec-schemes}, given an $F$-algebra and
+As we mentioned in Section~\ref{sec:category-theory}, given an $F$-algebra and
 $F$-coalgebra, the hylomorphism is the unique solution (when it exists) to the
 equation
 \[
@@ -940,7 +919,7 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
 
 \subsubsection{On the subtype of finite elements}
 As we mention in
-Section~\ref{sec:rec-schemes}, we define recursive anamorphisms as
+Section~\ref{sec:category-theory}, we define recursive anamorphisms as
 hylomorphisms built by using a recursive coalgebra, and the respective
 initial \coq{F}-algebra.
 In other words, in this development we have defined recursive anamorphisms on inductive data
