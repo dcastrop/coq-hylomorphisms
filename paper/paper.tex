@@ -1427,10 +1427,12 @@ abstractly at a high level, and then derive an efficient implementation using
 the process of program calculation~\cite{BirddeMoor96:Algebra}. This area has
 been extensively explored over the years.
 
-Tesson et al.\ demonstrated the efficacy of leveraging Coq to establish an
-approach for implementing a robust system dedicated to verifying the correctness
-of program transformations for functions that manipulate
-lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and Emoto went further and
+% Tesson et al.\ demonstrated the efficacy of leveraging Coq to establish an
+% approach for implementing a robust system dedicated to verifying the correctness
+% of program transformations for functions that manipulate
+% lists~\cite{10.1007/978-3-642-17796-5_10}.
+Tesson et al.\ used Coq to mechanically verify program transformations for functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}.
+Murata and Emoto went further and
 formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
 include hylomorphisms and dynamorphisms, and relies on the functional
 extensionality axiom, as well as further extensionality axioms for each
@@ -1446,26 +1448,25 @@ hylomorphisms are axioms in their system.
 
 \subsection{Fusion Optimisation}\label{sec:fusion}
 
-Fusion in functional programming is a general technique for combining multiple
-computations into a single pass to eliminate intermediate data structures or
-repeated traversals, improving efficiency. The fusion we have discussed in this
+% Fusion in functional programming is a general technique for combining multiple
+% computations into a single pass to eliminate intermediate data structures or
+% repeated traversals, improving efficiency.
+The fusion we have discussed in this
 paper relating to program calculation is one form of fusion, but there are other
-approaches, and prior research has explored the mechanisation and verification
-of fusion transformations.
-
+approaches.
+%
 Fusion has been applied to recursive tree traversals, in order to reduce the
 number of times each section of the tree must be visited. Research has
 demonstrated that this sort of fusion can be performed automatically by a
 compiler~\cite{10.1145/3133900}, and the correctness of tree traversal fusion
 has been verified mechanically in Coq~\cite{10.1145/3377555.3377884}.
-
+%
 Another related family transformations are worker/wrapper
 transformations~\cite{gill09}, which have been used in the context of optimising
 compilers, and have been mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}. This
 technique has been applied to improving the performance of programs defined
 using folds via fusion~\cite{hutton10}. Their work does not focus on the use of
-an interactive proof assistant, but rather on the manual use of equational
-reasoning to re-write programs and on the automatic transformation of functional
+an interactive proof assistant, but rather on the automatic optimisation of
 programs by a compiler.
 
 %\mvol{Need more general citations for program calculation.}
@@ -1513,11 +1514,13 @@ divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % for more flexibility.
 Certain functions that are not structurally recursive can be reformulated using
 a nonstandard approach to achieve structural recursion~\cite{AbreuDHJMS23}.
-Take, for instance, division by iterated subtraction, which is inherently
-non-structurally recursive since it involves recursion based on the result of a
-subtraction. There is a nonstandard implementation of divivion found on Coq's
-standard library, which involves a four-argument function that effectively
-combines subtraction and division. Similarly, the mergesort in Coq's standard
+% Take, for instance, division by iterated subtraction, which is inherently
+% non-structurally recursive since it involves recursion based on the result of a
+% subtraction. There is a nonstandard implementation of divivion found on Coq's
+% standard library, which involves a four-argument function that effectively
+% combines subtraction and division.
+% Similarly,
+The mergesort in Coq's standard
 library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
@@ -1525,45 +1528,6 @@ mergesort''~\cite{AbreuDHJMS23}.
 There are common approaches in Coq to deal with termination, but none of these
 approaches address program calculation techniques, and the mechanisation of
 fusion laws.
-
-% \subsection{Fusion}\label{sec:fusion}
-
-% Fusion in functional programming is a general technique for combining multiple
-% computations into a single pass to eliminate intermediate data structures and
-% improve efficiency. The fusion we have discussed in this paper relating to
-% program calculation is one form of fusion, but there are other approaches.
-
-% \emph{Deforestation}, introduced by Wadler~\cite{wadler88}, is a specific
-% approach to fusion that aims to remove intermediate trees (such as lists)
-% created between chained operations. A well-known method of deforestation is
-% \haskell{foldr/build} fusion~\cite{gill93}, which optimizes list-processing by
-% fusing list-producing functions (like \haskell{map} or \haskell{filter}) with
-% list-consuming ones (like \haskell{foldr}), avoiding the creation of temporary
-% lists.
-% %
-% Extending this idea, stream fusion generalizes the concept to handle other data
-% types, using a lazy stream abstraction to represent sequences and fuse
-% transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
-% Both approaches eliminate redundant structures and ensure computations happen in
-% a single efficient pass over the data.
-
-% Another dimension of fusion is \emph{tupling}, a technique used to combine
-% multiple recursive functions into a single function by grouping their results
-% into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
-% the same data structure when multiple operations are applied.
-% In addition to
-% techniques like \haskell{foldr/build} fusion and stream fusion, tupling
-% complements deforestation by allowing multiple recursive functions to share a
-% single traversal, further optimizing computations and minimizing intermediate
-% data structures.
-
-% In the context of Coq, Danvy explains the use of fold/unfold lemmas to mechanize
-% equational reasoning about recursive programs~\cite{DANVY_2022}. Fold-unfold
-% lemmas enable optimizations like fusion by allowing programs to be
-% systematically simplified, including eliminating intermediate structures.
-% Additionally, an approach to fusion called the worker/wrapper
-% transformation~\cite{gill09} was formalised and mechanised in
-% Agda~\cite{SCULTHORPE_HUTTON_2014}.
 
 \section{Conclusions and Future Work}
 
