@@ -1434,10 +1434,13 @@ been extensively explored over the years.
 Tesson et al.\ used Coq to mechanically verify program transformations for functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}.
 Murata and Emoto went further and
 formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
-include hylomorphisms and dynamorphisms, and relies on the functional
-extensionality axiom, as well as further extensionality axioms for each
-coinductive datatype that they use. They do not discuss the extracted OCaml code
-from their formalisation. Larchey-Wendling and Monin encode recursion schemes in
+include hylomorphisms and dynamorphisms, relies on various additional axioms, and does not discuss the extracted OCaml code.
+% the functional
+% extensionality axiom, as well as further extensionality axioms for each
+% coinductive datatype that they use.
+% They do not discuss the extracted OCaml code
+% from their formalisation.
+Larchey-Wendling and Monin encode recursion schemes in
 Coq, by formalising computational graphs of algorithms~\cite{larchey2022braga}.
 Their work does not focus on encoding generic recursion schemes, and proving
 their algebraic laws. Castro-Perez et al.~\cite{farmsCastro} encode the laws of
