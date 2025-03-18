@@ -547,7 +547,7 @@ it, can be fused together into a single recursive definition. This, in turn,
 allows us to prove that a recursive hylomorphism is the composition of a
 catamorphism and a recursive anamorphism.
 
-\paragraph{Recursive Anamorphisms}
+\paragraph*{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
 inductive data type in the following way. A recursive coalgebra can be applied
 only finitely many times, therefore when this is applied to an anamorphism the
@@ -601,16 +601,16 @@ $\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
 Note however, that the type $\forall s : S.\; P\;s \to X$ would force us to add
 the functional extensionality axiom to deal with the heterogeneous equality of
-position. Thus, we require that all the types used in our definitions are
+positions. Thus, we require that all the types used in our definitions are
 \emph{setoids}, where we will use \coq{x =e y} to represent setoid equality. All
 morphisms need to be \emph{proper} morphisms with respect to the function
 \emph{respectfulness} relation. In our development, we use
 \begin{coqcode}
 Notation "A ~> B" := (* proper morphisms  s.t. forall x y, x =e y -> f x =e f y *).
 \end{coqcode}
-We add an automatic coercion from \coq{A ~> B} to \coq{A -> B} and provide tactics
-to automatically discharge proofs that \coq{forall x y, x =e y -> f x =e f y}
-for the simplest cases of \coq{f}.
+We add an automatic coercion from \coq{A ~> B} to \coq{A -> B} and provide
+tactics to automatically discharge proofs that morphisms are proper,  for some
+simple cases.
 
 We define containers in terms of shapes, \emph{base} positions (\coq{APos : Set}),
 and \emph{decidable validity predicates} that
@@ -922,10 +922,10 @@ As we mention in
 Section~\ref{sec:category-theory}, we define recursive anamorphisms as
 hylomorphisms built by using a recursive coalgebra, and the respective
 initial \coq{F}-algebra.
-In other words, in this development we have defined recursive anamorphisms on inductive data
-types.  We might have as well defined them on the subtype of finite elements of
-coinductive data types using a predicate which states when an element of a
-coinductive data type is finite:
+In other words, in this development we have defined recursive anamorphisms on
+inductive data types.  We might have as well defined them on the subtype of
+finite elements of coinductive data types using a predicate which states when an
+element of a coinductive data type is finite:
 \begin{coqcode}
 Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
@@ -954,8 +954,8 @@ Lemma ccata_cata `{setoid A} : ccata l_in \o cata lg_in =e id.
 \end{coqcode}
 The finite subtype of \coq{GFix F} allows us to compose
 catamorphisms and anamorphisms, by using the above isomorphism. In our work,
-however, we use \emph{recursive} anamorphisms, defined as follows for
-a recursive coalgebra \coq{c}:
+however, we use \emph{recursive} anamorphisms, defined as hylomorphisms on the
+recursive recursive coalgebra \coq{c}, and the initial \coq{F}-algebra:
 \begin{coqcode}
 Definition rana c := hylo l_in c.
 \end{coqcode}
@@ -1019,6 +1019,29 @@ and finiteness of values of coinductive types.
 % the unique solution to the equation
 % \coq{f =e l_in \o fmap f \o h},
 % where \coq{h} is a recursive coalgebra.
+%
+
+\subsubsection{Proving Correctness}
+
+Suppose that we have an algebra \coq{a : Alg F B}, a recursive coalgebra
+\coq{c : RCoalg F A}, and a property \coq{P : A -> B -> Prop}, and we want to
+guarantee that the hylomorphism satisfies this property:
+\coq{forall x, P x (hylo a c x)}.
+Such proofs in our framework are done by induction on the proof that the
+recursive coalgebra terminates. In particular, the induction hypothesis would be
+that \coq{P} is satisfied by any recursive call of the hylomorphism
+\begin{coqcode}
+forall e, P (cont (c x) e) (hylo a c (cont (c x) e))
+\end{coqcode}
+\noindent
+Then, by the uniqueness property of hylomorphisms, it is enough to prove that
+\begin{coqcode}
+P x ((a \o fmap (hylo a c) \o c) x)
+\end{coqcode}
+We will see in Section~\ref{sec:examples} one example where we will prove that
+the output of a sorting algorithm is a sorted permutation of the input, and we
+will show that these proofs are comparable to other techniques for
+non-structural recursion.
 
 
 \section{Extraction}
@@ -1114,7 +1137,7 @@ the following algebra and coalgebra.
            end
   )}|.
 Defined.
-Definition c_split : Coalg (TreeF unit int) (list int).
+Definition split : Coalg (TreeF unit int) (list int).
 |{ x ~> match x with
         | nil => a_leaf tt
         | cons h t => let (l, r) := List.partition (fun x => x <=? h) t in
@@ -1122,15 +1145,15 @@ Definition c_split : Coalg (TreeF unit int) (list int).
         end}|.
 Defined.
 \end{coqcode}
-We prove that the coalgebra \coq{c_split} is recursive by showing
+We prove that the coalgebra \coq{split} is recursive by showing
 that it respects the ``less-than'' relation on the length of the lists.
 %\begin{coqcode}
-%Lemma split_fin : respects_relation c_split (@length int) lt.  (* *) Qed.
+%Lemma split_fin : respects_relation split (@length int) lt.  (* *) Qed.
 %
 %Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
 %  := mk_wf_coalg wf_lt split_fin.
 %\end{coqcode}
-The code that we extract for \coq{hylo merge c_split} is the following:
+The code that we extract for \coq{hylo merge split} is the following:
 \begin{ocamlcode}
 let rec qsort = function
 | [] -> [] | h :: t ->
@@ -1141,6 +1164,24 @@ let rec qsort = function
 Note that Coq's code extraction is unable to inline \coq{x0}, but the resulting
 code is similar to a hand-written \coq{qsort}.
 The mergesort algorithm can be defined analogously.
+
+\paragraph*{Proving Quicksort Correct}
+
+We show that the output of \coq{hylo merge split} produces a sorted
+permutation of the input:
+\begin{coqcode}
+forall (l : list int), Sorted (hylo merge split l) /\ Perm l (hylo merge split l).
+\end{coqcode}
+The proof in our framework starts by induction on the proof that \coq{split}
+is recursive, and that it terminates on \coq{l}, i.e. using tactic
+\coq{induction (recP split l)}. Then, we can unfold
+\coq{hylo merge split} to \coq{merge \o fmap (hylo merge split) \o split} using
+hylomorphism uniqueness, and the proof would then proceed equally to any other
+similar proof. Overall, our proof is shorter than alternative implementations, and of comparable complexity\footnote{The QSort definition and
+correctness proof in the equations package is under 200LOC --
+\href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
+and other online proofs of correctness are of similar complexity
+\href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
 % and can be found in the
 % formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
 
@@ -1222,14 +1263,14 @@ Suppose that we map a function to the result of sorting the list. We can
 use our framework to fuse both computations. In particular, consider
 the following definition:
 \begin{coqcode}
-Definition qsort_times_two := Lmap times_two \o hylo merge c_split.
+Definition qsort_times_two := Lmap times_two \o hylo merge split.
 \end{coqcode}
 Here, \coq{Lmap times_two} is a list map function defined as a hylomorphism,
 and \coq{times_two} multiplies every element of the list by two.
 We can use Coq's generalised rewriting, and \coq{hylo_fusion_l} to fuse
 \coq{times_two} into the RHS hylomorphism in \coq{qsort_times_two}.
 After applying hylo fusion and the necessary rewrites, the hylomorphism that we
-extract is \coq{hylo (merge \o natural times_two) c_split}. In this definition,
+extract is \coq{hylo (merge \o natural times_two) split}. In this definition,
 \coq{natural} defines a natural transformation by applying \coq{times_two} to
 the shapes, and \coq{times_two} multiplies every pivot in the Quicksort tree by
 two. Our formalisation contains a proof that \coq{natural} is indeed a natural
