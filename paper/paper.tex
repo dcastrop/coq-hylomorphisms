@@ -79,14 +79,14 @@
 \input{lensbans}
 
 \newcommand{\anamor}[1]{{\llens\, #1\, \rlens}}
-\newcommand{\catamor}[1]{\lbanana\, #1\, \rbanana}
-\newcommand{\fold}[1]{\catamor{#1}}
-\newcommand{\cata}[1]{\catamor{#1}}
+\newcommand{\catamor}[1]{\lbans\, #1\, \rbans}
+\newcommand{\cata}[1]{\lbans #1 \rbans}
 \newcommand{\ana}[1]{\llens #1 \rlens}
 \newcommand{\catafree}[1]{\Lbanana #1 \Rbanana}
 \newcommand{\anacofree}[1]{\Llens #1 \Rlens}
 \newcommand{\hylo}[2]{\cata{#1 \to #2}}
 \newcommand{\cohylo}[2]{\ana{#1 \to #2}}
+\newcommand{\fold}[1]{\catamor{#1}}
 \newcommand{\unfold}[1]{\anamor{#1}}
 \newcommand{\comp}{\cdot}
 \newcommand{\operator}[1]{\textsf{#1}}
@@ -138,28 +138,6 @@
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
 \newminted{ocaml}{fontsize=\small}
-
-\newsavebox{\lbananabox}
-\newcommand{\lbananamacro}{%
-  \begin{tikzpicture}[baseline=0.25em,xscale=0.005em,yscale=0.005em]
-  \draw[solid, join=round] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9)
-              to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;
-\end{tikzpicture}
-}
-\savebox{\lbananabox}{\lbananamacro}
-\newcommand{\lbanana}{\mathopen{\usebox{\lbananabox}\hspace{-0.6ex}}}
-
-
-\newsavebox{\rbananabox}
-\newcommand{\rbananamacro}{%
-  \begin{tikzpicture}[baseline=0.25em,xscale=-0.005em,yscale=0.005em]
-  \draw[solid, join=round] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9)
-              to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;
-  \end{tikzpicture}
-}
-\savebox{\rbananabox}{\rbananamacro}
-\newcommand{\rbanana}{\mathclose{\usebox{\rbananabox}}}
-
 
 \title{Mechanising Hylomorphisms for Extraction of Executable Code}
 
@@ -674,12 +652,12 @@ Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
 
 \noindent
-where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its inverse $\InOp$ (see Section~\ref{sec:category-theory}).
-As an example, the initial \coq{F}-algebra for the
-container that is isomorpic to the functor
-\coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra
-being defined by the empty list \coq{Empty : unit -> LFix F} and the cons
-operation \coq{Cons : A * LFix F -> LFix F}.
+where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its
+inverse $\InOp$ (see Section~\ref{sec:category-theory}).  As an example, the
+initial \coq{F}-algebra for the container that is isomorpic to the functor
+\coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra being
+defined by the empty list \coq{Empty : unit -> LFix F} and the cons operation
+\coq{Cons : A * LFix F -> LFix F}.
 
 We define \coq{LFix} as a setoid, where its equivalence relation can be
 described as the least fixed point of \coq{AppR} (see
@@ -1493,20 +1471,15 @@ abstractly at a high level, and then derive an efficient implementation using
 the process of program calculation~\cite{BirddeMoor96:Algebra}. This area has
 been extensively explored over the years.
 
-% Tesson et al.\ demonstrated the efficacy of leveraging Coq to establish an
-% approach for implementing a robust system dedicated to verifying the correctness
-% of program transformations for functions that manipulate
-% lists~\cite{10.1007/978-3-642-17796-5_10}.
-Tesson et al.\ used Coq to mechanically verify program transformations for functions that manipulate lists~\cite{10.1007/978-3-642-17796-5_10}.
-Murata and Emoto went further and
+Tesson et al.\ demonstrated the efficacy of leveraging Coq to establish an
+approach for implementing a robust system dedicated to verifying the correctness
+of program transformations for functions that manipulate
+lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and Emoto went further and
 formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
-include hylomorphisms and dynamorphisms, relies on various additional axioms, and does not discuss the extracted OCaml code.
-% the functional
-% extensionality axiom, as well as further extensionality axioms for each
-% coinductive datatype that they use.
-% They do not discuss the extracted OCaml code
-% from their formalisation.
-Larchey-Wendling and Monin encode recursion schemes in
+include hylomorphisms and dynamorphisms, and relies on the functional
+extensionality axiom, as well as further extensionality axioms for each
+coinductive datatype that they use. They do not discuss the extracted OCaml code
+from their formalisation. Larchey-Wendling and Monin encode recursion schemes in
 Coq, by formalising computational graphs of algorithms~\cite{larchey2022braga}.
 Their work does not focus on encoding generic recursion schemes, and proving
 their algebraic laws. Castro-Perez et al.~\cite{farmsCastro} encode the laws of
@@ -1517,25 +1490,26 @@ hylomorphisms are axioms in their system.
 
 \subsection{Fusion Optimisation}\label{sec:fusion}
 
-% Fusion in functional programming is a general technique for combining multiple
-% computations into a single pass to eliminate intermediate data structures or
-% repeated traversals, improving efficiency.
-The fusion we have discussed in this
+Fusion in functional programming is a general technique for combining multiple
+computations into a single pass to eliminate intermediate data structures or
+repeated traversals, improving efficiency. The fusion we have discussed in this
 paper relating to program calculation is one form of fusion, but there are other
-approaches.
-%
+approaches, and prior research has explored the mechanisation and verification
+of fusion transformations.
+
 Fusion has been applied to recursive tree traversals, in order to reduce the
 number of times each section of the tree must be visited. Research has
 demonstrated that this sort of fusion can be performed automatically by a
 compiler~\cite{10.1145/3133900}, and the correctness of tree traversal fusion
 has been verified mechanically in Coq~\cite{10.1145/3377555.3377884}.
-%
+
 Another related family transformations are worker/wrapper
 transformations~\cite{gill09}, which have been used in the context of optimising
 compilers, and have been mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}. This
 technique has been applied to improving the performance of programs defined
 using folds via fusion~\cite{hutton10}. Their work does not focus on the use of
-an interactive proof assistant, but rather on the automatic optimisation of
+an interactive proof assistant, but rather on the manual use of equational
+reasoning to re-write programs and on the automatic transformation of functional
 programs by a compiler.
 
 %\mvol{Need more general citations for program calculation.}
@@ -1583,13 +1557,11 @@ divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % for more flexibility.
 Certain functions that are not structurally recursive can be reformulated using
 a nonstandard approach to achieve structural recursion~\cite{AbreuDHJMS23}.
-% Take, for instance, division by iterated subtraction, which is inherently
-% non-structurally recursive since it involves recursion based on the result of a
-% subtraction. There is a nonstandard implementation of divivion found on Coq's
-% standard library, which involves a four-argument function that effectively
-% combines subtraction and division.
-% Similarly,
-The mergesort in Coq's standard
+Take, for instance, division by iterated subtraction, which is inherently
+non-structurally recursive since it involves recursion based on the result of a
+subtraction. There is a nonstandard implementation of divivion found on Coq's
+standard library, which involves a four-argument function that effectively
+combines subtraction and division. Similarly, the mergesort in Coq's standard
 library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
 Abreu et al., the result is ``barely recognizable as a form of
@@ -1597,6 +1569,45 @@ mergesort''~\cite{AbreuDHJMS23}.
 There are common approaches in Coq to deal with termination, but none of these
 approaches address program calculation techniques, and the mechanisation of
 fusion laws.
+
+% \subsection{Fusion}\label{sec:fusion}
+
+% Fusion in functional programming is a general technique for combining multiple
+% computations into a single pass to eliminate intermediate data structures and
+% improve efficiency. The fusion we have discussed in this paper relating to
+% program calculation is one form of fusion, but there are other approaches.
+
+% \emph{Deforestation}, introduced by Wadler~\cite{wadler88}, is a specific
+% approach to fusion that aims to remove intermediate trees (such as lists)
+% created between chained operations. A well-known method of deforestation is
+% \haskell{foldr/build} fusion~\cite{gill93}, which optimizes list-processing by
+% fusing list-producing functions (like \haskell{map} or \haskell{filter}) with
+% list-consuming ones (like \haskell{foldr}), avoiding the creation of temporary
+% lists.
+% %
+% Extending this idea, stream fusion generalizes the concept to handle other data
+% types, using a lazy stream abstraction to represent sequences and fuse
+% transformations like \haskell{map} and \haskell{fold}~\cite{coutts07}.
+% Both approaches eliminate redundant structures and ensure computations happen in
+% a single efficient pass over the data.
+
+% Another dimension of fusion is \emph{tupling}, a technique used to combine
+% multiple recursive functions into a single function by grouping their results
+% into a tuple~\cite{hughes89}. This approach helps avoid redundant traversals of
+% the same data structure when multiple operations are applied.
+% In addition to
+% techniques like \haskell{foldr/build} fusion and stream fusion, tupling
+% complements deforestation by allowing multiple recursive functions to share a
+% single traversal, further optimizing computations and minimizing intermediate
+% data structures.
+
+% In the context of Coq, Danvy explains the use of fold/unfold lemmas to mechanize
+% equational reasoning about recursive programs~\cite{DANVY_2022}. Fold-unfold
+% lemmas enable optimizations like fusion by allowing programs to be
+% systematically simplified, including eliminating intermediate structures.
+% Additionally, an approach to fusion called the worker/wrapper
+% transformation~\cite{gill09} was formalised and mechanised in
+% Agda~\cite{SCULTHORPE_HUTTON_2014}.
 
 \section{Conclusions and Future Work}
 
