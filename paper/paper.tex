@@ -635,53 +635,42 @@ shape x =e shape y /\ (forall p p', projT1 p = projT1 p' -> cont x p =e cont y p
 
 Recall that an algebra is a set $A$ together with a morphism that defines the
 operations of the algebra $F\;A \to A$.  Given a type \coq{A} and a container
-\coq{F}, an `\coq{App F}'-algebra is a pair given by the carrier \coq{A}, and the
-\emph{structure map} of type:
+\coq{F}, an `\coq{App F}'-algebra (or `\coq{F}-algebra' for short) is a pair
+given by the carrier \coq{A}, and the \emph{structure map} of type:
 \begin{coqcode}
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
-
-\noindent
-For simplicity, we will abuse terminology, and call these
-\coq{F}-algebras, instead of `\coq{App F}'-algebras.
-
-The initial \coq{F}-algebra can be defined as follows, thanks to the use of
-containers:
+The initial \coq{F}-algebra can be defined as the inductive type with a finite
+number of uses of \coq{App F}
 \begin{coqcode}
 Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
-
-\noindent
-where \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its
+\coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its
 inverse $\InOp$ (see Section~\ref{sec:category-theory}).  As an example, the
 initial \coq{F}-algebra for the container that is isomorpic to the functor
 \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra being
 defined by the empty list \coq{Empty : unit -> LFix F} and the cons operation
 \coq{Cons : A * LFix F -> LFix F}.
 
-We define \coq{LFix} as a setoid, where its equivalence relation can be
-described as the least fixed point of \coq{AppR} (see
-Section~\ref{sec:types-morphisms}). We define smart constructors for the
-isomorphism of least fixed points as respectful morphisms:
+The \coq{LFix F} setoid equality is the least fixed point of the \coq{App F}
+setoid equality. We define smart constructors for the isomorphism of least fixed
+points as proper morphisms:
 \begin{coqcode}
 l_in : App F (LFix F) ~> LFix F         l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
 
-Catamorphisms are constructed, as expected, so that they structurally
-deconstruct the datatype, call themselves recursively, and then compose the
-result using an \coq{F}-algebra.
+Catamorphisms are constructed so that they structurally deconstruct the
+datatype, call themselves recursively, and then compose the result using an
+\coq{F}-algebra.
 \begin{coqcode}
-Definition cata_f (alg : Alg F A) : LFix -> A
-  := fix f (x : LFix)
-     := match x with
-        | LFix_in ax =>
-             alg {shape := shape ax; cont := fun e => f (cont ax e)}
+Definition cata_f (a : Alg F A) : LFix -> A
+  := fix f (x : LFix) := match x with
+        | LFix_in x => a {shape := shape x; cont := fun e => f (cont x e)}
         end.
 \end{coqcode}
 
-It is easy to show that this function is a respectful morphism of
-\coq{F}-algebras. In fact, it is possible to define it as a map of the
-following type:
+It is easy to show that this function is a proper morphism of \coq{F}-algebras.
+In fact, it is possible to define it as a map of the following type:
 \begin{coqcode}
   cata : forall `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
