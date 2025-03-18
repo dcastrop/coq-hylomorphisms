@@ -611,22 +611,21 @@ Intuitively, the type of shapes captures the different ``cases'' of an algebraic
 datatype, and the positions of a shape are used to identify the elements inside
 a container of the given shape.
 
-Any polynomial functor can be represented as a container (see accompanying code
-for a mechanisation).  For example, a container that is equivalent to
-$F\; X = 1 + A \times X$ requires a shape that can distinguish two cases,
-indicating that there are two constructors to build an object of type $F\;X$,
-e.g. $S_{F} = 1 + A$. We need to consider two cases for the family of positions:
+Any polynomial functor can be represented as a container (see accompanying
+code).  For example, a container that is equivalent to $F\; X = 1 + A \times X$
+requires a shape that can distinguish two cases, indicating that there are two
+constructors to build an object of type $F\;X$, e.g. $S_{F} = 1 + A$. We need to
+consider two cases for the family of positions:
 $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because there are no occurrences of $X$ in the
 left case; and $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence
 of $X$ in the right hand side. It is easy to see that
 $\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
-Note however, that the type $\forall s : S.\; P\;s \to X$ would force us to add
-the functional extensionality axiom to deal with the heterogeneous equality of
-positions. Thus, we require that all the types used in our definitions are
-\emph{setoids}, where we will use \coq{x =e y} to represent setoid equality. All
-morphisms need to be \emph{proper} morphisms with respect to the function
-\emph{respectfulness} relation. In our development, we use
+The type $\forall s : S.\; P\;s \to X$ would force us to add
+the functional extensionality axiom. Thus, we require that all the types used in
+our definitions are \emph{setoids}, where we use \coq{x =e y} to represent
+setoid equality. All morphisms need to be \emph{proper} morphisms that respect
+setoid equalities. In our development, we use
 \begin{coqcode}
 Notation "A ~> B" := (* proper morphisms  s.t. forall x y, x =e y -> f x =e f y *).
 \end{coqcode}
@@ -634,16 +633,20 @@ We add an automatic coercion from \coq{A ~> B} to \coq{A -> B} and provide
 tactics to automatically discharge proofs that morphisms are proper,  for some
 simple cases.
 
-We define containers in terms of shapes, \emph{base} positions (\coq{APos : Set}),
-and \emph{decidable validity predicates} that
-specify when a base position is valid in a shape. Since validity predicates are in
-\coq{Prop}, they will be erased during extraction:
+%% WARNING: removing the point about axiom K leads to leaving the use of
+%% decidable validity predicates unexplained -- do not remove!
+We define containers in terms of shapes, \emph{base} positions
+(\coq{APos : Set}), and \emph{decidable validity predicates} that specify when a
+base position is valid in a shape. Since validity predicates are in \coq{Prop},
+they will be erased during extraction, and since they are decidable, they
+prevent the use of axiom K to deal with heterogeneous equalities of positions:
 \begin{coqcode}
 Record App F (X : Type) := {shape : Shape F; cont : {p : APos | valid s p = true} -> X}.
 \end{coqcode}
 
-Given two \coq{x y : App F X}, we define
-\coq{x =e y} as the setoid equality of the shapes as
+%% Make sure you do not cut text so much that it ends up being inconsistent with
+%% the code! I just restored an old explanation and cut some of it in a consistent way
+We define the setoid equality of two container extensions \coq{x y : App F X} as
 \begin{coqcode}
 shape x =e shape y /\ (forall p p', projT1 p = projT1 p' -> cont x p =e cont y p')
 \end{coqcode}
