@@ -79,14 +79,14 @@
 \input{lensbans}
 
 \newcommand{\anamor}[1]{{\llens\, #1\, \rlens}}
-\newcommand{\catamor}[1]{\lbans\, #1\, \rbans}
-\newcommand{\cata}[1]{\lbans #1 \rbans}
+\newcommand{\catamor}[1]{\lbanana\, #1\, \rbanana}
+\newcommand{\fold}[1]{\catamor{#1}}
+\newcommand{\cata}[1]{\catamor{#1}}
 \newcommand{\ana}[1]{\llens #1 \rlens}
 \newcommand{\catafree}[1]{\Lbanana #1 \Rbanana}
 \newcommand{\anacofree}[1]{\Llens #1 \Rlens}
 \newcommand{\hylo}[2]{\cata{#1 \to #2}}
 \newcommand{\cohylo}[2]{\ana{#1 \to #2}}
-\newcommand{\fold}[1]{\catamor{#1}}
 \newcommand{\unfold}[1]{\anamor{#1}}
 \newcommand{\comp}{\cdot}
 \newcommand{\operator}[1]{\textsf{#1}}
@@ -138,6 +138,28 @@
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
 \newminted{ocaml}{fontsize=\small}
+
+\newsavebox{\lbananabox}
+\newcommand{\lbananamacro}{%
+  \begin{tikzpicture}[baseline=0.25em,xscale=0.005em,yscale=0.005em]
+  \draw[solid, join=round] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9)
+              to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;
+\end{tikzpicture}
+}
+\savebox{\lbananabox}{\lbananamacro}
+\newcommand{\lbanana}{\mathopen{\usebox{\lbananabox}\hspace{-0.6ex}}}
+
+
+\newsavebox{\rbananabox}
+\newcommand{\rbananamacro}{%
+  \begin{tikzpicture}[baseline=0.25em,xscale=-0.005em,yscale=0.005em]
+  \draw[solid, join=round] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9)
+              to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;
+  \end{tikzpicture}
+}
+\savebox{\rbananabox}{\rbananamacro}
+\newcommand{\rbanana}{\mathclose{\usebox{\rbananabox}}}
+
 
 \title{Mechanising Hylomorphisms for Extraction of Executable Code}
 
