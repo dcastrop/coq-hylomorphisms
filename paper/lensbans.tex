@@ -44,16 +44,17 @@
 
 \newsavebox{\llensbox}
 \newcommand{\llensmacro}{%
-\begin{tikzpicture}[baseline=0.45ex,xscale=0.006em,yscale=0.012ex]%
-\draw[solid,join=round] (1.4,0) -- (0,0) -- (0,6) -- (1.4,6) -- (1.5,5.9) to[out=-120, in=90] (0.7,3) to[out=-90, in=120] (1.5,0.1) -- cycle;%
+\begin{tikzpicture}[baseline=0.25em,xscale=0.006em,yscale=0.006em]
+\draw[solid, join=round] (1.4,0) -- (0,0) -- (0,6) -- (1.4,6) -- (1.5,5.9) to[out=-120,in=90] (0.7,3) to[out=-90,in=120] (1.5,0.1) -- cycle;%
 \end{tikzpicture}}
 \savebox{\llensbox}{\llensmacro}
 \newcommand{\llens}{\mathopen{\usebox{\llensbox}\mspace{1mu}}}
 
 \newsavebox{\rlensbox}
 \newcommand{\rlensmacro}{%
-\begin{tikzpicture}[baseline=0.45ex,xscale=-0.006em,yscale=0.012ex]%
-\draw[solid,join=round] (1.4,0) -- (0,0) -- (0,6) -- (1.4,6) -- (1.5,5.9) to[out=-120, in=90] (0.7,3) to[out=-90, in=120] (1.5,0.1) -- cycle;%
+\begin{tikzpicture}[baseline=0.25em,xscale=-0.006em,yscale=0.006em]
+  \draw[join=round] (1.4,0) -- (0,0) -- (0,6) -- (1.4,6) -- (1.5,5.9)
+  to[out=-120,in=90] (0.7,3) to[out=-90,in=120] (1.5,0.1) -- cycle;
 \end{tikzpicture}}
 \savebox{\rlensbox}{\rlensmacro}
 \newcommand{\rlens}{\mathclose{\mspace{1mu}\usebox{\rlensbox}}}
