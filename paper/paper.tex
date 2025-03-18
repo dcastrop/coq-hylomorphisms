@@ -547,7 +547,7 @@ it, can be fused together into a single recursive definition. This, in turn,
 allows us to prove that a recursive hylomorphism is the composition of a
 catamorphism and a recursive anamorphism.
 
-\paragraph{Recursive Anamorphisms}
+\paragraph*{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
 inductive data type in the following way. A recursive coalgebra can be applied
 only finitely many times, therefore when this is applied to an anamorphism the
@@ -601,16 +601,16 @@ $\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
 
 Note however, that the type $\forall s : S.\; P\;s \to X$ would force us to add
 the functional extensionality axiom to deal with the heterogeneous equality of
-position. Thus, we require that all the types used in our definitions are
+positions. Thus, we require that all the types used in our definitions are
 \emph{setoids}, where we will use \coq{x =e y} to represent setoid equality. All
 morphisms need to be \emph{proper} morphisms with respect to the function
 \emph{respectfulness} relation. In our development, we use
 \begin{coqcode}
 Notation "A ~> B" := (* proper morphisms  s.t. forall x y, x =e y -> f x =e f y *).
 \end{coqcode}
-We add an automatic coercion from \coq{A ~> B} to \coq{A -> B} and provide tactics
-to automatically discharge proofs that \coq{forall x y, x =e y -> f x =e f y}
-for the simplest cases of \coq{f}.
+We add an automatic coercion from \coq{A ~> B} to \coq{A -> B} and provide
+tactics to automatically discharge proofs that morphisms are proper,  for some
+simple cases.
 
 We define containers in terms of shapes, \emph{base} positions (\coq{APos : Set}),
 and \emph{decidable validity predicates} that
