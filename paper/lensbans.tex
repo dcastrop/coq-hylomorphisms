@@ -1,3 +1,25 @@
+\newsavebox{\lbananabox}
+\newcommand{\lbananamacro}{%
+  \begin{tikzpicture}[baseline=0.25em,xscale=0.005em,yscale=0.005em]
+  \draw[solid, join=round] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9)
+              to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;
+\end{tikzpicture}
+}
+\savebox{\lbananabox}{\lbananamacro}
+\newcommand{\lbanana}{\mathopen{\usebox{\lbananabox}\hspace{-0.6ex}}}
+
+
+\newsavebox{\rbananabox}
+\newcommand{\rbananamacro}{%
+  \begin{tikzpicture}[baseline=0.25em,xscale=-0.005em,yscale=0.005em]
+  \draw[solid, join=round] (2,0) to[out=140,in=-90] (0,3) to[out=90,in=-140] (2,6) -- (2.1,5.9)
+              to[out=-120,in=90] (1.2,3) to[out=-90,in=120] (2.1,0.1) -- cycle;
+  \end{tikzpicture}
+}
+\savebox{\rbananabox}{\rbananamacro}
+\newcommand{\rbanana}{\mathclose{\usebox{\rbananabox}}}
+
+
 \newsavebox{\lbansbox}
 \newcommand{\lbansmacro}{%
 \begin{tikzpicture}[baseline=0.45ex,xscale=0.006em,yscale=0.012ex]%
