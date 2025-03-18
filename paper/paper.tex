@@ -619,7 +619,7 @@ base position is valid in a shape. Since validity predicates are in \coq{Prop},
 they will be erased during extraction, and since they are decidable, they
 prevent the use of axiom K to deal with heterogeneous equalities of positions:
 \begin{coqcode}
-Record App F (X : Type) := {shape : Shape F; cont : {p : APos | valid s p = true} -> X}.
+Record App F X := {shape : Shape F; cont : {p : APos F | valid s p = true} -> X}.
 \end{coqcode}
 
 %% Make sure you do not cut text so much that it ends up being inconsistent with
