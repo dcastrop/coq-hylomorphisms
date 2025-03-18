@@ -641,7 +641,7 @@ given by the carrier \coq{A}, and the \emph{structure map} of type:
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
 The initial \coq{F}-algebra can be defined as the inductive type with a finite
-number of uses of \coq{App F}
+number of \coq{App F}
 \begin{coqcode}
 Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
@@ -668,22 +668,17 @@ Definition cata_f (a : Alg F A) : LFix -> A
         | LFix_in x => a {shape := shape x; cont := fun e => f (cont x e)}
         end.
 \end{coqcode}
-
-It is easy to show that this function is a proper morphism of \coq{F}-algebras.
-In fact, it is possible to define it as a map of the following type:
+It is easy to prove that catamorphisms respect setoid equalities.  In fact, we
+define it as a proper morphism:
 \begin{coqcode}
-  cata : forall `{setoid A}, Alg F A ~> LFix ~> A
+cata : forall `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
-
-\noindent
-We prove that catamorphisms satisfy the universality property we explained in
-Section~\ref{sec:category-theory}:
+Finally, we prove that catamorphisms satisfy their universality property (see
+Section~\ref{sec:category-theory}):
 \begin{coqcode}
 Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
     : f =e cata alg <-> f =e alg \o fmap f \o l_out.
 \end{coqcode}
-
-\noindent
 In other words, if there is any other \coq{f} with the same structural recursive
 shape as the catamorphism on the algebra \coq{alg} then it must be equal to that
 catamorphism.
@@ -697,43 +692,36 @@ following notation for coalgebras:
 \begin{coqcode}
 Notation Coalg F A := (A ~> App F A).
 \end{coqcode}
-
 Dually to the initial \coq{F}-algebra, a final \coq{F}-coalgebra is the greatest
-fixed-point for \coq{App F}. We define it using a coinductive data type:
+fixed-point of \coq{App F}. We define it using a coinductive data type:
 \begin{coqcode}
 CoInductive GFix F : Type := GFix_in { GFix_out : App F GFix }.
 \end{coqcode}
-
-\noindent
-where \coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix_in} is its
+\coq{GFix_out} is the final \coq{F}-coalgebra and \coq{GFix_in} is its
 inverse witnessing the isomorphism. Similarly to \coq{LFix}, \coq{GFix} is also
 defined as a setoid, with an equivalence relation that is the greatest fixpoint
-of \coq{AppR}. Additionally, we define smart constructors for the isomorphism of
-greatest fixed points:
+of the \coq{App F} setoid equality. Additionally, we define smart constructors
+for the isomorphism of greatest fixed points:
 \begin{coqcode}
 g_in : App F (GFix F) ~> GFix F          g_out : GFix F ~> App F (GFix F)
 \end{coqcode}
-
 The greatest fixed-point is a terminal \coq{F}-coalgebra in the sense that it
 yields a coinductive recursion scheme: the \emph{anamorphism}.
 \begin{coqcode}
 Definition ana_f_ (c : Coalg F A) :=
-  cofix f x :=
-   let cx := c x in
+  cofix f x := let cx := c x in
    GFix_in { shape := shape cx; cont := fun e => f (cont cx e) }.
 
 Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*...*)
 \end{coqcode}
-
-\noindent
 From this definition the universality property falls out:
 \begin{coqcode}
 Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix F)
 : f =e ana h <-> f =e g_in \o fmap f \o h.
 \end{coqcode}
-In words, for any \coq{F}-coalgebra, if there is any other function \coq{f}
-that is a \coq{F}-coalgebra homomorphism then it must be the anamorphism on the
-same coalgebra.
+In words, for any \coq{F}-coalgebra, if there is any other function \coq{f} that
+is an \coq{F}-coalgebra homomorphism then it must be the anamorphism on the same
+coalgebra.
 
 \subsection{Mechanising Hylomorphisms}
 \label{sec:coq-rec-coalgebras}
@@ -756,41 +744,34 @@ In order to find a solution we restrict ourselves to the so-called
 \emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  We mechanise
 \emph{recursive hylomorphisms} which are guaranteed to have a unique solution to
 the hylomorphism equation. These are hylomoprhisms where the coalgebra is
-\emph{recursive}, i.e. coalgebras that terminate on all inputs. We represent
+\emph{recursive}, i.e.\ coalgebras that terminate on all inputs. We represent
 recursive coalgebras using a predicate that states that a coalgebra terminates
 on an input:
 \begin{coqcode}
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
-
-\noindent
-For convenience, we package recursive coalgebras with their proofs that they
-terminate for all inputs:
+For convenience, we package recursive coalgebras with proofs that they terminate
+for all inputs:
 \begin{coqcode}
 Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
 \end{coqcode}
 Recursive hylomorphisms are implemented in Coq recursively on the structure of
-the proof for the type (\coq{RecF}) as follows:
+the proof that the anamorphism terminates on an input:
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A)
   : forall (x : A), RecF c x -> B
   := fix f x H
-     := match c x as cx
-          return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B
-        with
-        | cx => fun H =>
-            a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
+     := match c x as cx return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B with
+        | cx => fun H => a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
         end (RecF_inv H).
 \end{coqcode}
 
 \noindent
 We use \coq{RecF_inv} to obtain the structurally smaller proof to use in
 the recursive calls.
-
-\noindent
 As we did with catamorphisms and anamorphisms, we
-prove that \coq{hylo_def} is respectful, and use this proof to build the
+prove that \coq{hylo_def} is a proper morphism, and use this proof to build the
 corresponding higher-order proper morphism:
 \begin{coqcode}
 hylo : forall F `{setoid A} `{setoid B}, Alg F B ~> RCoalg F A ~> A ~> B
@@ -817,8 +798,8 @@ It is important to highlight that, in our mechanisation, these proofs follow
 \emph{exactly} the steps that one would do in a pen-and-paper proof.  We show
 the series of rewrite steps for \coq{hylo_fusion_l} in
 Figure~\ref{fig:proof-fusion-l}. The steps of this proof are: (1) apply the
-uniqueness law of recursive hylomorphisms; (2) rewrite the goal using the
-property that functors preserve composition; (3) rewrite the goal using the
+uniqueness law of recursive hylomorphisms; (2) rewrite using that
+functors preserve composition; (3) rewrite using the
 condition of \coq{hylo_fusion_l}; (4) use the uniqueness law of hylomorphisms to
 fold $a \circ F \; f \circ c$ into $f$.
 \begin{figure}[t!]
@@ -923,8 +904,9 @@ Inductive FinF : GFix F -> Prop :=
 | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
 \end{coqcode}
 Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
-is isomorphic its corresponding the inductive data type \coq{LFix F}. This is
-easy to see. We first define a catamorphism \coq{ccata_f_} from the
+is isomorphic its corresponding the inductive data type \coq{LFix F}.
+We show this by
+defining a catamorphism \coq{ccata_f_} from the
 subtype \coq{{x : GFix F | FinF x}} of finitary elements of \coq{GFix F} to
 any \coq{F}-algebra.
 \begin{coqcode}
@@ -1032,7 +1014,7 @@ P x ((a \o fmap (hylo a c) \o c) x)
 \end{coqcode}
 We will see in Section~\ref{sec:examples} one example where we will prove that
 the output of a sorting algorithm is a sorted permutation of the input, and we
-will show that these proofs are comparable to other techniques for
+show that these proofs are comparable to other techniques for
 non-structural recursion.
 
 
