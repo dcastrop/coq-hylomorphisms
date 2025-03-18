@@ -572,10 +572,10 @@ formalise recursive coalgebras and hylomorphisms
 
 \subsection{Mechanising Extractable Container Functors}
 \label{sec:containers}
-Recursion schemes are defined using generic functors representing the scheme
-behind the recursive operator.  However, as not all functors possess enough
-fixed-points we need to be able to restrict to those mappings \coq{F : Type -> Type}
-that are so called \emph{strictly positive}.
+Recursion schemes are formulated using generic functors that encapsulate the
+structure of the recursive operator. However, since not all functors have the
+suitable fixed points, it is necessary to restrict our focus to those mappings
+of the form \coq{F : Type -> Type} which are additionally \emph{strictly positive}.
 
 A common solution is to consider \emph{containers}~\cite{AbbottAG05}.  A
 container $S \triangleright P$ is defined by a type of \emph{shapes} $S : \Type$
