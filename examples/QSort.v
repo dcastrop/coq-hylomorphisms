@@ -19,13 +19,11 @@ Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 
 Definition merge : App (TreeF unit int) (list int) ~> list int.
 |{ x : (App (TreeF unit int) (list int)) ~> (
-           match x with
-           | MkCont sx kx =>
+           let (sx, kx) := x in
                match sx return (Container.Pos sx -> _) -> _ with
                | Leaf _ _ => fun _ => nil
                | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
                end kx
-           end
   )}|.
 Defined.
 

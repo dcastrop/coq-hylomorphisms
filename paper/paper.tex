@@ -933,11 +933,9 @@ recursive recursive coalgebra \coq{c}, and the initial \coq{F}-algebra:
 \begin{coqcode}
 Definition rana c := hylo l_in c.
 \end{coqcode}
-
-\noindent
-The main advantage of this definition is that recursive anamorphisms
-compose with catamorphisms without the need to reason about termination
-and finiteness of values of coinductive types.
+The main advantage of this definition is that recursive anamorphisms compose
+with catamorphisms without the need to reason about termination and finiteness
+of values.
 % This predicate is equivalent to the proposition that
 % the anamorphism of such coalgebras produce only finite trees:
 % \begin{coqcode}
@@ -1009,13 +1007,15 @@ forall e, P (cont (c x) e) (hylo a c (cont (c x) e))
 \end{coqcode}
 \noindent
 Then, by the uniqueness property of hylomorphisms, it is enough to prove that
+\coq{P} is satisfied by the unfolding of the hylomorphism:
 \begin{coqcode}
 P x ((a \o fmap (hylo a c) \o c) x)
 \end{coqcode}
 We will see in Section~\ref{sec:examples} one example where we will prove that
-the output of a sorting algorithm is a sorted permutation of the input, and we
-show that these proofs are comparable to other techniques for
-non-structural recursion.
+the output of a sorting algorithm is a sorted permutation of the input, and
+show that these proofs are comparable to other techniques for non-structural
+recursion, with the additional advantage that any result that is proven on a
+hylomorphism will also hold for any result of doing program calculation.
 
 
 \section{Extraction}
@@ -1068,91 +1068,82 @@ optimisation in our framework (Section~\ref{sec:shortcut}).
 %  flow more smoothly.}
 
 \subsection{Sorting Algorithms}\label{sec:sorting}
-Our first case study is divide-and-conquer sorting algorithms.  Encoding them
-in our framework will require the use of recursive hylomorphisms and
-termination proofs.  We complete the sorting algorithm examples by applying
-fusion optimisation.
-
-Both mergesort and quicksort are divide-and-conquer algorithms that can be
-captured by the structure of an hylomorphisms. The structure of the recursion
-is that of a binary tree.  For example, in the case of quicksort, a list is
-split into a pivot, the label of the node, and two sublists. We define the data
-functor of trees as follows:
+Our first case study is divide-and-conquer sorting algorithms encoded as
+recursive hylomorphisms. Our accompanying code contains both mergesort and
+quicksort as examples, but we will focus on quicksort for conciseness. We will
+also show how to use program calculation to apply a fusion optimisation.  The
+recursive structure of both mergesort and quicksort is a binary tree. For
+example, in the case of quicksort, a list is split into a pivot, the label of
+the node, and two sublists. We define the data functor of trees as follows:
 \begin{coqcode}
 Inductive ITreeF L N X := i_leaf (l : L) | i_node (n : N) (l r : X)
 \end{coqcode}
-We define the functor as a container using the following shapes and positions:
+To define an equivalent container, we notice that this functor has two shapes,
+one for leaves, and one for nodes, and that nodes have two positions (akin to
+\coq{l r : X} in \coq{i_node}). We also note that, in this container, positions
+are only valid in nodes.
 \begin{coqcode}
 Inductive Tshape L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
 \end{coqcode}
-These define a container, \coq{TreeF}, in a straightforward way, by making
-the positions of type \coq{Tpos} only valid in \coq{Node}.
-We define a series of definitions for tree container constructors and 
-destructors:
+We name \coq{TreeF} the container that has these shapes and (base) poisitions.
+For convenience, we define a series of wrappers to construct these containers:
 % \mpav{The following algebra should be called a\_in or l\_in whatever}
 \begin{coqcode}
-Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
 Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
 Notation a_node x l r := (MkCont (Node _ x)
   (fun p => match val p with | Lbranch => l | Rbranch => r end)).
 \end{coqcode}
-The container for the Quicksort hylomorphism is \coq{TreeF unit int}, with
-the following algebra and coalgebra.
+The container for the Quicksort hylomorphism is \coq{TreeF unit int}, with the
+following algebra and coalgebra. In the below definition, we use \coq{posL} and
+\coq{posR} as wrappers for \coq{Lbranch} and \coq{Rbranch} with validity proofs.
 \begin{coqcode}
-  Definition merge : App (TreeF unit int) (list int) ~> list int.
-|{ x : (App (TreeF unit int) (list int)) ~> (
-           match x with
-           | MkCont sx kx =>
-               match sx return (Container.Pos sx -> _) -> _ with
-               | Leaf _ _ => fun _ => nil
-               | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
-               end kx
-           end
-  )}|.
-Defined.
-Definition split : Coalg (TreeF unit int) (list int).
-|{ x ~> match x with
-        | nil => a_leaf tt
-        | cons h t => let (l, r) := List.partition (fun x => x <=? h) t in
-                      a_node h l r
-        end}|.
-Defined.
+Definition merge_f (x : App (TreeF unit int) (list int)) : list int :=
+  let (sx, kx) := x in
+  match sx return (Container.Pos sx -> _) -> _ with
+  | Leaf _ _ => fun _ => nil
+  | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
+  end kx.
+Definition qsplit_f (x : list int) : App (TreeF unit int) (list int) :=
+  match x with
+  | nil => a_leaf tt
+  | cons h t => let (l, r) := List.partition (fun x => x <=? h) t in a_node h l r
+  end.
 \end{coqcode}
-We prove that the coalgebra \coq{split} is recursive by showing
-that it respects the ``less-than'' relation on the length of the lists.
+Our tactics automatically discharge the proof that these are proper morphisms
+(called \coq{merge} and \coq{qsplit}), and we prove that the coalgebra
+\coq{qsplit} is recursive by showing that it respects the ``less-than'' relation
+on the length of the lists.
 %\begin{coqcode}
 %Lemma split_fin : respects_relation split (@length int) lt.  (* *) Qed.
 %
 %Definition tsplit : RCoalg (TreeF (list int) unit) (list int)
 %  := mk_wf_coalg wf_lt split_fin.
 %\end{coqcode}
-The code that we extract for \coq{hylo merge split} is the following:
+The code that we extract for \coq{hylo merge qsplit} is similar to a hand-written implementation:
 \begin{ocamlcode}
 let rec qsort = function
-| [] -> [] | h :: t ->
-  let (l, r) = partition (fun x0 -> leb x0 h) t in
-  let x0 = fun e -> qsort (match e with | Lbranch -> l | Rbranch -> r) in
-  app (x0 Lbranch) (h :: (x0 Rbranch))
+  | [] -> []
+  | h :: t -> let (l, r) = partition (fun x0 -> leb x0 h) t in
+    let x0 = fun e -> qsort (match e with | Lbranch -> l | Rbranch -> r) in
+    app (x0 Lbranch) (h :: (x0 Rbranch))
 \end{ocamlcode}
-Note that Coq's code extraction is unable to inline \coq{x0}, but the resulting
-code is similar to a hand-written \coq{qsort}.
-The mergesort algorithm can be defined analogously.
 
 \paragraph*{Proving Quicksort Correct}
 
-We show that the output of \coq{hylo merge split} produces a sorted
+We show that the output of \coq{hylo merge qsplit} produces a sorted
 permutation of the input:
 \begin{coqcode}
-forall (l : list int), Sorted (hylo merge split l) /\ Perm l (hylo merge split l).
+forall (l : list int), Sorted (hylo merge qsplit l) /\ Perm l (hylo merge qsplit l).
 \end{coqcode}
-The proof in our framework starts by induction on the proof that \coq{split}
+The proof in our framework starts by induction on the proof that \coq{qsplit}
 is recursive, and that it terminates on \coq{l}, i.e. using tactic
-\coq{induction (recP split l)}. Then, we can unfold
-\coq{hylo merge split} to \coq{merge \o fmap (hylo merge split) \o split} using
-hylomorphism uniqueness, and the proof would then proceed equally to any other
-similar proof. Overall, our proof is shorter than alternative implementations, and of comparable complexity\footnote{The QSort definition and
-correctness proof in the equations package is under 200LOC --
+\coq{induction (recP qsplit l)}. Then, we can unfold
+\coq{hylo merge qsplit} to \coq{merge \o fmap (hylo merge qsplit) \o qsplit} using
+hylomorphism uniqueness, and the rest of the proof is standard. Overall, our
+proof is shorter than alternative implementations, and of comparable
+complexity\footnote{The QSort definition and correctness proof in the equations
+package is under 200LOC --
 \href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
 and other online proofs of correctness are of similar complexity
 \href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
@@ -1237,19 +1228,20 @@ Suppose that we map a function to the result of sorting the list. We can
 use our framework to fuse both computations. In particular, consider
 the following definition:
 \begin{coqcode}
-Definition qsort_times_two := Lmap times_two \o hylo merge split.
+Definition qsort_times_two := Lmap times_two \o hylo merge qsplit.
 \end{coqcode}
 Here, \coq{Lmap times_two} is a list map function defined as a hylomorphism,
 and \coq{times_two} multiplies every element of the list by two.
-We can use Coq's generalised rewriting, and \coq{hylo_fusion_l} to fuse
-\coq{times_two} into the RHS hylomorphism in \coq{qsort_times_two}.
-After applying hylo fusion and the necessary rewrites, the hylomorphism that we
-extract is \coq{hylo (merge \o natural times_two) split}. In this definition,
+We can use Coq's generalised rewriting and \coq{hylo_fusion_l} to fuse
+\coq{times_two} into \coq{hylo merge qsplit}.
+After the necessary rewrites, we obtain \coq{hylo (merge \o natural times_two) qsplit}. In this definition,
 \coq{natural} defines a natural transformation by applying \coq{times_two} to
-the shapes, and \coq{times_two} multiplies every pivot in the Quicksort tree by
-two. Our formalisation contains a proof that \coq{natural} is indeed a natural
-transformation, which relies on the fact that it preserves the structure of the
-shapes and, therefore, the validity of the positions.  The extracted OCaml code
+the shapes, thus multiplying every pivot by
+two.
+%% Our formalisation contains a proof that \coq{natural} is indeed a natural
+%% transformation, which relies on the fact that it preserves the structure of the
+%% shapes and, therefore, the validity of the positions.
+The extracted OCaml code
 is a single recursive traversal:
 \begin{ocamlcode}
 let rec qsort_times_two = function | [] -> []
