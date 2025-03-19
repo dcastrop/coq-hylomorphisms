@@ -1252,19 +1252,17 @@ let rec qsort_times_two = function | [] -> []
 \end{ocamlcode}
 
 \subsection{Knapsack}\label{sec:knap}
-We focus now on the formalisation and extraction of \emph{dynamorphisms} for
-dynamic programming, by using their encoding as a hylomorphism. We use the
+We show now the formalisation and extraction of \emph{dynamorphisms} for
+dynamic programming. We use the
 knapsack example from~\cite{HinzeWG15}. Dynamorphisms build a memoisation table
 that stores intermediate results, alongside the current computation. The
 algebra used to define a dynamorphism can access this memoisation table to
 speed up computation.  First, we define memoisation tables in terms of
-containers. 
+containers.
 \begin{coqcode}
 Definition MemoShape : Type := A * Sg.
 Definition MemoPos := Pg.
-Instance Memo : Cont MemoShape MemoPos
-  := { valid := valid \o pair (snd \o fst) snd }.
-
+Instance Memo : Cont MemoShape MemoPos := { valid := valid \o pair (snd \o fst) snd }.
 Definition Table := LFix Memo.
 \end{coqcode}
 Memoisation tables are the least fixed point of the container defined by shapes
@@ -1309,8 +1307,8 @@ Definition knapsack_alg (wvs : list (nat * int))
   end kx end.
 Definition knapsackA wvs : App NatF (Table NatF int) ~> int :=  (* ... *)
 \end{coqcode}
-The hylomorphism for knapsack is as follows, where \coq{out_nat} is the
-recursive coalgebra for \coq{nat}.
+Given the recursive coalgebra for \coq{nat}, \coq{out_nat}, knapsack is defined
+as
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
@@ -1346,9 +1344,9 @@ This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
 \textbf{not} provable in Coq if we want to remain axiom-free, since we would
 need to add the necessary parametricity
 axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}.
-However, we prove a specific version of this theorem for the list generating
-container (i.e.\ the container whose least fixed point is a list), and use it
-to encode the example from Takano and Meijer~\cite{TakanoM95}:
+However, we prove a specific version of this theorem for the container whose
+least fixed point is a list, and use it to encode the example from Takano and
+Meijer~\cite{TakanoM95}:
 \begin{coqcode}
 Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
 \end{coqcode}
