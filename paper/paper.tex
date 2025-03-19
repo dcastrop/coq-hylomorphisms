@@ -217,26 +217,21 @@
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
   Generic programming with recursion schemes provides a powerful abstraction for
-structuring recursion, in part due to the rigorous set of algebraic laws that
-they satisfy. These laws are the basis for reasoning about program equivalences
-and, therefore , they can be used for reasoning about program correctness and
-optimisations.  Some of these optimisations are successfully applied by
-compilers of (functional) languages.  Formalising recursion schemes in a type
-theory offers additional termination guarantees, but it often requires
-compromises affecting the resulting code, such as imposing performance
-penalties, requiring the assumption of additional axioms, or introducing unsafe
-casts into extracted code (e.g. \ocaml{Obj.magic} in OCaml).
+structuring recursion and provide a rigorous reasoning principle for program
+optimisations which have been successfully applied to compilers for functional
+languages. Formalising recursion schemes in a type theory offers additional
+termination guarantees, but it often requires compromising on performance,
+requiring the assumption of additional axioms, and/or introducing unsafe casts
+into extracted code.
 
-This paper presents the first Coq formalisation of a recursion scheme, called
-the \emph{hylomorphism}, along with its algebraic laws allowing for the
-mechanisation of all recognised (terminating) recursive algorithms. The key
-contribution of this paper is that this formalisation is fully axiom-free
+This paper presents the first Coq formalisation of \emph{hylomorphisms} allowing for the
+mechanisation of all recognised recursive algorithms. The key
+contribution of this paper is that this formalisation is fully \emph{axiom-free}
 allowing for the extraction of safe, idiomatic OCaml code. We exemplify the
 framework by formalising a series of algorithms based on different recursive
 paradigms such as divide-and conquer, dynamic programming, and mutual recursion
 and demonstrate that the extracted OCaml code for the programs formalised in our
-framework is efficient, resembles code that a human programmer would write, and
-contains no occurrences of \ocaml{Obj.magic}.  Furthermore, we show the use of
+framework is efficient, humanly readable, and runnable. Furthermore, we show the use of
 the machine-checked proofs of the laws of hylomorphisms to do program
 optimisations.
 \end{abstract}
