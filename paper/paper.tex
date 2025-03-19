@@ -1234,10 +1234,10 @@ Here, \coq{Lmap times_two} is a list map function defined as a hylomorphism,
 and \coq{times_two} multiplies every element of the list by two.
 We can use Coq's generalised rewriting and \coq{hylo_fusion_l} to fuse
 \coq{times_two} into \coq{hylo merge qsplit}.
-After the necessary rewrites, we obtain \coq{hylo (merge \o natural times_two) qsplit}. In this definition,
-\coq{natural} defines a natural transformation by applying \coq{times_two} to
-the shapes, thus multiplying every pivot by
-two.
+After the necessary rewrites, we obtain
+\coq{hylo (merge \o natural times_two) qsplit}.
+In this definition, \coq{natural} defines a natural transformation by
+applying \coq{times_two} to the shapes, thus multiplying every pivot by two.
 %% Our formalisation contains a proof that \coq{natural} is indeed a natural
 %% transformation, which relies on the fact that it preserves the structure of the
 %% shapes and, therefore, the validity of the positions.
