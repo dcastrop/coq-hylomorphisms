@@ -188,7 +188,7 @@
 
 \ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm
 
-\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+\keywords{hylomorphisms, program calculation, divide and conquer, fusion} %TODO mandatory; please add comma-separated list of keywords
 
 \category{} %optional, e.g. invited paper
 
@@ -217,40 +217,43 @@
 %TODO mandatory: add short abstract of the document
 \begin{abstract}
   Generic programming with recursion schemes provides a powerful abstraction for
-structuring recursion and provide a rigorous reasoning principle for program
-optimisations which have been successfully applied to compilers for functional
-languages. Formalising recursion schemes in a type theory offers additional
-termination guarantees, but it often requires compromising on performance,
-requiring the assumption of additional axioms, and/or introducing unsafe casts
-into extracted code.
+  structuring recursion and provides a rigorous reasoning principle for program
+  optimisations which have been successfully applied to compilers for functional
+  languages. Formalising recursion schemes in a type theory offers additional
+  termination guarantees, but it often requires compromising on performance,
+  requiring the assumption of additional axioms, and/or introducing unsafe casts
+  into extracted code.
 
-This paper presents the first Coq formalisation of \emph{hylomorphisms} allowing for the
-mechanisation of all recognised recursive algorithms. The key
-contribution of this paper is that this formalisation is fully \emph{axiom-free}
-allowing for the extraction of safe, idiomatic functional code. We exemplify the
-framework by formalising a series of algorithms based on different recursive
-paradigms such as divide-and conquer, dynamic programming, and mutual recursion
-and demonstrate that the extracted functional code for the programs formalised in our
-framework is efficient, humanly readable, and runnable. Furthermore, we show the use of
-the machine-checked proofs of the laws of hylomorphisms to do program
-optimisations.
+  This paper presents the first Coq formalisation of \emph{hylomorphisms}
+  allowing for the mechanisation of all recognised recursive algorithms. The key
+  contribution of this paper is that this formalisation is fully
+  \emph{axiom-free} allowing for the extraction of safe, idiomatic functional
+  code. We exemplify the framework by formalising a series of algorithms based
+  on different recursive paradigms such as divide-and conquer, dynamic
+  programming, and mutual recursion and demonstrate that the extracted
+  functional code for the programs formalised in our framework is efficient,
+  humanly readable, and runnable. Furthermore, we show the use of the
+  machine-checked proofs of the laws of hylomorphisms to do program
+  optimisations.
 \end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
-Structured recursion schemes are powerful
-abstractions that capture common patterns of recursion. The main benefit of
-structuring computation using recursion schemes, is that they enjoy
-well-estabished \emph{algebraic properties} that can serve as a foundation for
-reasoning about program equivalences, transformations, and
-optimisations (e.g.\ \emph{fusion} laws, or semi-automatic
+Structured recursion schemes are powerful abstractions that capture common
+patterns of recursion. The main benefit of structuring computation using
+recursion schemes, is that they enjoy well-estabished \emph{algebraic
+properties} that can serve as a foundation for reasoning about program
+equivalences, transformations, and optimisations (e.g.\ \emph{fusion} laws, or
+semi-automatic
 parallelisations~\cite{TakanoM95,Gibbons96:Third,Morihata09:Third,farmsCastro}).
-These algebraic properties led to their use in the context of
-\emph{program calculation}, where programmers would describe their code using
-simple, inefficient specifications in an \emph{algebra of
-programming}~\cite{BirddeMoor96:Algebra}, and then use the algebraic laws of
-this algebra of programming to \emph{calculate} an efficient version of the same
-algorithm. Suppose, for example, that we want to write a program that sorts a list of
+%
+These algebraic properties are widely used in the context of \emph{program
+calculation}, where programmers describe their code using simple, inefficient
+specifications in an \emph{algebra of programming}~\cite{BirddeMoor96:Algebra},
+and then use the algebraic laws of this algebra of programming to
+\emph{calculate} an efficient version of the same algorithm.
+%
+Suppose, for example, that we want to write a program that sorts a list of
 integers, and then multiplies by 2 all its elements. In OCaml, we may write this
 function directly:
 \begin{minted}{ocaml}
@@ -259,57 +262,59 @@ let rec sort_times_two = function
   | h :: t -> let (l, r) = partition (fun x -> x < h) t in
   sort_times_two l @ (h * 2) :: sort_times_two t
 \end{minted}
-This program is derived by \emph{fusing} a regular \emph{quicksort} OCaml implementation, with
-\ocaml{map (fun x -> x * 2)}. A lot of program calculations have this pattern:
-start from a simple specification, e.g.\
-$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
-equivalences and algebraic laws to rewrite it to an optimised version. We will revisit a similar example
-in Section~\ref{sec:sorting}.
+This program is derived by \emph{fusing} a regular \emph{quicksort} OCaml
+implementation, with
+\ocaml{map (fun x -> x * 2)}.
+A lot of program calculations have this pattern: start from a simple
+specification, e.g.\ $\mathsf{map}\;(\lambda x.\;x \times 2) \circ
+\mathsf{sort}$, and use program equivalences and algebraic laws to rewrite it to
+an optimised version. We will revisit a similar example in
+Section~\ref{sec:sorting}.
 
 This program calculation stems from the more general theory of hylomorphisms.  A
 hylomorphism is a structured recursion scheme representing the idea of a
 divide-and-conquer algorithm where, first, the problem is split into smaller
-subproblems,  (divide), then subsolutions are computed recursively, and,
-finally, these subsolutions are put together to compute the original solution
-(conquer). This general pattern of recursion induces a reasoning principle which
-is called fusion law which has been exemplified in the previous paragraph.
+subproblems (divide), then subsolutions are computed recursively, and, finally,
+these subsolutions are put together to compute the solution to the original
+problem (conquer).  This general pattern of recursion induces a reasoning
+principle, called \emph{fusion law}, which has been exemplified in the previous
+paragraph.
 
-Hylomorphism are very powerful non-structural recursive algorithms that can be
+Hylomorphisms are very powerful non-structural recursive algorithms that can be
 used to implement structural recursion, as well as many other known recursion
 schemes such as mutual recursion, accumulators, primitive recursion and
 course-of-values iteration (dynamic programming)~\cite{HinzeWG15}. This power
-comes at a price. Since hylomorphisms are not necessarily structural they need
-extra-care is needed when encoding these in a type theory. In particular, the
-divide part of the algorithm must be \emph{recursive} that is the input needs to
-be split into smaller parts (not necessarily following the structure of the
-input data).
+comes at a price. Since hylomorphisms are not necessarily structural, extra-care
+is needed when encoding them in a type theory. In particular, the divide part of
+the algorithm must be \emph{recursive} that is the input needs to be split into
+smaller parts (not necessarily following the structure of the input data).
 
 Implementations of recursion schemes currently focus on non-terminating
 languages (e.g. Haskell) and they would benefit from a type-theoretical
 formalisation which leverages the underlying prover's logic to ensure
 correctness of definitions.  While existing mechanisations do exist they either
 do not cover a large subset of the recursion schemes or are not suitable for
-program calculation or code extraction (see Related
-Work~\ref{sec:related-work}).
+program calculation or code extraction (see Section~\ref{sec:related-work},
+Related Work).
 
-In this work we mechanise hylomorphisms thus reaping the benefits of their
+In this work we mechanise hylomorphisms, thus reaping the benefits of their
 generality and their algebraic properties. We do this in a way which allows the
-user to write specifications of their code, reason about program optimisations
-and eventually be able to extract humanly readable functional code which can be
-run which means it cannot contain unsafe casts. These are, in particular,
-problematic  for higher-order programs as simple interoperations with them can
-lead to incorrect behaviour or even segmentation
+user to write specifications of their code, reason about program optimisations,
+and eventually extract humanly readable functional code which can be run. Our
+extracted code does not contain unsafe casts. We focus strongly on avoiding
+unsafe casts because, even if the extracted code has been verified, simple
+interoperations with them can lead to incorrect behaviour or even segmentation
 faults~\cite{forster:hal-04329663} and, moreover, it invalidates the
 fast-and-loose principle~\cite{DanielssonHJG06}.
 
-To retain the hylomorphism's generality we encode data structures using
-polynomial functors and to ensure our extracted code is runnable we make a point
-to remain axiom-free and avoid indexed types in the definition of our recursion
-schemes.
+To preserve the generality of hylomorphisms, we encode data structures using
+polynomial functors. To ensure that the extracted code is runnable, we make a
+conscious effort to stay axiom-free and avoid using indexed types in the
+definition of our recursion schemes.
 
 The contributions of this paper are as follows. This work presents a Coq
 formalisation of \emph{hylomorphisms} that (1) is \emph{fully axiom-free}; (2)
-allows the extraction of idiomatic OCaml code; and (3) can use regular Coq
+allows the extraction of idiomatic code; and (3) can use regular Coq
 equalities to do program calculation, derive correct implementations, and apply
 optimisations.  The full mechanisation is open source.
 %can be found on
@@ -324,14 +329,14 @@ The remainder of the paper is structured as follows:
   \item In Section~\ref{sec:category-theory} we give an overview about recursion
 schemes.
   \item In Section~\ref{sec:containers} we formalise the type of container
-functors ensuring the presence of least and greatest fixed-points for functors
-and suitably adapted for program extraction.
+    functors, ensuring the presence of least and greatest fixed-points for
+    functors, and suitably adapted for program extraction.
   \item In Section~\ref{sec:recursion-schemes} we mechanise folds, unfolds, and
-hylomorphisms, as well as proving their uniqueness properties in Coq.
+    hylomorphisms, as well as proving their uniqueness properties in Coq.
   \item In Section~\ref{sec:examples} we use the framework to formalise examples
-of divide-and-conquer, dynamic programming, and mutual recursion algorithms.
-Furthermore we verify the short-cut fusion optimisation and show the extracted
-optimised code to OCaml.
+    of divide-and-conquer, dynamic programming, and mutual recursion algorithms.
+    Furthermore we verify the short-cut fusion optimisation and show the
+    extracted optimised code.
 \end{itemize}
 
 \section{Recursion Schemes}\label{sec:category-theory}
@@ -355,19 +360,19 @@ from the point of view of category theory.
 
 \subsection{Elements of Category Theory}
 A \emph{category} is a collection of objects $A, B, C$, denoted by $\Obj(\CatC)$
-and a collection of arrows $f, g, h$ between these objects, denoted by
-$\Arr (\CatC)$, such that there always exists an identity arrow
-$id_{A} : A \to A$ for each object $A$ and for two arrows $A \xrightarrow{f} B$
-and $B \xrightarrow{g} C$ there always exists an arrow
-$A \xrightarrow{g\circ f} C$ obeying the associativity law. We denote
-$\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to $B$ and we use the letters
-$\CatC$, $\CatD$, $\CatE\dots$ for categories\footnote[1]{For presentation
-purposes we shall not deal with size issues and assume all the categories are
-locally small.}. The initial object in a category, denoted by $0$, is the object such
-that for any other object $A$ there is a unique arrow $0 \xrightarrow{!} A$.
-Dually, the terminal object, denoted by $1$, is the object such that for any
-other object $A$ there is a unique arrow $A \xrightarrow{!} 1$. Initial and
-terminal object are unique up-to isomorphism.
+and a collection of arrows $f, g, h$ between these objects, denoted by $\Arr
+(\CatC)$, such that there always exists an identity arrow $id_{A} : A \to A$ for
+each object $A$ and for two arrows $A \xrightarrow{f} B$ and $B \xrightarrow{g}
+C$ there always exists an arrow $A \xrightarrow{g\circ f} C$ obeying the
+associativity law. We denote $\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to
+$B$ and we use the letters $\CatC$, $\CatD$, $\CatE\dots$ for
+categories\footnote[1]{For presentation purposes we shall not deal with size
+  issues and assume all the categories are locally small.}. The initial object
+in a category, denoted by $0$, is the object such that for any other object $A$
+there is a unique arrow $0 \xrightarrow{!} A$.  Dually, the terminal object,
+denoted by $1$, is the object such that for any other object $A$ there is a
+unique arrow $A \xrightarrow{!} 1$. Initial and terminal object are unique up-to
+isomorphism.
 
 For example, the category of sets, denoted by $\Set$, is the category where
 objects are sets and arrows are functions between sets. The initial object $0$
@@ -394,17 +399,16 @@ In $\Set$, we can define the set of lists
   \List{A} \iso 1 + A \times \List{A}
 \]
 as the set inductively generated by the constructors $\nil : 1 \to \List{A}$ and
-$\cons : A \times \List{A} \to \List{A}$. The $\List{-}$ type is an \emph{endofunctor}
-$\Set \to \Set$ mapping objects and arrows in $\Set$ to $\Set$ itself.
-Its functorial action $\List{f} : \List{A} \to \List{B}$ is
-given by $\List{f}(\nil(*)) = \nil(*)$ and
-$\List{f}(\cons(a,xs)) = \cons(f(a), \List{f}(xs))$. Notice that the definition
-$\List{f}$ is well-defined as it recursively calls on a smaller argument.
-Similarly, the set of streams $\Str{A} \iso A \times \Str{A}$ is
-the greatest set generated by the constructor
-$\cons : A \times \Str{A} \to \Str{A}$. The maps $\head : \Str{A} \to A$ and
-$\tail : \Str{A} \to \Str{A}$ can be easily constructed from the isomorphism.
-
+$\cons : A \times \List{A} \to \List{A}$. The $\List{-}$ type is a
+\emph{functor} $\Set \to \Set$ mapping objects and arrows in $\Set$ to $\Set$
+itself (such functors from a category to itself are called \emph{endofunctors}).
+Its functorial action $\List{f} : \List{A} \to \List{B}$ is given by
+$\List{f}(\nil(*)) = \nil(*)$ and $\List{f}(\cons(a,xs)) = \cons(f(a),
+\List{f}(xs))$. Notice that the definition $\List{f}$ is well-defined as it
+recursively calls on a smaller argument.  Similarly, the set of streams $\Str{A}
+\iso A \times \Str{A}$ is the greatest set generated by the constructor $\cons :
+A \times \Str{A} \to \Str{A}$. The maps $\head : \Str{A} \to A$ and $\tail :
+\Str{A} \to \Str{A}$ can be easily constructed from the isomorphism.
 
 \subsection{Algebras and Catamorphisms}
 \label{sec:algebras}
@@ -501,9 +505,9 @@ Recursion schemes provide an abstract way to consume and generate data capturing
 recursively and then composed back together (\emph{conquer}) by means of an
 algebra.
 
-Let $(A,a)$ be an $F$-algebra and $(C,c)$ be an $F$-coalgebra. An arrow
-$C \to A$ is an \emph{hylomorphism}, written $h : (C,c) \rightarrowtail (A,a)$ if
-it satisfies
+Let $(A,a)$ be an $F$-algebra and $(C,c)$ be an $F$-coalgebra. An arrow $C \to
+A$ is an \emph{hylomorphism}, written $h : (C,c) \rightarrowtail (A,a)$ if it
+satisfies
 \begin{equation}
   \label{eq:hylo}
   h = a \circ F(h) \circ c
@@ -611,7 +615,8 @@ We define containers in terms of shapes, \emph{base} positions
 (\coq{APos : Set}), and \emph{decidable validity predicates} that specify when a
 base position is valid in a shape. Since validity predicates are in \coq{Prop},
 they will be erased during extraction, and since they are decidable, they
-prevent the use of axiom K to deal with heterogeneous equalities of positions:
+do not require axiom K to deal with heterogeneous equalities.
+Container extensions are defined as
 \begin{coqcode}
 Record App F X := {shape : Shape F; cont : {p : APos F | valid s p = true} -> X}.
 \end{coqcode}
@@ -753,8 +758,7 @@ Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
 Recursive hylomorphisms are implemented in Coq recursively on the structure of
 the proof that the anamorphism terminates on an input:
 \begin{coqcode}
-Definition hylo_def (a : Alg F B) (c : Coalg F A)
-  : forall (x : A), RecF c x -> B
+Definition hylo_def (a : Alg F B) (c : Coalg F A) : forall (x : A), RecF c x -> B
   := fix f x H
      := match c x as cx return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B with
         | cx => fun H => a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
@@ -778,12 +782,10 @@ Lemma hylo_uniq (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
 \end{coqcode}
 Hylomorphisms fusion falls out from this uniqueness property:
 \begin{coqcode}
-Lemma hylo_fusion_l
-  (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C) (f2 : B ~> C)
+Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C) (f2 : B ~> C)
   : f2 \o g1 =e g2 \o fmap f2 -> f2 \o hylo g1 h1 =e hylo g2 h1.
 
-Lemma hylo_fusion_r
-  (h1 : RCoalg F B) (g1 : Alg F C) (h2 : RCoalg F A) (f1 : A ~> B)
+Lemma hylo_fusion_r (h1 : RCoalg F B) (g1 : Alg F C) (h2 : RCoalg F A) (f1 : A ~> B)
   :  h1 \o f1 =e fmap f1 \o h2 -> hylo g1 h1 \o f1 =e hylo g1 h2.
 \end{coqcode}
 
@@ -815,7 +817,7 @@ rewrite <- hylo_unroll.
 
   \vspace{-.5cm}
   \caption{Rewrite steps to prove \coq{hylo_fusion_l} in our mechanisation. The
-steps are exactly the same that woudld be required in a manual pen-and-paper
+steps are exactly the same that would be required in a manual pen-and-paper
 proof.}
 \label{fig:proof-fusion-l}
 \end{figure}
@@ -838,9 +840,8 @@ proof.}
 Proving the deforestation optimisation is a straightforward application
 of \coq{hylo_fusion_l} (or \coq{hylo_fusion_r}).,
 \begin{coqcode}
-Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C)
-  (g1 : Alg F B) (h2 : RCoalg F B) (INV: h2 \o g1 =e id)
-  : hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
+Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C) (g1 : Alg F B) (h2 : RCoalg F B)
+  : h2 \o g1 =e id -> hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 \end{coqcode}
 
 % \subsection{Recursive Anamorphisms}
@@ -894,8 +895,7 @@ inductive data types.  We might have as well defined them on the subtype of
 finite elements of coinductive data types using a predicate which states when an
 element of a coinductive data type is finite:
 \begin{coqcode}
-Inductive FinF : GFix F -> Prop :=
-| FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
+Definition FinF : GFix F -> Prop := RecF g_out.
 \end{coqcode}
 Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
 is isomorphic its corresponding the inductive data type \coq{LFix F}.
@@ -907,7 +907,7 @@ any \coq{F}-algebra.
 Definition ccata_f_ `{eA : setoid A} (g : Alg F A)
   : forall x : GFix F, FinF x -> A := fix f x H :=
     let hx := g_out x in
-      g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
+      g (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
 \end{coqcode}
 We now prove this is isomorphic to the least fixed-point of the functor
 \coq{F}.
@@ -1017,10 +1017,11 @@ hylomorphism will also hold for any result of doing program calculation.
 We go in this section through a series of case studies of various recursive
 algorithms.  We show how they can be encoded in our framework, how can we do
 program calculation techniques for optimisation, and how can they be extracted
-to idiomatic OCaml code. Our examples are the Quicksort and Mergesort
-algorithms (Section~\ref{sec:sorting}), dynammic programming and Knapsack
-(Section~\ref{sec:knap}), and examples of the shortcut deforestation
-optimisation in our framework (Section~\ref{sec:shortcut}).
+to idiomatic functional code. Although our examples use OCaml as target
+language, extraction works equally well to other target languages. Our examples
+are the Quicksort and Mergesort algorithms (Section~\ref{sec:sorting}), dynammic
+programming and Knapsack (Section~\ref{sec:knap}), and examples of the shortcut
+deforestation optimisation in our framework (Section~\ref{sec:shortcut}).
 %The steps are the following:
 %\begin{enumerate}
 %  \item Write a specification as a morphism \coq{f : A ~> B}.
@@ -1434,7 +1435,7 @@ lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and Emoto went further and
 formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
 include hylomorphisms and dynamorphisms, and relies on the functional
 extensionality axiom, as well as further extensionality axioms for each
-coinductive datatype that they use. They do not discuss the extracted OCaml code
+coinductive datatype that they use. They do not discuss the extracted code
 from their formalisation. Larchey-Wendling and Monin encode recursion schemes in
 Coq, by formalising computational graphs of algorithms~\cite{larchey2022braga}.
 Their work does not focus on encoding generic recursion schemes, and proving
@@ -1488,7 +1489,7 @@ OCaml code.
 % natural formulation of the recursive function).
 Through experiments, we found that code extracted from their formalisation makes
 heavy use of unsafe casts and has a generally complex structure that may be
-hard to understand and integrate with other OCaml code. Due to the great benefit
+hard to understand and integrate with other code. Due to the great benefit
 of entirely avoiding termination proofs, it would be interesting to extend their
 approach to improve code extraction.
 
@@ -1572,7 +1573,7 @@ to reason about program equivalences. To our knowledge, this is their first form
 in Coq. This is partly due to the
 difficulty of dealing with termination, and reasoning about functional
 extensionality. In this work, we tackle these problems in a \emph{fully
-axiom-free} way that targets the extraction of idiomatic OCaml code.  This
+axiom-free} way that targets the extraction of idiomatic code.  This
 formalisation allows the use of program calculation techniques in Coq to derive
 formally optimised implementations from naive specifications. Furthermore, the
 rewritings that are applied to specifications are formal, machine-checked
