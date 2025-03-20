@@ -241,7 +241,7 @@
 \label{sec:intro}
 Structured recursion schemes are powerful abstractions that capture common
 patterns of recursion. The main benefit of structuring computation using
-recursion schemes, is that they enjoy well-estabished \emph{algebraic
+recursion schemes, is that they enjoy well-established \emph{algebraic
 properties} that can serve as a foundation for reasoning about program
 equivalences, transformations, and optimisations (e.g.\ \emph{fusion} laws, or
 semi-automatic
@@ -274,8 +274,8 @@ Section~\ref{sec:sorting}.
 This program calculation stems from the more general theory of hylomorphisms.  A
 hylomorphism is a structured recursion scheme representing the idea of a
 divide-and-conquer algorithm where, first, the problem is split into smaller
-subproblems (divide), then subsolutions are computed recursively, and, finally,
-these subsolutions are put together to compute the solution to the original
+sub-problems (divide), then sub-solutions are computed recursively, and, finally,
+these sub-solutions are put together to compute the solution to the original
 problem (conquer).  This general pattern of recursion induces a reasoning
 principle, called \emph{fusion law}, which has been exemplified in the previous
 paragraph.
@@ -520,9 +520,9 @@ A coalgebra $(C,c)$ is \emph{recursive} if for every algebra $(A, a)$ there is a
 hylos by $\hylo{c}{a}$.
 
 An example of a recursive coalgebra is the \coq{partition} function in quicksort
-which destructures a list into a pivot and two sublist and as long as the
-sublists are smaller the partitioning function still yields a unique solution to
-the recursion scheme.  The uniqueness property of the hylo yields the following
+which destructures a list into a pivot and two sub-list and as long as the
+sub-lists are smaller the partitioning function still yields a unique solution to
+the recursion scheme.  The uniqueness property of the hylomorphisms yields the following
 fusion laws:
 \begin{align}
   \label{eq:hylo:fusion}
@@ -537,7 +537,7 @@ fusion laws:
   \hspace{1cm}
   c \circ f = F(f) \circ c'
 \end{align}
-Using the hylo fusion laws, we can prove the well-known \emph{deforestation
+Using the hylomorphism fusion laws, we can prove the well-known \emph{deforestation
 optimisation}, also known as the \emph{composition
 law}~\cite{DBLP:conf/ifl/HinzeHJ10}. This is when two consecutive recursive
 computations, one that builds a data structure, and another one that consumes
@@ -646,7 +646,7 @@ Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
 \coq{LFix_in} is the initial algebra $\InIso$, while \coq{LFix_out} is its
 inverse $\InOp$ (see Section~\ref{sec:category-theory}).  As an example, the
-initial \coq{F}-algebra for the container that is isomorpic to the functor
+initial \coq{F}-algebra for the container that is isomorphic to the functor
 \coq{F X = unit + A * X} is the type of lists with the \coq{F}-algebra being
 defined by the empty list \coq{Empty : unit -> LFix F} and the cons operation
 \coq{Cons : A * LFix F -> LFix F}.
@@ -742,7 +742,7 @@ accepted by Coq.
 In order to find a solution we restrict ourselves to the so-called
 \emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  We mechanise
 \emph{recursive hylomorphisms} which are guaranteed to have a unique solution to
-the hylomorphism equation. These are hylomoprhisms where the coalgebra is
+the hylomorphism equation. These are hylomorphisms where the coalgebra is
 \emph{recursive}, i.e.\ coalgebras that terminate on all inputs. We represent
 recursive coalgebras using a predicate that states that a coalgebra terminates
 on an input:
@@ -1019,7 +1019,7 @@ algorithms.  We show how they can be encoded in our framework, how can we do
 program calculation techniques for optimisation, and how can they be extracted
 to idiomatic functional code. Although our examples use OCaml as target
 language, extraction works equally well to other target languages. Our examples
-are the Quicksort and Mergesort algorithms (Section~\ref{sec:sorting}), dynammic
+are the Quicksort and Mergesort algorithms (Section~\ref{sec:sorting}), dynamic
 programming and Knapsack (Section~\ref{sec:knap}), and examples of the shortcut
 deforestation optimisation in our framework (Section~\ref{sec:shortcut}).
 %The steps are the following:
@@ -1326,7 +1326,7 @@ this memoisation table is used to compute the intermediate results in
 
 \subsection{Shortcut Deforestation}\label{sec:shortcut}
 The final case study we consider is shortcut deforestation on lists.  Shortcut
-deforestation can be expressed succintly in terms of hylomorphisms and their
+deforestation can be expressed succinctly in terms of hylomorphisms and their
 laws~\cite{TakanoM95}. In particular, given a function:
 \begin{coqcode}
   s  : forall A. (App F A -> A) -> (App F A -> A)
@@ -1420,7 +1420,7 @@ recursion.
 
 % \textbf{Program Calculation}.
 % \label{sec:calccoq}
-Within the domain of program optimization, program calculation serves as a
+Within the domain of program optimisation, program calculation serves as a
 well-established programming technique aimed at deriving efficient programs from
 their naive counterparts through systematic program
 transformation~\cite{gibbonsSquiggol}. Programmers may specify algorithms
@@ -1515,12 +1515,12 @@ Certain functions that are not structurally recursive can be reformulated using
 a nonstandard approach to achieve structural recursion~\cite{AbreuDHJMS23}.
 Take, for instance, division by iterated subtraction, which is inherently
 non-structurally recursive since it involves recursion based on the result of a
-subtraction. There is a nonstandard implementation of divivion found on Coq's
+subtraction. There is a nonstandard implementation of division found on Coq's
 standard library, which involves a four-argument function that effectively
 combines subtraction and division. Similarly, the mergesort in Coq's standard
 library uses an ``explicit stack of pending merges'' in order to avoid issues
 with nonstructural definitions. There is a major downside, however; as noted by
-Abreu et al., the result is ``barely recognizable as a form of
+Abreu et al., the result is ``barely recognisable as a form of
 mergesort''~\cite{AbreuDHJMS23}.
 There are common approaches in Coq to deal with termination, but none of these
 approaches address program calculation techniques, and the mechanisation of
