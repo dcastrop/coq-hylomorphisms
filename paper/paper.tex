@@ -227,10 +227,10 @@ into extracted code.
 This paper presents the first Coq formalisation of \emph{hylomorphisms} allowing for the
 mechanisation of all recognised recursive algorithms. The key
 contribution of this paper is that this formalisation is fully \emph{axiom-free}
-allowing for the extraction of safe, idiomatic OCaml code. We exemplify the
+allowing for the extraction of safe, idiomatic functional code. We exemplify the
 framework by formalising a series of algorithms based on different recursive
 paradigms such as divide-and conquer, dynamic programming, and mutual recursion
-and demonstrate that the extracted OCaml code for the programs formalised in our
+and demonstrate that the extracted functional code for the programs formalised in our
 framework is efficient, humanly readable, and runnable. Furthermore, we show the use of
 the machine-checked proofs of the laws of hylomorphisms to do program
 optimisations.
@@ -238,7 +238,7 @@ optimisations.
 
 \section{Introduction}
 \label{sec:intro}
-Structured recursion schemes~\cite{HinzeW16,HinzeWG15} are powerful
+Structured recursion schemes are powerful
 abstractions that capture common patterns of recursion. The main benefit of
 structuring computation using recursion schemes, is that they enjoy
 well-estabished \emph{algebraic properties} that can serve as a foundation for
@@ -259,56 +259,55 @@ let rec sort_times_two = function
   | h :: t -> let (l, r) = partition (fun x -> x < h) t in
   sort_times_two l @ (h * 2) :: sort_times_two t
 \end{minted}
-Instead of writing this function directly, we may observe that we can derive it
-by \emph{fusing} a regular \emph{quicksort} OCaml implementation, with
-\ocaml{map (fun x -> x * 2)}. This is the main idea behind program calculation:
-start
-from a simple specification, e.g.\
+This program is derived by \emph{fusing} a regular \emph{quicksort} OCaml implementation, with
+\ocaml{map (fun x -> x * 2)}. A lot of program calculations have this pattern:
+start from a simple specification, e.g.\
 $\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
-equivalences and algebraic laws to rewrite it to an optimised version  (e.g.\
-the fused OCaml implementation above). We will revisit a similar example
+equivalences and algebraic laws to rewrite it to an optimised version. We will revisit a similar example
 in Section~\ref{sec:sorting}.
 
-There is not much tool support to use program calculation techniques. In fact,
-uses of program calculation are done by  pen-and-paper proofs, and then
-translating the result to specific instances of recursion schemes, implemented
-in a programming language (generally Haskell).  There are some examples of
-implementations of program calculation techniques, but these implementations are
-scarce, not up to date, and not verified in a proof assistant. For example,
-Cunha et al.~\cite{DrHylo} automated program calculation techniques by a custom
-Haskell implementation.
+This program calculation stems from the more general theory of hylomorphisms.  A
+hylomorphism is a structured recursion scheme representing the idea of a
+divide-and-conquer algorithm where, first, the problem is split into smaller
+subproblems,  (divide), then subsolutions are computed recursively, and,
+finally, these subsolutions are put together to compute the original solution
+(conquer). This general pattern of recursion induces a reasoning principle which
+is called fusion law which has been exemplified in the previous paragraph.
 
-Several authors build tools for applying program calculation techniques by
-\emph{mechanising} them as part of a proof assistant. However, most of the
-existing work only mechanises a narrow subset of the know recursion schemes, or
-do not prove their algebraic
-laws~\cite{10.1007/978-3-642-17796-5_10,MurataE19,larchey2022braga}.  Indeed,
-most of the mechanisations of generic recursion schemes cover \emph{maps} and
-\emph{folds}, and few authors focus implement \emph{unfolds}. Omitting
-\emph{unfolds} severely limits the expressivity of the resulting mechanisations,
-and prevent them from being able to mechanise the most general recursion scheme:
-a divide-and-conquer algorithm which goes under the name of
-\emph{hylomorphism}~\cite{MeijerFP91,HuIT96}. This generality has been proven by
-Hinze et al.~\cite{HinzeWG15}, by showing that \emph{all known  recursion
-schemes are instances of hylomorphisms}.  To date, no work has mechanised
-hylomorphisms in the Coq proof assistant, together with their algebraic laws.
+Hylomorphism are very powerful non-structural recursive algorithms that can be
+used to implement structural recursion, as well as many other known recursion
+schemes such as mutual recursion, accumulators, primitive recursion and
+course-of-values iteration (dynamic programming)~\cite{HinzeWG15}. This power
+comes at a price. Since hylomorphisms are not necessarily structural they need
+extra-care is needed when encoding these in a type theory. In particular, the
+divide part of the algorithm must be \emph{recursive} that is the input needs to
+be split into smaller parts (not necessarily following the structure of the
+input data).
 
-Recently, Abreu et al.~\cite{AbreuDHJMS23} encoded an algebraic approach to
-divide-and-conquer computations in which termination is entirely enforced by the
-typing discipline. Their approach solves the problem of termination proofs as
-well as the performance of the code that is run \emph{within Coq}, but it does
-not allow for extraction of idiomatic OCaml code, and it is not well-suited for
-program calculation. This is unfortunate since code extration is what allows the
-execution of code that has been verified in
-Coq~\cite{OnoHTNH11,Larchey-Wendling23,MiculanP12,Sakaguchi20}.  In Abreu et
-al's approach, extraction (1) does not produce code with the same recursive
-structure  as existing manual implementations; and (2) leads to unsafe casts
-like \ocaml{Obj.magic} in the generated code. This latter is also problematic in
-that, for higher-order programs, simple interoperations can lead to incorrect
-behaviour or even segfaults~\cite{forster:hal-04329663} and, moreover, it
-invalidates the fast-and-loose principle~\cite{DanielssonHJG06}.
+Implementations of recursion schemes currently focus on non-terminating
+languages (e.g. Haskell) and they would benefit from a type-theoretical
+formalisation which leverages the underlying prover's logic to ensure
+correctness of definitions.  While existing mechanisations do exist they either
+do not cover a large subset of the recursion schemes or are not suitable for
+program calculation or code extraction (see Related
+Work~\ref{sec:related-work}).
 
-The contributions of this paper are as follows.  This work presents a Coq
+In this work we mechanise hylomorphisms thus reaping the benefits of their
+generality and their algebraic properties. We do this in a way which allows the
+user to write specifications of their code, reason about program optimisations
+and eventually be able to extract humanly readable functional code which can be
+run which means it cannot contain unsafe casts. These are, in particular,
+problematic  for higher-order programs as simple interoperations with them can
+lead to incorrect behaviour or even segmentation
+faults~\cite{forster:hal-04329663} and, moreover, it invalidates the
+fast-and-loose principle~\cite{DanielssonHJG06}.
+
+To retain the hylomorphism's generality we encode data structures using
+polynomial functors and to ensure our extracted code is runnable we make a point
+to remain axiom-free and avoid indexed types in the definition of our recursion
+schemes.
+
+The contributions of this paper are as follows. This work presents a Coq
 formalisation of \emph{hylomorphisms} that (1) is \emph{fully axiom-free}; (2)
 allows the extraction of idiomatic OCaml code; and (3) can use regular Coq
 equalities to do program calculation, derive correct implementations, and apply
@@ -1395,6 +1394,7 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 
 \section{Related Work}
 \label{sec:related-work}
+
 %
 %\begin{itemize}
 %  \item McBride devised a generalisation of Bove and Capretta's general
@@ -1407,7 +1407,7 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 %  \item Not that related: extraction for mutable arrays~\cite{SAKAGUCHI2020102372}
 %        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
 %\end{itemize}
-Encoding recursion schemes in Coq is not new. We compare our work with other
+We compare our work with other
 encodings of program calculation techniques and recursion schemes in Coq, and
 discuss other approaches to fusion and to termination of nonstructural
 recursion.
@@ -1417,8 +1417,8 @@ recursion.
 % nonstructural recursion (Section~\ref{sec:termcheck}), and we discuss other
 % approaches to fusion in functional programs (Section~\ref{sec:fusion}).
 
-\subsection{Program Calculation}\label{sec:calccoq}
-
+% \textbf{Program Calculation}.
+% \label{sec:calccoq}
 Within the domain of program optimization, program calculation serves as a
 well-established programming technique aimed at deriving efficient programs from
 their naive counterparts through systematic program
@@ -1444,8 +1444,9 @@ parallel programs from specifications. Their work focuses on parallelism, and
 they do not formalise their approach in a proof assistant, and the laws of
 hylomorphisms are axioms in their system.
 
-\subsection{Fusion Optimisation}\label{sec:fusion}
-
+% \textbf{Fusion Optimisation}.
+% %
+% \label{sec:fusion}
 Fusion in functional programming is a general technique for combining multiple
 computations into a single pass to eliminate intermediate data structures or
 repeated traversals, improving efficiency. The fusion we have discussed in this
@@ -1469,8 +1470,8 @@ reasoning to re-write programs and on the automatic transformation of functional
 programs by a compiler.
 
 %\mvol{Need more general citations for program calculation.}
-\subsection{Divide and Conquer Recursion}\label{sec:reccoq}
-
+% \textbf{Divide and Conquer Recursion}.%
+% \label{sec:reccoq}
 Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
 using a recursion scheme in which termination is entirely enforced by its
 typing. This is a significant advance, since it avoids \emph{completely} the
@@ -1486,13 +1487,12 @@ OCaml code.
 % (that is, whether the extracted OCaml code resembles the
 % natural formulation of the recursive function).
 Through experiments, we found that code extracted from their formalisation makes
-heavy use of \ocaml{Obj.magic} and has a generally complex structure that may be
+heavy use of unsafe casts and has a generally complex structure that may be
 hard to understand and integrate with other OCaml code. Due to the great benefit
 of entirely avoiding termination proofs, it would be interesting to extend their
 approach to improve code extraction.
 
-\subsection{Termination Checking of Nonstructural Recursion}\label{sec:termcheck}
-
+%\textbf{Termination Checking of Nonstructural Recursion}.% \label{sec:termcheck}
 % Termination and productivity are non-trivial properties of programs, and various
 % methods have been proposed for checking that these properties hold. A common
 % approach is guardedness checking~\cite{Eduardo94}, which is a
@@ -1502,7 +1502,6 @@ approach to improve code extraction.
 % Coq uses such a check, and it works for many classic functional programming
 % patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
 % definitions will not be accepted by such checks.
-
 %In particular,
 The problem of \emph{nonstructural recursion} (including
 divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
