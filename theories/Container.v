@@ -4,9 +4,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Import Util.Utils.
-Require Import HYLO.Equivalence.
-Require Import HYLO.Morphism.
+Require Export Util.Utils.
+Require Export HYLO.Equivalence.
+Require Export HYLO.Morphism.
 
 
 (** The justification why the class below this comment defines a Container can be
