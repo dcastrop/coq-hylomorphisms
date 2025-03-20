@@ -95,11 +95,7 @@ Section FCoalgDef.
   Arguments mk_wf_coalg {A}%_type_scope {eA} {B}%_type_scope m [R] WF [c] RR.
 
   (* Finite Trees *)
-  Inductive FinF : GFix F -> Prop :=
-  | FinF_fold (x : GFix F) : (forall e, FinF (cont (g_out x) e)) -> FinF x.
-
-  Lemma FinF_inv (x : GFix F) : FinF x -> forall e, FinF (cont (g_out x) e).
-  Proof. intros []. auto. Defined.
+  Definition FinF : GFix F -> Prop := RecF g_out.
 
   Lemma ana_rcoalg_fin `{setoid A} (c : Coalg F A) (Rc : RecP c)
     : forall x, FinF (ana c x).
@@ -226,7 +222,7 @@ Section CAlgDef.
     : forall x : GFix F, FinF x -> A
     := fix f x H :=
       let hx := g_out x in
-      g (MkCont (shape hx) (fun e => f (cont hx e) (FinF_inv H e))).
+      g (MkCont (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
 
   Lemma ccata_f_irr `{eA : setoid A} (h : Alg F A)
     : forall x (F1 F2 : FinF x), ccata_f_ h F1 =e ccata_f_ h F2.
@@ -269,7 +265,7 @@ Section CAlgDef.
   Definition lg_out_ (x : GFix F | FinF x) : App F {x : GFix F | FinF x}
     := let hx := g_out (proj1_sig x) in
        MkCont (shape hx)
-         (fun e => exist (fun ex => _) (cont hx e) (FinF_inv (proj2_sig x) e)).
+         (fun e => exist (fun ex => _) (cont hx e) (RecF_inv (proj2_sig x) e)).
 
   Lemma lg_out_arr : forall x y, x =e y -> lg_out_ x =e lg_out_ y.
   Proof.
@@ -284,7 +280,7 @@ Section CAlgDef.
   Definition lg_in_ (x : App F {g : GFix F | FinF g}) : {x : GFix F | FinF x}
     := let gx := g_in (MkCont (shape x) (fun e => proj1_sig (cont x e))) in
        exist (fun g => _) gx
-         (FinF_fold (fun e : Pos (shape (g_out gx)) => proj2_sig (cont x e))).
+         (RecF_fold (fun e : Pos (shape (g_out gx)) => proj2_sig (cont x e))).
 
   Lemma lg_in_arr : forall x y, x =e y -> lg_in_ x =e lg_in_ y.
   Proof.
