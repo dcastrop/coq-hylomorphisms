@@ -780,7 +780,9 @@ hylomorphism equation.
 Lemma hylo_uniq (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
 \end{coqcode}
-Hylomorphisms fusion falls out from this uniqueness property:
+Fusing a hylomorphism with any algebra or coalgebra homomorphism (in the code
+below, \coq{f2} and \coq{f1} respectively) falls out from this uniqueness
+property:
 \begin{coqcode}
 Lemma hylo_fusion_l (h1 : RCoalg F A) (g1 : Alg F B) (g2 : Alg F C) (f2 : B ~> C)
   : f2 \o g1 =e g2 \o fmap f2 -> f2 \o hylo g1 h1 =e hylo g2 h1.
