@@ -1418,47 +1418,23 @@ let rec ex2 = function | [] -> (Uint63.of_int (0))
 % \textbf{Program Calculation}.
 % \label{sec:calccoq}
 
-Tesson et al.\ demonstrated the efficacy of leveraging Coq to establish an
-approach for implementing a robust system dedicated to verifying the correctness
-of program transformations for functions that manipulate
+There is existing prior work on formalising recursion schemes in a proof
+assistant.  Tesson et al.\ demonstrated the efficacy of leveraging Coq to
+establish an approach for implementing a robust system dedicated to verifying
+the correctness of program transformations for functions that manipulate
 lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and Emoto went further and
 formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
 include hylomorphisms and dynamorphisms, and relies on the functional
 extensionality axiom, as well as further extensionality axioms for each
-coinductive datatype that they use. They do not discuss the extracted code
-from their formalisation. Larchey-Wendling and Monin encode recursion schemes in
-Coq, by formalising computational graphs of algorithms~\cite{larchey2022braga}.
-Their work does not focus on encoding generic recursion schemes, and proving
-their algebraic laws. Castro-Perez et al.~\cite{farmsCastro} encode the laws of
-hylomorphisms as part of the type system of a functional language to calculate
-parallel programs from specifications. Their work focuses on parallelism, and
-they do not formalise their approach in a proof assistant, and the laws of
-hylomorphisms are axioms in their system.
-
-% \textbf{Fusion Optimisation}.
-% %
-% \label{sec:fusion}
-Fusion in functional programming is a more general technique for combining multiple
-computations into a single pass to eliminate intermediate data structures or
-repeated traversals, improving efficiency. The fusion we have discussed in this
-paper relating to program calculation is one form of fusion, but there are other
-approaches, and prior research has explored the mechanisation and verification
-of fusion transformations.
-
-Fusion has been applied to recursive tree traversals, in order to reduce the
-number of times each section of the tree must be visited. Research has
-demonstrated that this sort of fusion can be performed automatically by a
-compiler~\cite{10.1145/3133900}, and the correctness of tree traversal fusion
-has been verified mechanically in Coq~\cite{10.1145/3377555.3377884}.
-
-Another related family transformations are worker/wrapper
-transformations~\cite{gill09}, which have been used in the context of optimising
-compilers, and have been mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}. This
-technique has been applied to improving the performance of programs defined
-using folds via fusion~\cite{hutton10}. Their work does not focus on the use of
-an interactive proof assistant, but rather on the manual use of equational
-reasoning to re-write programs and on the automatic transformation of functional
-programs by a compiler.
+coinductive datatype that they use. They do not discuss the extracted code from
+their formalisation. Larchey-Wendling and Monin encode recursion schemes in Coq,
+by formalising computational graphs of algorithms~\cite{larchey2022braga}.
+Their work does not focus on encoding higher-order generic recursion schemes,
+and proving their algebraic laws. Castro-Perez et al.~\cite{farmsCastro} encode
+the laws of hylomorphisms as part of a type system to calculate parallel
+programs from specifications. Their work focuses on parallelism, and they do not
+formalise their approach in a proof assistant, and they treat the  laws of
+hylomorphisms as axioms.
 
 %\mvol{Need more general citations for program calculation.}
 % \textbf{Divide and Conquer Recursion}.%
@@ -1478,10 +1454,49 @@ OCaml code.
 % (that is, whether the extracted OCaml code resembles the
 % natural formulation of the recursive function).
 Through experiments, we found that code extracted from their formalisation makes
-heavy use of unsafe casts and has a generally complex structure that may be
-hard to understand and integrate with other code. Due to the great benefit
+heavy use of unsafe casts and has a generally complex structure that may be hard
+to understand and integrate with other external code. Due to the great benefit
 of entirely avoiding termination proofs, it would be interesting to extend their
 approach to improve code extraction.
+
+The problem of \emph{nonstructural recursion} (including
+divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
+% A distinction between standard and
+% nonstandard recursion lies in the fact that standard recursion adheres strictly
+% to recursing on pattern variables, avoiding reliance on results from other
+% function calls. Nonstandard recursion may deviate from this convention, allowing
+% for more flexibility.
+Certain functions that are not structurally recursive can be reformulated using
+a nonstandard approach to achieve structural recursion.  For exammple, the
+mergesort in Coq's standard library uses an ``explicit stack of pending merges''
+in order to avoid issues with nonstructural definitions. There is a major
+downside, however; as noted by Abreu et al., the result is ``barely recognisable
+as a form of mergesort''~\cite{AbreuDHJMS23}.  There are common approaches in
+Coq to deal with termination~\cite{DBLP:journals/pacmpl/SozeauM19,
+  DBLP:conf/icfp/Sozeau07}, but none of these approaches address program
+calculation techniques, and the mechanisation of fusion laws.
+
+% \textbf{Fusion Optimisation}.
+% %
+% \label{sec:fusion}
+The fusion laws that we formalise in this paper are applied in the more general
+context of compilers for functional programming lanmguages.  Fusion has been
+applied to recursive tree traversals, in order to reduce the number of times
+each section of the tree must be visited. Research has demonstrated that this
+sort of fusion can be performed automatically by a
+compiler~\cite{10.1145/3133900}. The correctness of tree traversal fusion has
+been verified mechanically in Coq~\cite{10.1145/3377555.3377884}, but the
+authors do not formalise unfolds and hylomorphisms.
+
+Another related family transformations are worker/wrapper
+transformations~\cite{gill09}, which have been used in the context of optimising
+compilers, and have been mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}. This
+technique has been applied to improving the performance of programs defined
+using folds via fusion~\cite{hutton10}. Their work does not focus on the use of
+an interactive proof assistant, but rather on the manual use of equational
+reasoning to re-write programs and on the automatic transformation of functional
+programs by a compiler.
+
 
 %\textbf{Termination Checking of Nonstructural Recursion}.% \label{sec:termcheck}
 % Termination and productivity are non-trivial properties of programs, and various
@@ -1494,27 +1509,6 @@ approach to improve code extraction.
 % patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
 % definitions will not be accepted by such checks.
 %In particular,
-The problem of \emph{nonstructural recursion} (including
-divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
-% A distinction between standard and
-% nonstandard recursion lies in the fact that standard recursion adheres strictly
-% to recursing on pattern variables, avoiding reliance on results from other
-% function calls. Nonstandard recursion may deviate from this convention, allowing
-% for more flexibility.
-Certain functions that are not structurally recursive can be reformulated using
-a nonstandard approach to achieve structural recursion~\cite{AbreuDHJMS23}.
-Take, for instance, division by iterated subtraction, which is inherently
-non-structurally recursive since it involves recursion based on the result of a
-subtraction. There is a nonstandard implementation of division found on Coq's
-standard library, which involves a four-argument function that effectively
-combines subtraction and division. Similarly, the mergesort in Coq's standard
-library uses an ``explicit stack of pending merges'' in order to avoid issues
-with nonstructural definitions. There is a major downside, however; as noted by
-Abreu et al., the result is ``barely recognisable as a form of
-mergesort''~\cite{AbreuDHJMS23}.
-There are common approaches in Coq to deal with termination, but none of these
-approaches address program calculation techniques, and the mechanisation of
-fusion laws.
 
 % \subsection{Fusion}\label{sec:fusion}
 
@@ -1556,38 +1550,35 @@ fusion laws.
 % Agda~\cite{SCULTHORPE_HUTTON_2014}.
 
 \section{Conclusions and Future Work}
-In this work we mechanise hylomorphisms and their algebraic laws and use them
-to perform optimisations for programs than can be later extracted into human-readable and runnable code.
-We do this in a \emph{fully
-  axiom-free}.
-
-This formalisation allows the use of program calculation techniques in Coq to derive
-formally optimised implementations from naive specifications. Furthermore, the
-rewritings that are applied to specifications are formal, machine-checked
-proofs that the resulting program is extensionally equal to the input
-specification.
+In this work we mechanise hylomorphisms and their algebraic laws and use them to
+perform program calculation and optimisations. The resulting programs can be
+later extracted into idiomatic and runnable code. Our mechanisation is
+\emph{fully axiom-free}. This formalisation allows us to use Coq as a framework
+for program calculation in a way that is close to common practice in pen and
+paper program calculation proofs. This implies that every rewriting step is the
+result of applying a formal, machine-checked proof that the resulting program is
+extensionally equal to the input specification.
 
 As part of the future improvements, we will study how to mitigate the problem of
 setoids. At the moment, we use a short ad-hoc tactic that is able to
 automatically discharge many of these proofs in simple settings.  We will study
-the more thorough and systematic use of proof automation for respectful
-morphisms. Generalised rewriting in proofs involving setoids tends to be quite
-slow, due to the large size of the terms that need to be rewritten. Sometimes,
-this size is hidden in implicit arguments and coercions. We will study
-alternative formulations to try to improve the performance of the rewriting
-tactics (e.g.\ canonical structures).  Currently, Coq is unable to inline a
-number of trivially inlineable definitions.  We will study alternative
-definitions, or extensions to Coq's code extraction mechanisms to force the
-full inlining of all container code that is used in hylomorphisms.  Finally,
-proving termination still remains a hurdle. In our framework this reduces to
-proving that the anamorphism
-terminates in all inputs, and we provide a convenient connection to
+the more thorough and systematic use of proof automation for proper morphisms.
+Generalised rewriting in proofs involving setoids tends to be quite slow, due to
+the large size of the terms that need to be rewritten. Sometimes, this size is
+hidden in implicit arguments and coercions. We will study alternative
+formulations to try to improve the performance of the rewriting tactics
+(e.g.\ canonical structures).  Currently, Coq is unable to inline a number of
+trivially inlineable definitions.  We will study alternative definitions, or
+extensions to Coq's code extraction mechanisms to force the full inlining of all
+container code that is used in hylomorphisms.  Finally, proving termination
+still remains a hurdle. In our framework this reduces to proving that the
+anamorphism terminates in all inputs, and we provide a convenient connection to
 well-founded recursion. Furthermore, recursive coalgebras compose with natural
-transformations, which allows the reuse
-of a number of core recursive coalgebras. A possible interesting future line of work
-is the use of the approach by Abreu et al.~\cite{AbreuDHJMS23} in combination with ours to
-improve code extraction from divide-and-conquer computations whose termination
-does not require an external proof. 
+transformations, which allows the reuse of a number of core recursive
+coalgebras. A possible interesting future line of work is the use of the
+approach by Abreu et al.~\cite{AbreuDHJMS23} in combination with ours to improve
+code extraction from divide-and-conquer computations whose termination does not
+require an external proof.
 
 
 
