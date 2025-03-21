@@ -134,7 +134,7 @@
 \newcommand{\cons}{\operator{cons}}
 \newcommand{\foldr}{\operator{foldr}}
 
-\newmintinline[coq]{coq}{fontsize=\small}
+\newmintinline[coq]{coq}{fontsize=\small, breaklines}
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
 \newminted{ocaml}{fontsize=\small}
@@ -1111,8 +1111,9 @@ Inductive Tshape L A := | Leaf | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
 \end{coqcode}
 The container for \coq{ITreeF} is denoted by \coq{TreeF}. For convenience, we
-define a series of wrappers \coq{a_leaf} and \coq{a_node} to construct these
-containers.  Now, the container for quicksort is given by \coq{TreeF int}.
+define the wrappers \coq{a_leaf} and \coq{a_node} to construct values of the
+extension of this container.
+Now, the container for quicksort is given by \coq{TreeF int}.
 In the definition below, we use \coq{posL} and \coq{posR} as wrappers for
 \coq{Lbranch} and \coq{Rbranch} with validity proofs.
 \begin{coqcode}
@@ -1135,13 +1136,12 @@ coalgebra \coq{qsplit} is recursive. In this specific case we have to prove that
 the two sublists are smaller than the input list. In general, we are required to
 prove that the input is related to the data inside the structure functor, that
 is that the element of the carrier of the coalgebra is related to the content of
-the functor by some total relation. Here we give a specialised property, the
+the functor by some well-founded relation. Here we give a specialised property, the
 full general property can be found in the formalisation:
 \begin{coqcode}
 Definition respects_relation `{setoid A} (c : Coalg F B) B} (R : B -> B -> Prop)
 := forall x (p : Pos (shape (c x))), R (length (cont (c x) p)) (length x).
 \end{coqcode}
-
 The resulting code extracted from \coq{hylo merge qsplit} is similar to a
 hand-written implementation:
 \begin{ocamlcode}
@@ -1263,7 +1263,6 @@ applying \coq{times_two} to the shapes thus multiplying every pivot by two.
 %% Our formalisation contains a proof that \coq{natural} is indeed a natural
 %% transformation, which relies on the fact that it preserves the structure of the
 %% shapes and, therefore, the validity of the positions.
-The extracted OCaml code is a single recursive traversal:
 \begin{ocamlcode}
 let rec qsort_times_two = function | [] -> []
 | h :: t -> let (l, r) = partition (fun x0 -> leb x0 h) t in
@@ -1271,7 +1270,9 @@ let rec qsort_times_two = function | [] -> []
                                  | Lbranch -> l | Rbranch -> r) in
             app (x0 Lbranch) ((mul (Uint63.of_int (2)) h) :: (x0 Rbranch))
 \end{ocamlcode}
-\todo{Write something here, don't leave it empty}{}
+The extracted OCaml code is a single recursive traversal. Note the similarity to
+a hand-written implementation, and that it has been derived by fusing two
+different recursive programs using regular Coq rewrite tactics.
 
 \subsection{Knapsack}\label{sec:knap}
 We show now the formalisation and extraction of \emph{dynamorphisms} for
@@ -1363,8 +1364,7 @@ We can conclude, by parametricity, that
   hylo a l_out \o hylo (sigma l_in) c =e hylo (s a) c
 \end{coqcode}
 This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
-\textbf{not} provable in Coq if we want to remain axiom-free, since we would
-need to add the necessary parametricity
+\textbf{not} provable in Coq without adding the parametricity
 axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}.
 However, we prove a specific version of this theorem for the container whose
 least fixed point is a list, and use it to encode the example from Takano and
