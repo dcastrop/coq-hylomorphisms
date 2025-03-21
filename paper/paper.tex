@@ -414,24 +414,24 @@ where $X$ is an object of the category called the \emph{carrier} of the algebra
 and $a_{X}$ is an arrow of type $FX \to X$ called the \emph{structure map}.
 The category of $F$-algebras, denoted by $F\Alg(\CatC)$, is the category where
 objects are $F$-algebras and arrows $f : (X, a_{X}) \to (Y, a_{Y})$ are
-\emph{$F$-algebra homomorphisms}  $f : X \to Y$ in $\CatC$ such that they
+\emph{$F$-algebra homomorphisms}. These are  arrows $f : X \to Y$ in the underlying category $\CatC$ such that they
 respect the structure of the algebra, that is
 $f \circ a_{X} = a_{Y} \circ F(f)$. The initial object in this category is
 called the \emph{initial $F$-algebra}, that is the $F$-algebra which has a
 unique $F$-algebra homomorphism into any other $F$-algebra. By Lambek's lemma
-the initial $F$-algebra is precisely the \emph{least fixed-point} for the
-functor $F$ which we denote by $(\mu F, \InIso)$ with
-$\InIso : F \mu F \to \mu F$ and $\InOp : \mu F \to F \mu F$ witnessing the
-isomorphism $F\mu F \iso \mu F$.  By the property of initial $F$-algebras, for
-any other $F$-algebra $(X, a_{X})$ there exists a unique $F$-algebra
-homomorphism, denoted by $\cata{\beta} : (\mu F, \InIso) \to (X, a_{X})$ and
-pronounced ``\emph{catamorphism}'' satisfying:
+if $F$ has an initial $F$-algebra then this is the \emph{least fixed-point} for the
+functor $F$ which we denote by $(\mu F, \InIso)$ where
+$\InIso : F \mu F \to \mu F$ is the $F$-algebra  witnessing the
+isomorphism $F\mu F \iso \mu F$, furthermore  $\InOp : \mu F \to F \mu F$ is the
+inverse of $\InIso$. The uniqueness property of initial $F$-algebras states that for any other
+$F$-algebra $(X, a_{X})$ there exists a unique $F$-algebra homomorphism, denoted
+by $\cata{\beta} : (\mu F, \InIso) \to (X, a_{X})$ and pronounced
+``\emph{catamorphism}'' or ``\emph{fold}'' satisfying:
 \begin{equation}
   \label{eq:cata:unique}
   f = \cata{a_{X}} \iff f = a_{X} \circ F(f) \circ \InOp
 \end{equation}
-In words, any $F$-algebra homomorphism from the initial $F$-algebra is a
-catamorphism. As a result of the uniqueness property we can derive the fusion
+As a result of the uniqueness property we can derive the fusion
 law. For all $F$-algebra homomorphisms $f : (X, a_{X}) \to (Y, a_{Y})$ we have
 \begin{equation}
   \label{eq:cata:fusion}
@@ -445,12 +445,12 @@ optimisation as we shall see.
 For example, for a set $A$ we define the functor $F : \Set \to \Set$ mapping
 $X \mapsto 1 + A \times X$. An $F$-algebra is a set $B$ together with a
 structure map $[b, i] : 1 + A \times B \to B$. The initial $F$-algebra is
-clearly the set of lists $\List{A}$. The catamorphism associated with the type
-of lists is the unique arrow recursively translating the initial algebra
-$[\nil,\cons]$ into the algebra $[b, i]$.
-In functional programming this is commonly referred to as
-$\foldr : (1 \to B) \to (A \times B \to B) \to B$. We can in fact set
-$\foldr\;base\;ind = \cata{[base, ind]}$.
+clearly the set of lists $\List{A}$ and the catamorphism associated with the
+type of lists is the unique arrow which recursively translates the initial
+algebra $[\nil,\cons]$ into the algebra $[base, step]$ while turning the operation
+$\nil$ into $base$ and $\cons$ into $step$.  In functional programming this is
+commonly referred to as $\foldr : (1 \to B) \to (A \times B \to B) \to \List{A} \to B$. We
+can in fact set $\foldr\;base\;step = \cata{[base, step]}$.
 
 \subsection{Coalgebras and Anamorphisms}
 \label{sec:coalg}
@@ -470,25 +470,24 @@ In this case, we can even set some notation for the transition map:
 The category of $B$-coalgebras, denoted $B\Coalg$, is the category where objects
 are $B$-coalgebras and morphisms $f : (X, c_{X}) \to (Y, c_{Y})$ are
 $B$-coalgebra homomorphisms $f : A \to B$, that is
-$ c_{Y} \circ f = F(f) \circ c_{X}$. Terminal object in this category
-$B$-coalgebra corresponds to the greatest fixed-point for the functor $B$,
-denoted by $(\nu B, \OutIso)$ where $\OutIso$ denotes the final $B$-coalgebra
-$\OutIso : \nu B \to B\nu B$.
+$ c_{Y} \circ f = F(f) \circ c_{X}$. The terminal object in this category is
+called the terminal, or final, $B$-coalgebra. The carrier of this coalgebra
+corresponds to the greatest fixed-point for the functor $B$, denoted by
+$(\nu B, \OutIso)$ with $\OutIso$ being the final $B$-coalgebra witnessing the
+isomorphism and $\OutIso : \nu B \to B\nu B$ being its inverse.
 
 For example, the terminal coalgebra for the functor $BX = L \times X$ is the set
-of of infinite streams, that is the greatest solution to the domain equation
-$\Str{A} \iso A \times \Str{A}$.  As a result, for any $B$-coalgebra
+of infinite streams, that is the greatest solution to the domain equation
+$\Str{A} \iso A \times \Str{A}$.  The uniqueness property of terminal $B$-coalgebras states that for any other $B$-coalgebra
 $(X, c_{X})$ there exists a unique $B$-coalgebra homomorphism into the terminal
 coalgebra $(\nu B, \OutIso)$ which is denoted by $\ana{c_{X}}$ and pronounced
-``\emph{anamorphism}''. We spell out the uniqueness property:
+``\emph{anamorphism}'' or ``\emph{unfold}''. We spell out the uniqueness property:
 \begin{equation}
   \label{eq:ana:unique}
   f = \ana{c_{X}} \iff f = \OutOp \circ B(f) \circ c_{X}
 \end{equation}
-In words, for any $B$-coalgebra, if there is any other $B$-coalgebra
-homomorphism $f$ into the terminal object then it must be the anamorphism on the
-same coalgebra. As a result of the uniqueness property we can derive the fusion
-law:\begin{equation}
+From the uniqueness property we can derive the fusion law for unfolds:
+\begin{equation}
   \label{eq:ana:fusion}
   \ana{c_{Y}} \circ f = \ana{c_{X}}
 \end{equation}
@@ -554,6 +553,62 @@ recursive $F$-coalgebra and the algebra $\InIso$ for the inductive data type
 $\mu F$. This fact falls out from the uniqueness property of the hylomorphism
 and the fact that recursive anamorphisms satisfy the same equation.
 
+\subsection{Polynomial Functors}
+Recursion schemes are formulated using generic functors that encapsulate the
+structure of the recursive operator. However, since not all functors have the
+suitable fixed points, it is necessary to restrict our focus to \emph{strictly
+positive functors}.
+
+For example, in the category \textbf{Set}, consider the polynomial functor
+corresponding to
+\[
+F(X) = A + B \times X + C \times X^2.
+\]
+We can model this functor by using a set $S$ defined by $A \uplus B \uplus C$ which distinguishes the three
+cases, and a function $P$ which tells us the number of occurrences of $X$ in
+each case: for $s = (1,a) \mapsto \emptyset$; for $s = (2, b) \mapsto 1$ the singleton set and  for $s = (3, c) \mapsto 2$ the $2$-element set.
+
+To formalise this we need  a function $p : P \to S$ and a function
+$q : P \times X \to P$.  Here, $S$ serves as a \emph{shape object} that indexes
+the different cases of the functor, while $P$ represents the positions where
+elements of $X$ appear. The projection $p: P \to S$ assigns each position to its
+corresponding shape, and the map $q: P \to P \times X$ describes how these
+positions are instantiated using elements of $X$. The functor associated with
+this data is defined on objects using a dependent sum (to be precise a coend):
+% \[
+% F(X) = S \times_P (P \times X),
+% \]
+% which can also be written as a dependent sum (a coend to be precise)
+\[
+F(X) = \sum_{s \in S} (P(s) \to X)
+\]
+where  \( P(s) = p^{-1}(s) \) called the fiber of \( p \) over \( s \). Given a
+function \( f: X \to Y \), the functor acts by post-composition, mapping an
+element \( (s, p, x) \) in \( F(X) \) to \( (s, p, f(x)) \) in \( F(Y) \),
+ensuring functoriality.
+
+% First off, a Given a universe of types $\Type$, a container $S \triangleright P$
+% is defined by a type of \emph{shapes} $S : \Type$ and a \emph{family of position
+% types} indexed by shapes $P : S \to \Type$.  An \emph{extension} of this
+% container is a functor $\llbracket S \triangleright P \rrbracket$, whose action
+% on objects is given by
+% $\llbracket S \triangleright P \rrbracket \; X = \Sigma s : S.\; P\;s \to X$,
+% and on morphisms is given by post-composition, keeping the shape the same
+% $\llbracket S \triangleright P \rrbracket \; f = \lambda (s,\;g).\;(s,\;f\circ g)$.
+% Intuitively, the type of shapes captures the different ``cases'' of an algebraic
+% datatype, and the positions of a shape are used to identify the elements inside
+% a container of the given shape.
+
+% Any polynomial functor can be represented as a container (see accompanying
+% code).  For example, a container that is equivalent to $F\; X = 1 + A \times X$
+% requires a shape that can distinguish two cases, indicating that there are two
+% constructors to build an object of type $F\;X$, e.g. $S_{F} = 1 + A$. We need to
+% consider two cases for the family of positions:
+% $P_{F}(\mathsf{inj}_{1}\;*) = 0$, because there are no occurrences of $X$ in the
+% left case; and $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence
+% of $X$ in the right hand side. It is easy to see that
+% $\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
+
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
 Recursion schemes provide an abstract way to consume and generate data. We now
@@ -567,33 +622,7 @@ formalise recursive coalgebras and hylomorphisms
 
 \subsection{Mechanising Extractable Container Functors}
 \label{sec:containers}
-Recursion schemes are formulated using generic functors that encapsulate the
-structure of the recursive operator. However, since not all functors have the
-suitable fixed points, it is necessary to restrict our focus to those mappings
-of the form \coq{F : Type -> Type} which are additionally \emph{strictly positive}.
-
-A common solution is to consider \emph{containers}~\cite{AbbottAG05}.  A
-container $S \triangleright P$ is defined by a type of \emph{shapes} $S : \Type$
-and a \emph{family of position types} indexed by shapes $P : S \to \Type$.  An
-\emph{extension} of this container is a functor
-$\llbracket S \triangleright P \rrbracket$, whose action on objects is given by
-$\llbracket S \triangleright P \rrbracket \; X = \Sigma s : S.\; P\;s \to X$,
-and on morphisms is given by post-composition, keeping the shape the same
-$\llbracket S \triangleright P \rrbracket \; f = \lambda (s,\;g).\;(s,\;f\circ g)$.
-Intuitively, the type of shapes captures the different ``cases'' of an algebraic
-datatype, and the positions of a shape are used to identify the elements inside
-a container of the given shape.
-
-Any polynomial functor can be represented as a container (see accompanying
-code).  For example, a container that is equivalent to $F\; X = 1 + A \times X$
-requires a shape that can distinguish two cases, indicating that there are two
-constructors to build an object of type $F\;X$, e.g. $S_{F} = 1 + A$. We need to
-consider two cases for the family of positions:
-$P_{F}(\mathsf{inj}_{1}\;*) = 0$, because there are no occurrences of $X$ in the
-left case; and $P_{F}(\mathsf{inj}_{2}\;a) = 1$, because there is one occurrence
-of $X$ in the right hand side. It is easy to see that
-$\llbracket S_{F} \triangleright P_{F} \rrbracket \cong F$.
-
+\todo{FILL OUT}{}
 The type $\forall s : S.\; P\;s \to X$ would force us to add
 the functional extensionality axiom. Thus, we require that all the types used in
 our definitions are \emph{setoids}, where we use \coq{x =e y} to represent
@@ -1243,6 +1272,7 @@ let rec qsort_times_two = function | [] -> []
             app (x0 Lbranch) ((mul (Uint63.of_int (2)) h) :: (x0 Rbranch))
 \end{ocamlcode}
 \todo{Write something here, don't leave it empty}{}
+
 \subsection{Knapsack}\label{sec:knap}
 We show now the formalisation and extraction of \emph{dynamorphisms} for
 dynamic programming. We use the
