@@ -1061,16 +1061,19 @@ deforestation optimisation (Section~\ref{sec:shortcut}).
 %  flow more smoothly.}
 
 \subsection{Sorting Algorithms}\label{sec:sorting}
-Our first case study is divide-and-conquer sorting algorithms encoded as
-recursive hylomorphisms. Our accompanying code contains both mergesort and
-quicksort as examples, but we will focus on quicksort for conciseness. We will
-also show how to use program calculation to apply a fusion optimisation.  The
-recursive structure of both mergesort and quicksort is a binary tree. For
-example, in the case of quicksort, a list is split into a pivot, the label of
-the node, and two sublists. We define the data functor of trees as follows:
+We now focus on divide-and-conquer sorting algorithms and demonstrate how to use
+program calculation to apply a fusion optimisation. Our accompanying code
+contains both mergesort and quicksort as examples, but we will focus on
+quicksort for conciseness.
+
+The recursive structure of quicksort and mergesort is given by the following
+functor
 \begin{coqcode}
-Inductive ITreeF L N X := i_leaf (l : L) | i_node (n : N) (l r : X)
+Inductive ITreeF N X := i_leaf | i_node (n : N) (l r : X)
 \end{coqcode}
+To explain this consider quicksort.
+The list is split into a pivot which is represented by the and two sublists. We define the data functor of trees as follows:
+
 To define an equivalent container, we notice that this functor has two shapes,
 one for leaves, and one for nodes, and that nodes have two positions (akin to
 \coq{l r : X} in \coq{i_node}). We also note that, in this container, positions
@@ -1079,7 +1082,7 @@ are only valid in nodes.
 Inductive Tshape L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
 \end{coqcode}
-We name \coq{TreeF} the container that has these shapes and (base) poisitions.
+We name \coq{TreeF} the container that has these shapes and (base) positions.
 For convenience, we define a series of wrappers to construct these containers:
 % \mpav{The following algebra should be called a\_in or l\_in whatever}
 \begin{coqcode}
