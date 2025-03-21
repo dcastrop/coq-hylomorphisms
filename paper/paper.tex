@@ -1107,22 +1107,22 @@ The container encoding \coq{ITreeF} has two shapes, one for leaves and one for
 nodes, and nodes have two positions, one for each sublist \coq{l r : X} in
 \coq{i_node}.
 \begin{coqcode}
-Inductive Tshape L A := | Leaf (ELEM : L) | Node (ELEM : A).
+Inductive Tshape L A := | Leaf | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
 \end{coqcode}
 The container for \coq{ITreeF} is denoted by \coq{TreeF}. For convenience, we
 define a series of wrappers \coq{a_leaf} and \coq{a_node} to construct these
-containers.  Now, the container for quicksort is given by \coq{TreeF unit int}.
+containers.  Now, the container for quicksort is given by \coq{TreeF int}.
 In the definition below, we use \coq{posL} and \coq{posR} as wrappers for
 \coq{Lbranch} and \coq{Rbranch} with validity proofs.
 \begin{coqcode}
-Definition qsplit_f (x : list int) : App (TreeF unit int) (list int) :=
+Definition qsplit_f (x : list int) : App (TreeF int) (list int) :=
   match x with
   | nil => a_leaf tt
   | cons h t => let (l, r) := List.partition (fun x => x <=? h) t in a_node h l r
   end.
 
-Definition merge_f (x : App (TreeF unit int) (list int)) : list int :=
+Definition merge_f (x : App (TreeF int) (list int)) : list int :=
   let (sx, kx) := x in
   match sx return (Container.Pos sx -> _) -> _ with
   | Leaf _ _ => fun _ => nil
