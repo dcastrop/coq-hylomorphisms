@@ -194,7 +194,8 @@
 
 \category{} %optional, e.g. invited paper
 
-\acknowledgements{I want to thank \dots}%optional
+% \acknowledgements{I want to thank \dots}
+% optional
 
 %\nolinenumbers %uncomment to disable line numbering
 
@@ -258,7 +259,7 @@ algebraic laws to systematically \emph{calculate} more efficient versions of the
 same algorithms.
 
 Suppose, for example, that we want to write a program that sorts a list of
-integers, and then multiplies by 2 all its elements. In OCaml, we may write this
+integers and multiplies them by 2 at the same time. In OCaml, we may write this
 function directly:
 \begin{minted}{ocaml}
 let rec sort_times_two = function
@@ -266,14 +267,14 @@ let rec sort_times_two = function
   | h :: t -> let (l, r) = partition (fun x -> x < h) t in
   sort_times_two l @ (h * 2) :: sort_times_two t
 \end{minted}
-This program is derived by \emph{fusing} a regular \emph{quicksort} OCaml
-implementation, with
-\ocaml{map (fun x -> x * 2)}.
-A lot of program calculations have this pattern: start from a simple
-specification, e.g.\ $\mathsf{map}\;(\lambda x.\;x \times 2) \circ
-\mathsf{sort}$, and use program equivalences and algebraic laws to rewrite it to
-an optimised version. We will revisit a similar example in
-Section~\ref{sec:sorting}.
+
+This program is the same as composing a \emph{quicksort} OCaml implementation,
+with the function \ocaml{map (fun x -> x * 2)} which is a known program
+optimisation called \emph{fusion}.  A lot of program calculations have this
+pattern: start from a simple specification, e.g.\
+$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
+equivalences and algebraic laws to rewrite it to an optimised version. We will
+revisit a similar example in Section~\ref{sec:sorting}.
 
 This program calculation stems from the more general theory of hylomorphisms. A
 hylomorphism is a structured recursion scheme representing the idea of a
