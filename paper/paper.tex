@@ -643,8 +643,9 @@ encode families of positions using \emph{decidable validity predicates}.
 In our formalisation, we require that every type is a setoid, where \coq{x =e y}
 denotes setoid equality and that all morphisms need to be \emph{proper}
 morphisms that respect setoid equalities. We use special notation  \coq{A ~> B}
-for proper morphisms and we add an implicit coercion from \coq{A ~> B} to \coq{A -> B}.  We also provide tactics to automatically discharge proofs that morphisms are proper,  for some simple cases.
-
+for proper morphisms and we add an implicit coercion from \coq{A ~> B} to
+\coq{A -> B}.  We also provide tactics to automatically discharge proofs that
+morphisms are proper,  for some simple cases.
 
 %% WARNING: removing the point about axiom K leads to leaving the use of
 %% decidable validity predicates unexplained -- do not remove!
@@ -1285,74 +1286,76 @@ let rec qsort_times_two = function | [] -> []
 The extracted OCaml code is a single recursive traversal. Note the similarity to
 a hand-written implementation, and that it has been derived by fusing two
 different recursive programs using regular Coq rewrite tactics.
-
+\newcommand{\Id}{\text{Id}}
 \subsection{Knapsack}\label{sec:knap}
-We show now show the formalisation and extraction of \emph{dynamorphisms} for
-dynamic programming using the knapsack example from~\cite{HinzeWG15}. In
-general, dynamorphisms build a memoisation table which stores intermediate
-results alongside the current computation. The algebra used to define a
-dynamorphism can access this memoisation table to speed up computation.
-First, we define memoisation tables in terms of containers:
+Dynamorphisms are hylomorphisms where the algebra has access to the memory table
+of the result of all previous recursive calls. To implement this we need to
+formalise the idea of a memory table which is in our case simply represented by
+the cofree comonad. For a functor $G : \CatC \to \CatC$ the cofree comonad is
+defined as the greatest solution to the following equation
+\[
+  G_{\infty} A \iso A \times G (G_{\infty} A)
+\]
+In words, these are the (possibly) infinite trees which branch out with shape
+$G$. For example, for the identity functor $\Id_{\infty} A$ is the type of
+infinite streams. For $G X = 1 + X$, the type $G_{\infty} A$ is isomorphic to
+$i \times (1 + G_{\infty} A)$. This is the type representing our memory table
+with the operation $\head_{A} : G_{\infty} A$ being the result of the previous
+recursive call. Notice that in the case of a recursive $G$-coalgebra this type
+only contains finite $G$-trees and so we can view $G_{\infty}A$ as the finite
+$G$-trees thus being able to inspect all the previous recursive calls. This has
+been expounded thoroughly by Hinze et al.~\cite{HinzeWG15}.
+
+In our framework, we formalise $G$ as a container with shape \coq{Sg} and
+position \coq{Pg}, then \coq{Memo} is the least fixed-point of the functor
+$F X = A \times GX$:
 \begin{coqcode}
 Instance Memo : Cont (A * Sg) Pg := { valid := valid \o pair (snd \o fst) snd }.
 Definition Table := LFix Memo.
 \end{coqcode}
-Given a type of shapes \coq{Sg} and positions \coq{Pg}, the container
-\coq{Memo : Cont (A * Sg) Pg}.  The least fixed-point of which is the least
-fixed-point of the
-
-given a container \coq{G : Cont Sg Pg}
-
-We define a function to insert elements into the memo tables:
+The operations of the cofree comonad \coq{Memo} are the \coq{Cons}, the \coq{headT} and the \coq{tailT}:
 \begin{coqcode}
-Definition Cons : A * App G Table ~> App Memo Table := (* *)
-\end{coqcode}
-And two functions, to inspect the head of a table, and remove an
-element:
-\begin{coqcode}
+Definition consT : A * App G Table ~> Table := (* *)
 Definition headT : Table ~> A := (* *)
 Definition tailT : Table ~> App G Table := (* *)
 \end{coqcode}
-These tables map ``paths'' in the least fixed point of \coq{Memo} to elements
-of type \coq{A}. For example, if \coq{G} is a list-generating functor, these
-paths will be natural numbers. 
-Using these definitions, a dynamorphism is defined as follows:
+Finally, we define a dynamorphism as a hylomorphism from a type \coq{B} into a
+type \coq{Table} post-composed with the \coq{headT} map which outputs the last
+result from the memory table:
 \begin{coqcode}
 Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
-  := headT \o hylo (l_in \o Cons \o pair a id) c.
+  := headT \o hylo (consT \o pair a id) c.
 \end{coqcode}
-Note how, instead of an algebra \coq{App G A ~> A}, the algebra takes a
-memo table. The definition of the algebra can use this table to lookup
-elements, instead of triggering a further recursive call. Elements are inserted
-into the memoisation table by the use of \coq{Cons} to the result of applying
-the algebra. The algebra for the dynamorphism looks up the previously computed
-elements to produce the result, thus saving the corresponding recursive calls:
-\begin{coqcode}
-Fixpoint memo_knap table wvs :=
-  match wvs with | nil => nil | h :: t =>
-      match lookupT (Nat.pred (fst h)) table with
-      | Some u => (u + snd h)%sint63 :: memo_knapsack table t
-      | None => memo_knapsack table t
-      end
-  end.
-Definition knapsack_alg (wvs : list (nat * int))
-  (x : App NatF (Table NatF int)) : int :=
-  match x with | MkCont sx kx => match sx with
-  | inl tt => fun kx => 0%sint63
-  | inr tt => fun kx => let tbl := kx next_elem in max_int 0 (memo_knap tbl wvs)
-  end kx end.
-Definition knapsackA wvs : App NatF (Table NatF int) ~> int :=  (* ... *)
-\end{coqcode}
-Given the recursive coalgebra for \coq{nat}, \coq{out_nat}, knapsack is defined
-as
+Note the map \coq{App G Table ~> A} corresponding to a map $G G_{\infty}A \to A$ is not a $G$-algebra.
+To recover the $G$-algebra we pair it with the identity map and  so we need to
+transmogrify it by pairing it with the identity map and post-composing it with
+\coq{consT}. This algebra uses this table to lookup
+elements, instead of triggering a further recursive call, then elements are inserted
+into the memoisation table by the use of \coq{consT} to the result of applying
+the algebra. In our example this algebra is called \coq{knapsackA} (see accompanying code).
+% \begin{coqcode}
+% Fixpoint memo_knap table wvs :=
+%   match wvs with | nil => nil | h :: t =>
+%       match lookupT (Nat.pred (fst h)) table with
+%       | Some u => (u + snd h)%sint63 :: memo_knapsack table t
+%       | None => memo_knapsack table t
+%       end
+%   end.
+% Definition knapsack_alg (wvs : list (nat * int))
+%   (x : App NatF (Table NatF int)) : int :=
+%   match x with | MkCont sx kx => match sx with
+%   | inl tt => fun kx => 0%sint63
+%   | inr tt => fun kx => let tbl := kx next_elem in max_int 0 (memo_knap tbl wvs)
+%   end kx end.
+% Definition knapsackA wvs : App NatF (Table NatF int) ~> int :=  (* ... *)
+% \end{coqcode}
+Finally, given the recursive coalgebra \coq{out_nat} on the natural numbers, we can define knapsack using the recursion scheme for dynamorphisms:
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
-While the extracted code has the expected performance characteristics, Coq's
-code extraction mechanism is unable to inline several definitions in this case.
-We have manually inlined the extracted code for simplicity. The full extracted
-code is available in the artefact accompanying this paper, and an interested
-reader can check that simple inlining would produce the following function:
+The full extracted code coming from this specification
+is available in the artefact accompanying this paper, and an interested reader
+can check that simple inlining would produce the following function:
 % The reader can check
 % in our artefact that the extracted code can be trivially inlined to produce the
 % following:
@@ -1365,7 +1368,7 @@ let knapsack wvs x = let (y, _) = (let rec f x0 =
            cont = fun _ -> fn } }
      in f x).lFix_out.shape in y
 \end{ocamlcode}
-Note how the recursive calls of \ocaml{f} build the memoisation table, and how
+Note that in the extracted code, the recursive calls to \ocaml{f} build the memoisation table, and that
 this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
 
