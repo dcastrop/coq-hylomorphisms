@@ -376,7 +376,7 @@ categories\footnote[1]{For presentation purposes we shall not deal with size
 in a category, denoted by $0$, is the object such that for any other object $A$
 there is a unique arrow $0 \xrightarrow{!} A$.  Dually, the terminal object,
 denoted by $1$, is the object such that for any other object $A$ there is a
-unique arrow $A \xrightarrow{!} 1$. Initial and terminal object are unique up-to
+unique arrow $A \xrightarrow{!} 1$. As a result of the uniqueness properties, initial and terminal objects are unique up-to
 isomorphism.
 
 For example, the category of sets, denoted by $\Set$, is the category where
@@ -787,8 +787,7 @@ on an input:
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
-For convenience, we package recursive coalgebras with proofs that they terminate
-for all inputs:
+For convenience, we equip recursive coalgebras with an additional proof of termination:
 \begin{coqcode}
 Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
 \end{coqcode}
@@ -811,8 +810,8 @@ corresponding higher-order proper morphism:
 \begin{coqcode}
 hylo : forall F `{setoid A} `{setoid B}, Alg F B ~> RCoalg F A ~> A ~> B
 \end{coqcode}
-Finally, we show that recursive hylomorphisms are the unique solution to the
-hylomorphism equation.
+Finally, we show that recursive hylomorphisms are the unique solution to the following
+hylomorphism equation:
 \begin{coqcode}
 Lemma hylo_uniq (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
@@ -1262,7 +1261,7 @@ with a  divide-and-conquer algorithm to obtain a new program that only performs
 recursion once instead of twice. In particular, we can map a function to the
 result of quicksort and obtain a new program which orders the elements and
 computes the function on every element by traversing the list only once. The
-composition of these two programs is given by the following definition:
+composition of these two programs is given by the following:
 \begin{coqcode}
 Definition qsort_times_two := Lmap times_two \o hylo merge qsplit.
 \end{coqcode}
@@ -1355,7 +1354,7 @@ Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
 The full extracted code coming from this specification
 is available in the artefact accompanying this paper, and an interested reader
-can check that simple inlining would produce the following function:
+can check that simple inlining would produce the following:
 % The reader can check
 % in our artefact that the extracted code can be trivially inlined to produce the
 % following:
@@ -1373,48 +1372,57 @@ this memoisation table is used to compute the intermediate results in
 \ocaml{memo_knap}, which is finally discarded to produce the final result.
 
 \subsection{Shortcut Deforestation}\label{sec:shortcut}
-The final case study we consider is shortcut deforestation on lists.  Shortcut
-deforestation can be expressed succinctly in terms of hylomorphisms and their
-laws~\cite{TakanoM95}. In particular, given a function:
-\begin{coqcode}
-  s  : forall A. (App F A -> A) -> (App F A -> A)
-\end{coqcode}
-We can conclude, by parametricity, that
-\begin{coqcode}
-  hylo a l_out \o hylo (sigma l_in) c =e hylo (s a) c
-\end{coqcode}
-This is generally known as the \emph{acid rain} theorem. Unfortunately, this is
-\textbf{not} provable in Coq without adding the parametricity
-axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}.
-However, we prove a specific version of this theorem for the container whose
-least fixed point is a list, and use it to encode the example from Takano and
-Meijer~\cite{TakanoM95}:
+We now showcase the shortcut deforestation optimisation on lists.  This is used
+to remove the creation of intermediate data structures by fusing multiple
+recursive traversals into one.  For example, we can use it to show the following
+code from Takano and
+Meijer~\cite{TakanoM95}
 \begin{coqcode}
 Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
 \end{coqcode}
-Here, we are defining function \coq{sf1} as the composition of \coq{length},
-\coq{Lmap f} and \coq{append ys}. Functions \coq{length} and \coq{Lmap} are
-catamorphisms. Function \coq{append ys} is also a catamorphism that
-appends \coq{ys} to an input list. It is defined by applying an algebra to
-every cons node of a list, and applying a catamorphism with the input algebra
-to \coq{ys} in the nil case:
+which uses three different hylomorphisms can be fused into one.
+Here   \coq{sf1} is the composition of \coq{length},
+\coq{Lmap f} and \coq{append ys} which are, in particular,
+catamorphisms.
+
+To prove our goal we use the so called \emph{acid rain} theorem which states
+that given a parametric function of the following type:
+\begin{coqcode}
+  s  : forall A. (App F A -> A) -> (App F A -> A)
+\end{coqcode}
+we can conclude, by parametricity, that the following equation holds:
+\begin{coqcode}
+  hylo a l_out \o hylo (s l_in) c =e hylo (s a) c
+\end{coqcode}
+Unfortunately, this is not provable in Coq without adding the parametricity
+axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}, but we can prove it for specific
+functors, e.g. the functor of lists.
+
+Instead, we prove the acid rain theorem of the specific parametric function
+\coq{tau}. This essentially is a recursive function on lists which uses the
+algebra for both the recursive step and for the base case where it is used in
+the hylomorphism to continue the recursion:
 \begin{coqcode}
 Definition tau (l : list A) (a : Alg (ListF A) B) : App (ListF A) B -> B :=
   fun x => match x with | MkCont sx kx => match sx with
   | s_nil => fun _ => (hylo a ilist_coalg) l
   | s_cons h => fun kx => a (MkCont (s_cons h) kx)
   end kx end.
+\end{coqcode}
+Our acid rain theorem is stated as follows:
+\begin{coqcode}
+  hylo a l_out \o hylo (tau l l_in) c =e hylo (tau l a) c
+\end{coqcode}
+
+Now we use \coq{tau} to define the \coq{append} function as follows:
+\begin{coqcode}
 Definition append (l : list A) := hylo (tau l l_in) ilist_coalg.
 \end{coqcode}
 Here, \coq{ilist_coalg} is a recursive coalgebra from Coq lists to the
-\coq{ListF} container. We apply the hylo fusion law repeatedly, unfold
-definitions, and simplify in our specification for \coq{sf1}:
-\begin{coqcode}
-Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
-  rewrite hylo_map_fusion, <- acid_rain. simpl; reflexivity.
-Defined.
-\end{coqcode}
-From this, we extract the following OCaml code:
+\coq{ListF} container. The acid rain theorem allows us to fuse this definition
+of append with the maps \coq{Lmap} and \coq{length} which is the optimisation we
+wanted in the first place. The following is the extracted OCaml code from the
+optimised program:
 \begin{ocamlcode}
 let rec sf1 f ys =
   function | [] -> let rec f0 = function
@@ -1423,22 +1431,21 @@ let rec sf1 f ys =
                    in f0 ys
            | _ :: t -> add (Uint63.of_int (1)) (sf1 f ys t)
 \end{ocamlcode}
+Notice how the \coq{Lmap} is optimised away and the function \coq{length} is
+applied to both the arguments of the append function.
 
-\noindent
-We then prove that \ocaml{length} fuses with
+As a second example, we prove that \ocaml{length} fuses with
 the naive quadratic \ocaml{reverse} function:
 \begin{coqcode}
 Definition sf2 : Ext (length \o reverse).
-  calculate.  unfold length, reverse. rewrite hylo_fusion_l.
-  2:{ (* Rewrite into the fused version *) }
-  simpl; reflexivity.
-Defined.
 \end{coqcode}
 This code extracts to the optimised length function on the input list:
 \begin{ocamlcode}
 let rec ex2 = function | [] -> (Uint63.of_int (0))
                        | _ :: t -> add (Uint63.of_int (1)) (ex2 t)
 \end{ocamlcode}
+Here by fusing the hylomorphism for the reverse function with the length
+function we obtain the original length function.
 
 \section{Related Work}
 \label{sec:related-work}
@@ -1632,6 +1639,7 @@ code extraction from divide-and-conquer computations whose termination does not
 require an external proof.
 
 
+\newpage
 
 \bibliography{references.bib}
 
