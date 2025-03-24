@@ -1046,10 +1046,12 @@ hylomorphism will also hold for any result of doing program calculation.
 In this section we show how programs and their optimisations can be encoded in
 our framework and how can they be extracted to idiomatic functional code.
 Although our examples use OCaml as target language, extraction works equally
-well to other target languages (e.g. Haskell or Lisp). In particular, we show how to formalise
- quicksort (Section~\ref{sec:sorting}), we give an example of dynamic
-programming algorithm, that is knapsack (Section~\ref{sec:knap}), and show examples of the shortcut
-deforestation optimisation (Section~\ref{sec:shortcut}).
+well to other target languages (e.g. Haskell or Scheme). In particular, we show
+how to formalise sorting algorithms by looking at quicksort
+(Section~\ref{sec:sorting}), we show how to formalise dynamic programming
+algorithms by looking at knapsack (Section~\ref{sec:knap}), and, finally, we
+show an example of the shortcut deforestation optimisation
+(Section~\ref{sec:shortcut}).
 %The steps are the following:
 %\begin{enumerate}
 %  \item Write a specification as a morphism \coq{f : A ~> B}.
@@ -1092,9 +1094,9 @@ deforestation optimisation (Section~\ref{sec:shortcut}).
 
 \subsection{Sorting Algorithms}\label{sec:sorting}
 We now focus on divide-and-conquer sorting algorithms and demonstrate how to use
-program calculation to apply a fusion optimisation. Our accompanying code
-contains both mergesort and quicksort as examples, but we will focus on
-quicksort for conciseness.
+program calculation to apply a fusion optimisation. In the supplemental material
+accompanying this paper, we formalise both mergesort and quicksort, but in this
+section, we focus solely on quicksort.
 
 The recursive structure of quicksort is given by the following
 functor
@@ -1336,10 +1338,14 @@ as
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
-Coq's code extraction mechanism is unable to inline several definitions in this
-case. We have manually inlined the extracted code for simplicity. The reader
-can check in our artefact that the extracted code can be trivially
-inlined to produce the following:
+While the extracted code has the expected performance characteristics, Coq's
+code extraction mechanism is unable to inline several definitions in this case.
+We have manually inlined the extracted code for simplicity. The full extracted
+code is available in the artefact accompanying this paper, and an interested
+reader can check that simple inlining would produce the following function:
+% The reader can check
+% in our artefact that the extracted code can be trivially inlined to produce the
+% following:
 \begin{ocamlcode}
 let knapsack wvs x = let (y, _) = (let rec f x0 =
       if x0=0 then
