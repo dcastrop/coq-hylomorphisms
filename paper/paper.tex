@@ -633,20 +633,18 @@ formalise recursive coalgebras and hylomorphisms
 
 \subsection{Mechanising Extractable Container Functors}
 \label{sec:containers}
-
 A direct encoding of containers as presented in
 Section~\ref{sec:category-theory} requires the use of the functional
 extensionality axiom, and axiom K to deal with equalities of objects of type
-$P(s) \to X$. Furthermore, extraction will need to insert unsafe casts for
+$P(s) \to X$. Furthermore, upon extraction Coq will need to insert unsafe casts for
 anything of type $P(s)$.  To avoid these problems, we use \emph{setoids}, and
 encode families of positions using \emph{decidable validity predicates}.
 
 In our formalisation, we require that every type is a setoid, where \coq{x =e y}
-denotes setoid equality. All morphisms need to be \emph{proper} morphisms that
-respect setoid equalities. We use special notation for such morphisms,
-\coq{A ~> B}, and we add an implicit coercion from \coq{A ~> B} to \coq{A -> B}.
-We also provide tactics to automatically discharge proofs that morphisms are
-proper,  for some simple cases.
+denotes setoid equality and that all morphisms need to be \emph{proper}
+morphisms that respect setoid equalities. We use special notation  \coq{A ~> B}
+for proper morphisms and we add an implicit coercion from \coq{A ~> B} to \coq{A -> B}.  We also provide tactics to automatically discharge proofs that morphisms are proper,  for some simple cases.
+
 
 %% WARNING: removing the point about axiom K leads to leaving the use of
 %% decidable validity predicates unexplained -- do not remove!
