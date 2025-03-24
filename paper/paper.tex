@@ -1289,21 +1289,22 @@ a hand-written implementation, and that it has been derived by fusing two
 different recursive programs using regular Coq rewrite tactics.
 
 \subsection{Knapsack}\label{sec:knap}
-We show now the formalisation and extraction of \emph{dynamorphisms} for
-dynamic programming. We use the
-knapsack example from~\cite{HinzeWG15}. Dynamorphisms build a memoisation table
-that stores intermediate results, alongside the current computation. The
-algebra used to define a dynamorphism can access this memoisation table to
-speed up computation.  First, we define memoisation tables in terms of
-containers.
+We show now show the formalisation and extraction of \emph{dynamorphisms} for
+dynamic programming using the knapsack example from~\cite{HinzeWG15}. In
+general, dynamorphisms build a memoisation table which stores intermediate
+results alongside the current computation. The algebra used to define a
+dynamorphism can access this memoisation table to speed up computation.
+First, we define memoisation tables in terms of containers:
 \begin{coqcode}
-Definition MemoShape : Type := A * Sg.
-Definition MemoPos := Pg.
-Instance Memo : Cont MemoShape MemoPos := { valid := valid \o pair (snd \o fst) snd }.
+Instance Memo : Cont (A * Sg) Pg := { valid := valid \o pair (snd \o fst) snd }.
 Definition Table := LFix Memo.
 \end{coqcode}
-Memoisation tables are the least fixed point of the container defined by shapes
-\coq{A * Sg} and positions \coq{Pg}, given a a container \coq{G : Cont Sg Pg}.
+Given a type of shapes \coq{Sg} and positions \coq{Pg}, the container
+\coq{Memo : Cont (A * Sg) Pg}.  The least fixed-point of which is the least
+fixed-point of the
+
+given a container \coq{G : Cont Sg Pg}
+
 We define a function to insert elements into the memo tables:
 \begin{coqcode}
 Definition Cons : A * App G Table ~> App Memo Table := (* *)
