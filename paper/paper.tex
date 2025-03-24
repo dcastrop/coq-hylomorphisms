@@ -643,17 +643,17 @@ encode families of positions using \emph{decidable validity predicates}.
 
 In our formalisation, we require that every type is a setoid, where \coq{x =e y}
 denotes setoid equality. All morphisms need to be \emph{proper} morphisms that
-respect setoid equalities. We use special notation for such morphisms, \coq{A ~>
-  B}, and we add an implicit coercion from \coq{A ~> B} to \coq{A -> B}.  We
-also provide tactics to automatically discharge proofs that morphisms are
+respect setoid equalities. We use special notation for such morphisms,
+\coq{A ~> B}, and we add an implicit coercion from \coq{A ~> B} to \coq{A -> B}.
+We also provide tactics to automatically discharge proofs that morphisms are
 proper,  for some simple cases.
 
 %% WARNING: removing the point about axiom K leads to leaving the use of
 %% decidable validity predicates unexplained -- do not remove!
-We define containers in terms of shapes, \emph{base} positions (\coq{APos :
-  Set}), and \emph{decidable validity predicates} that specify when a base
-position is valid in a shape. Since validity predicates are in \coq{Prop}, they
-will be erased during extraction, and since they are decidable, they do not
+We define containers in terms of shapes, \emph{base} positions
+(\coq{APos : Set}), and \emph{decidable validity predicates} that specify when a
+base position is valid in a shape. Since validity predicates are in \coq{Prop},
+they will be erased during extraction, and since they are decidable, they do not
 require axiom K to deal with heterogeneous equalities.  Container extensions are
 defined as
 \begin{coqcode}
