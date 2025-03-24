@@ -340,7 +340,7 @@ We list the contributions of this paper. First, in Section~\ref{sec:category-the
 \section{Recursion Schemes}\label{sec:category-theory}
 The structure of data is very similar to the structure of an algorithm which
 processes that data. This relationship manifests in the form of structured
-recursion schemes which are widely used in functional languages such Haskell.
+recursion schemes, which are widely used in functional languages such Haskell.
 Canonical examples are folds (catamorphisms), which consume data, and unfolds
 (anamorphisms), which produce it. While some implementations of recursion
 schemes like $\operator{foldr}$/$\operator{unfoldr}$ in Haskell are specific to
@@ -349,7 +349,7 @@ further these ideas to account for generic (co)inductive data types and generic
 algorithms operating on them.
 
 Furthermore, folds and unfolds can be shown to capture a wide range of recursion
-schemes such as primitive recursion, mutual recursion, dynamic programming
+schemes, such as primitive recursion, mutual recursion, dynamic programming
 algorithms, polymorphic recursion, and recursion with accumulators. However, for
 divide-and-conquer algorithms, folds need to be generalised to hylomorphisms,
 which provide the ultimate basic building block for any other recursion scheme.
@@ -612,9 +612,9 @@ ensuring functoriality.
 
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
-Recursion schemes provide an abstract way to consume and generate data. We now
-proceed onto describing how to formalise hylomorphisms in Coq. We first
-formalise container functors as a tool to represent polynomial functors
+%Recursion schemes provide an abstract way to consume and generate data.
+We now consider the formalisation hylomorphisms in Coq. We first formalise
+container functors as a tool to represent polynomial functors
 (Section~\ref{sec:containers}). Then we formalise algebras for container
 extensions (Section~\ref{sec:coq-algebras}), then we formalise coalgebras
 (Section~\ref{sec:coq-coalg}) and then we put together these notions to
@@ -1166,12 +1166,14 @@ tactic \coq{induction (recP qsplit l)}. Then we can unfold \coq{hylo merge qspli
 \coq{merge \o fmap (hylo merge qsplit) \o qsplit} using hylomorphism
 uniqueness~\ref{sec:coq-rec-coalgebras}. The rest of the proof is standard.
 Overall, our proof is shorter than alternative implementations, and of
-comparable complexity\footnote{The QSort definition and correctness proof in the
-equations
-package is under 200LOC --
-\href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
-and other online proofs of correctness are of similar complexity
-\href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
+comparable complexity.
+%% Commenting out footnote to save space, since we mention the Coq QSort in related work already...
+% \footnote{The QSort definition and correctness proof in the
+% equations
+% package is under 200LOC --
+% \href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
+% and other online proofs of correctness are of similar complexity
+% \href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
 % and can be found in the
 % formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
 
