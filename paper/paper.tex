@@ -1325,13 +1325,14 @@ result from the memory table:
 Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
   := headT \o hylo (consT \o pair a id) c.
 \end{coqcode}
-Note the map \coq{App G Table ~> A} corresponding to a map $G G_{\infty}A \to A$ is not a $G$-algebra.
-To recover the $G$-algebra we pair it with the identity map and  so we need to
-transmogrify it by pairing it with the identity map and post-composing it with
-\coq{consT}. This algebra uses this table to lookup
-elements, instead of triggering a further recursive call, then elements are inserted
-into the memoisation table by the use of \coq{consT} to the result of applying
-the algebra. In our example this algebra is called \coq{knapsackA} (see accompanying code).
+Note the map \coq{App G Table ~> A} corresponding to a map $G G_{\infty}A \to A$
+is not a $G$-algebra.  To recover the $G$-algebra we pair it with the identity
+map and  so we need to transmogrify it by pairing it with the identity map and
+post-composing it with \coq{consT}. This algebra uses this table to lookup
+elements, instead of triggering a further recursive call, then elements are
+inserted into the memoisation table by the use of \coq{consT} to the result of
+applying the algebra. In our example this algebra is called \coq{knapsackA} (see
+accompanying code).
 % \begin{coqcode}
 % Fixpoint memo_knap table wvs :=
 %   match wvs with | nil => nil | h :: t =>
@@ -1348,13 +1349,14 @@ the algebra. In our example this algebra is called \coq{knapsackA} (see accompan
 %   end kx end.
 % Definition knapsackA wvs : App NatF (Table NatF int) ~> int :=  (* ... *)
 % \end{coqcode}
-Finally, given the recursive coalgebra \coq{out_nat} on the natural numbers, we can define knapsack using the recursion scheme for dynamorphisms:
+Finally, given the recursive coalgebra \coq{out_nat} on the natural numbers, we
+can define knapsack using the recursion scheme for dynamorphisms:
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
-The full extracted code coming from this specification
-is available in the artefact accompanying this paper, and an interested reader
-can check that simple inlining would produce the following:
+The full extracted code coming from this specification is available in the
+artefact accompanying this paper, and an interested reader can check that simple
+inlining would produce the following:
 % The reader can check
 % in our artefact that the extracted code can be trivially inlined to produce the
 % following:
@@ -1367,9 +1369,10 @@ let knapsack wvs x = let (y, _) = (let rec f x0 =
            cont = fun _ -> fn } }
      in f x).lFix_out.shape in y
 \end{ocamlcode}
-Note that in the extracted code, the recursive calls to \ocaml{f} build the memoisation table, and that
-this memoisation table is used to compute the intermediate results in
-\ocaml{memo_knap}, which is finally discarded to produce the final result.
+Note that in the extracted code, the recursive calls to \ocaml{f} build the
+memoisation table, and that this memoisation table is used to compute the
+intermediate results in \ocaml{memo_knap}, which is finally discarded to produce
+the final result.
 
 \subsection{Shortcut Deforestation}\label{sec:shortcut}
 We now showcase the shortcut deforestation optimisation on lists.  This is used
@@ -1381,7 +1384,7 @@ Meijer~\cite{TakanoM95}
 Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
 \end{coqcode}
 which uses three different hylomorphisms can be fused into one.
-Here   \coq{sf1} is the composition of \coq{length},
+Here \coq{sf1} is the composition of \coq{length},
 \coq{Lmap f} and \coq{append ys} which are, in particular,
 catamorphisms.
 
