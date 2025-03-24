@@ -292,21 +292,22 @@ correctness.
 % principle, called \emph{fusion law}, which has been exemplified in the previous
 % paragraph.
 
-Hylomorphisms are very powerful non-structural recursive algorithms that can be
-used to implement structural recursion, as well as many other known recursion
-schemes such as mutual recursion, accumulators, primitive recursion and
-course-of-values iteration (dynamic programming)~\cite{HinzeWG15}. This power
-comes at a price. Since hylomorphisms are not necessarily structural, extra-care
-is needed when encoding them in a type theory. In particular, the divide part of
-the algorithm must be \emph{recursive} that is the input needs to be split into
-smaller parts (not necessarily following the structure of the input data).
-On the other hand, a key benefit is the reusability of termination proofs: once
-the correctness of the divide phase is established, the same proof can be reused
-for any other conquer phase we choose. Moreover, in the case of structural
+Hylomorphisms are highly versatile, non-structural recursive algorithms that are
+capable of implementing structural recursion as well as other known recursion
+schemes like mutual recursion, accumulators, primitive recursios, and
+course-of-values iteration (dynamic programming)~\cite{HinzeWG15}. However, this
+versatility comes with a trade-off: because hylomorphisms are not inherently
+structurally recursive, special attention is required when encoding them in a
+type theory. Specifically, the ``divide'' phase of the algorithm must be
+recursive, meaning the input needs to be broken down into smaller parts, which
+do not necessarily align with the structure of the input data. On the other
+hand, a key benefit is the reusability of termination proofs: once the
+correctness of the divide phase is established, the same proof can be reused for
+any other conquer phase we choose. Moreover, in the case of structural
 recursion, the divide phase naturally follows the structure of the data, making
 it correct by definition and eliminating the need for additional proofs.
 
-Implementations of recursion schemes currently focus on non-terminating
+Implementations of recursion schemes generally focus on non-terminating
 languages (e.g. Haskell) and they would benefit from a type-theoretical
 formalisation which leverages the underlying prover's logic to ensure
 correctness of definitions.  While existing mechanisations do exist they either
@@ -314,15 +315,15 @@ do not cover a large subset of the recursion schemes or are not suitable for
 program calculation or code extraction (see Section~\ref{sec:related-work},
 Related Work).
 
-In this work we mechanise hylomorphisms, thus reaping the benefits of their
-generality and their algebraic properties. We do this in a way which allows the
-user to write specifications of their code, reason about program optimisations,
-and eventually extract humanly readable functional code which can be run. Our
-extracted code does not contain unsafe casts. We focus strongly on avoiding
-unsafe casts because, even if the extracted code has been verified, simple
-interoperations with them can lead to incorrect behaviour or even segmentation
-faults~\cite{forster:hal-04329663} and, moreover, it invalidates the
-fast-and-loose principle~\cite{DanielssonHJG06}.
+In this work, we mechanise hylomorphisms, reaping the benefits of their
+generality and algebraic properties. Our approach enables users to write
+high-level specifications for their programs, reason about program
+optimisations, and ultimately extract human-readable, executable functional
+code. The extracted code is free from unsafe casts, a priority in our design. We
+focus strongly on avoiding unsafe casts because, even if the extracted code has
+been verified, simple interoperations with them can lead to incorrect behaviour
+or even segmentation faults~\cite{forster:hal-04329663} and, moreover, it
+invalidates the fast-and-loose principle~\cite{DanielssonHJG06}.
 
 To preserve the generality of hylomorphisms, we encode data structures using
 polynomial functors. To ensure that the extracted code is runnable, we make a
@@ -344,7 +345,7 @@ present the extracted optimised code.
 \section{Recursion Schemes}\label{sec:category-theory}
 The structure of data is very similar to the structure of an algorithm which
 processes that data. This relationship manifests in the form of structured
-recursion schemes which are widely used in functional languages such Haskell.
+recursion schemes, which are widely used in functional languages such Haskell.
 Canonical examples are folds (catamorphisms), which consume data, and unfolds
 (anamorphisms), which produce it. While some implementations of recursion
 schemes like $\operator{foldr}$/$\operator{unfoldr}$ in Haskell are specific to
@@ -352,13 +353,13 @@ a particular data structure, in this case $\operator{List}$s, we can generalise
 further these ideas to account for generic (co)inductive data types and generic
 algorithms operating on them.
 
-Furthermore folds and unfolds can be shown to capture a wide
-range of recursion schemes such as primitive recursion, mutual recursion,
-dynamic programming algorithms, polymorphic recursion, recursion with
-accumulators and so on. However, for divide-and-conquer algorithms folds need to
-be generalised to hylomorphisms which provide the ultimate basic building block
-for any other recursion scheme. This is done by looking at recursion schemes
-from the point of view of category theory.
+Furthermore, folds and unfolds can be shown to capture a wide range of recursion
+schemes, such as primitive recursion, mutual recursion, dynamic programming
+algorithms, polymorphic recursion, and recursion with accumulators. However, for
+divide-and-conquer algorithms, folds need to be generalised to hylomorphisms,
+which provide the ultimate basic building block for any other recursion scheme.
+To do this, we look at recursion schemes from the point of view of category
+theory.
 
 \subsection{Elements of Category Theory}
 A \emph{category} is a collection of objects $A, B, C$, denoted by $\Obj(\CatC)$
@@ -623,9 +624,9 @@ ensuring functoriality.
 
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
-Recursion schemes provide an abstract way to consume and generate data. We now
-proceed onto describing how to formalise hylomorphisms in Coq. We first
-formalise container functors as a tool to represent polynomial functors
+%Recursion schemes provide an abstract way to consume and generate data.
+We now consider the formalisation hylomorphisms in Coq. We first formalise
+container functors as a tool to represent polynomial functors
 (Section~\ref{sec:containers}). Then we formalise algebras for container
 extensions (Section~\ref{sec:coq-algebras}), then we formalise coalgebras
 (Section~\ref{sec:coq-coalg}) and then we put together these notions to
@@ -1057,10 +1058,12 @@ hylomorphism will also hold for any result of doing program calculation.
 In this section we show how programs and their optimisations can be encoded in
 our framework and how can they be extracted to idiomatic functional code.
 Although our examples use OCaml as target language, extraction works equally
-well to other target languages (e.g. Haskell or Lisp). In particular, we show how to formalise
- quicksort (Section~\ref{sec:sorting}), we give an example of dynamic
-programming algorithm, that is knapsack (Section~\ref{sec:knap}), and show examples of the shortcut
-deforestation optimisation (Section~\ref{sec:shortcut}).
+well to other target languages (e.g. Haskell or Scheme). In particular, we show
+how to formalise sorting algorithms by looking at quicksort
+(Section~\ref{sec:sorting}), we show how to formalise dynamic programming
+algorithms by looking at knapsack (Section~\ref{sec:knap}), and, finally, we
+show an example of the shortcut deforestation optimisation
+(Section~\ref{sec:shortcut}).
 %The steps are the following:
 %\begin{enumerate}
 %  \item Write a specification as a morphism \coq{f : A ~> B}.
@@ -1103,9 +1106,9 @@ deforestation optimisation (Section~\ref{sec:shortcut}).
 
 \subsection{Sorting Algorithms}\label{sec:sorting}
 We now focus on divide-and-conquer sorting algorithms and demonstrate how to use
-program calculation to apply a fusion optimisation. Our accompanying code
-contains both mergesort and quicksort as examples, but we will focus on
-quicksort for conciseness.
+program calculation to apply a fusion optimisation. In the supplemental material
+accompanying this paper, we formalise both mergesort and quicksort, but in this
+section, we focus solely on quicksort.
 
 The recursive structure of quicksort is given by the following
 functor
@@ -1175,12 +1178,14 @@ tactic \coq{induction (recP qsplit l)}. Then we can unfold \coq{hylo merge qspli
 \coq{merge \o fmap (hylo merge qsplit) \o qsplit} using hylomorphism
 uniqueness~\ref{sec:coq-rec-coalgebras}. The rest of the proof is standard.
 Overall, our proof is shorter than alternative implementations, and of
-comparable complexity\footnote{The QSort definition and correctness proof in the
-equations
-package is under 200LOC --
-\href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
-and other online proofs of correctness are of similar complexity
-\href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
+comparable complexity.
+%% Commenting out footnote to save space, since we mention the Coq QSort in related work already...
+% \footnote{The QSort definition and correctness proof in the
+% equations
+% package is under 200LOC --
+% \href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
+% and other online proofs of correctness are of similar complexity
+% \href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
 % and can be found in the
 % formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
 
@@ -1347,10 +1352,14 @@ as
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
-Coq's code extraction mechanism is unable to inline several definitions in this
-case. We have manually inlined the extracted code for simplicity. The reader
-can check in our artefact that the extracted code can be trivially
-inlined to produce the following:
+While the extracted code has the expected performance characteristics, Coq's
+code extraction mechanism is unable to inline several definitions in this case.
+We have manually inlined the extracted code for simplicity. The full extracted
+code is available in the artefact accompanying this paper, and an interested
+reader can check that simple inlining would produce the following function:
+% The reader can check
+% in our artefact that the extracted code can be trivially inlined to produce the
+% following:
 \begin{ocamlcode}
 let knapsack wvs x = let (y, _) = (let rec f x0 =
       if x0=0 then
