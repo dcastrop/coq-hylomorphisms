@@ -134,6 +134,8 @@
 \newcommand{\cons}{\operator{cons}}
 \newcommand{\foldr}{\operator{foldr}}
 
+\newcommand{\vcomp}{\circ}
+
 \newmintinline[coq]{coq}{fontsize=\small, breaklines}
 \newmintinline[ocaml]{OCaml}{fontsize=\small}
 \newminted{coq}{fontsize=\small}
@@ -584,32 +586,17 @@ corresponding to
 \[
 F(X) = A + B \times X + C \times X^2.
 \]
-We can model this functor by using a set $S$ defined by $A + B + C$
-
-
-which distinguishes the three cases, and a function $P$ which tells us the
-number of occurrences of $X$ in each case: for $s = (1,a) \mapsto \emptyset$;
-for $s = (2, b) \mapsto 1$ the singleton set and  for $s = (3, c) \mapsto 2$ the
-$2$-element set.
-
-To formalise this we need  a function $p : P \to S$ and a function
-$q : P \times X \to P$.  Here, $S$ serves as a \emph{shape object} that indexes
-the different cases of the functor, while $P$ represents the positions where
-elements of $X$ appear. The projection $p: P \to S$ assigns each position to its
-corresponding shape, and the map $q: P \to P \times X$ describes how these
-positions are instantiated using elements of $X$. The functor associated with
-this data is defined on objects using a dependent sum (to be precise a coend):
-% \[
-% F(X) = S \times_P (P \times X),
-% \]
-% which can also be written as a dependent sum (a coend to be precise)
+We can model this functor by using a \emph{container}~\cite{AbbottAG05}. This is a set $S$
+of \emph{shapes}, for example, $S = A + B + C$ for the example above, together with a function $P(s)$ denoting the exponent of $X$ for each shape.
+Then a container extension is defined as the sum of all maps
+$P(s) \to X$
 \[
 F(X) = \sum_{s \in S} (P(s) \to X)
 \]
-where  \( P(s) = p^{-1}(s) \) called the fiber of \( p \) over \( s \). Given a
-function \( f: X \to Y \), the functor acts by post-composition, mapping an
-element \( (s, p, x) \) in \( F(X) \) to \( (s, p, f(x)) \) in \( F(Y) \),
-ensuring functoriality.
+The functorial action
+of $F$ is given by post-composition, mapping an element \( (s, g) \) in
+\( F(X) \) to \( (s, f \vcomp g ) \) in \( F(Y) \), for $f : A \to B$.
+
 
 % First off, a Given a universe of types $\Type$, a container $S \triangleright P$
 % is defined by a type of \emph{shapes} $S : \Type$ and a \emph{family of position
