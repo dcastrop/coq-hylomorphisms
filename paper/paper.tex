@@ -1118,7 +1118,7 @@ The container encoding \coq{ITreeF} has two shapes, one for leaves and one for
 nodes, and nodes have two positions, one for each sublist \coq{l r : X} in
 \coq{i_node}.
 \begin{coqcode}
-Inductive Tshape L A := | Leaf | Node (ELEM : A).
+Inductive Tshape A := | Leaf | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
 \end{coqcode}
 The container for \coq{ITreeF} is denoted by \coq{TreeF}. For convenience, we
@@ -1130,15 +1130,15 @@ In the definition below, we use \coq{posL} and \coq{posR} as wrappers for
 \begin{coqcode}
 Definition qsplit_f (x : list int) : App (TreeF int) (list int) :=
   match x with
-  | nil => a_leaf tt
+  | nil => a_leaf
   | cons h t => let (l, r) := List.partition (fun x => x <=? h) t in a_node h l r
   end.
 
 Definition merge_f (x : App (TreeF int) (list int)) : list int :=
   let (sx, kx) := x in
   match sx return (Container.Pos sx -> _) -> _ with
-  | Leaf _ _ => fun _ => nil
-  | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
+  | Leaf _ => fun _ => nil
+  | Node h => fun k => List.app (k (posL h)) (h :: k (posR h))
   end kx.
 \end{coqcode}
 The proofs that these are proper morphisms (called \coq{merge} and \coq{qsplit})
@@ -1153,8 +1153,7 @@ full general property can be found in the formalisation:
 Definition respects_relation `{setoid A} (c : Coalg F B) B} (R : B -> B -> Prop)
 := forall x (p : Pos (shape (c x))), R (length (cont (c x) p)) (length x).
 \end{coqcode}
-The resulting code extracted from \coq{hylo merge qsplit} is similar to a
-hand-written implementation:
+The resulting extracted code is similar to a hand-written implementation:
 \begin{ocamlcode}
 let rec qsort = function
   | [] -> []
@@ -1299,7 +1298,7 @@ defined as the greatest solution to the following equation
 In words, these are the (possibly) infinite trees which branch out with shape
 $G$. For example, for the identity functor $\Id_{\infty} A$ is the type of
 infinite streams. For $G X = 1 + X$, the type $G_{\infty} A$ is isomorphic to
-$i \times (1 + G_{\infty} A)$. This is the type representing our memory table
+$A \times (1 + G_{\infty} A)$. This is the type representing our memory table
 with the operation $\head_{A} : G_{\infty} A$ being the result of the previous
 recursive call. Notice that in the case of a recursive $G$-coalgebra this type
 only contains finite $G$-trees and so we can view $G_{\infty}A$ as the finite
