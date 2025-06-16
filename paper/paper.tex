@@ -353,7 +353,7 @@ Canonical examples are folds (catamorphisms), which consume data, and unfolds
 (anamorphisms), which produce it. While some implementations of recursion
 schemes like $\operator{foldr}$/$\operator{unfoldr}$ in Haskell are specific to
 a particular data structure, in this case $\operator{List}$s, we can generalise
-further these ideas to account for generic (co)inductive data types and generic
+these ideas further to account for generic (co)inductive data types and generic
 algorithms operating on them.
 
 Furthermore, folds and unfolds can be shown to capture a wide range of recursion
@@ -373,9 +373,9 @@ C$ there always exists an arrow $A \xrightarrow{g\circ f} C$ obeying the
 associativity law. We denote $\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to
 $B$ and we use the letters $\CatC$, $\CatD$, $\CatE\dots$ for
 categories\footnote[1]{For presentation purposes we shall not deal with size
-  issues and assume all the categories are locally small.}. The initial object
-in a category, denoted by $0$, is the object such that for any other object $A$
-there is a unique arrow $0 \xrightarrow{!} A$.  Dually, the terminal object,
+  issues and assume all the categories are locally small.}. The initial object (when it exists), denoted by $0$,
+is the object such that for any other object $A$
+there is a unique arrow $0 \xrightarrow{!} A$.  Dually, the terminal object (when it exists),
 denoted by $1$, is the object such that for any other object $A$ there is a
 unique arrow $A \xrightarrow{!} 1$. As a result of the uniqueness properties, initial and terminal objects are unique up-to
 isomorphism.
@@ -420,17 +420,18 @@ constructed from the isomorphism.
 Given two functors $F, G : \CatC \to \CatD$, a \emph{natural transformation} is
 is a family of morphisms $\phi_{X} : FX \to GX$ indexed
 by the objects $X \in \Obj(\CatC)$ and such that it is \emph{natural} in $X$,
-that is $ G(f) \cdot \phi_{X} = \phi_{Y} \cdot F(f)$. Intuitively, a natural
-transformation transforms the structure of a functor into the structure of
-another functor without assuming what is the type of data contained in them, for
+that is $ G(f) \cdot \phi_{X} = \phi_{Y} \cdot F(f)$, for all morphisms
+$f : X \to Y$. Intuitively, a natural transformation is akin to a polymorphic
+function transforming the structure of a functor into the structure of another
+functor without assuming what is the type of data contained in them.  For
 example, a program $f : \texttt{List }X \to \texttt{Maybe} X$ which returns
-nothing if the list is empty and the head of the list otherwise needs not to
-know the type of the data.
+nothing if the list is empty and the head of the list otherwise can work for all
+types $X$ uniformly because it needs not to inspect the data inside the list.
 
 
 \subsection{Algebras and Catamorphisms}
 \label{sec:algebras}
-For a functor $F : \CatC \to \CatC$ an $F$-\emph{algebra} is a pair $(X,a_{X})$
+For an endofunctor $F : \CatC \to \CatC$ an $F$-\emph{algebra} is a pair $(X,a_{X})$
 where $X$ is an object of the category called the \emph{carrier} of the algebra
 and $a_{X}$ is an arrow of type $FX \to X$ called the \emph{structure map}.
 The category of $F$-algebras, denoted by $F\Alg(\CatC)$, is the category where
@@ -446,7 +447,7 @@ $\InIso : F \mu F \to \mu F$ is the $F$-algebra  witnessing the
 isomorphism $F\mu F \iso \mu F$, furthermore  $\InOp : \mu F \to F \mu F$ is the
 inverse of $\InIso$. The uniqueness property of initial $F$-algebras states that for any other
 $F$-algebra $(X, a_{X})$ there exists a unique $F$-algebra homomorphism, denoted
-by $\cata{\beta} : (\mu F, \InIso) \to (X, a_{X})$ and pronounced
+by $\cata{\alpha_{X}} : (\mu F, \InIso) \to (X, a_{X})$ and pronounced
 ``\emph{catamorphism}'' or ``\emph{fold}'' satisfying:
 \begin{equation}
   \label{eq:cata:unique}
@@ -480,14 +481,11 @@ a $B$-\emph{coalgebra} is a pair $(X, c_{X})$ where $X \in \Obj(\CatC)$ is the
 carrier of the coalgebra and $c_{X} : X \to BX$ is a morphism.
 
 For example, for a set of states $X$ and a finite set of labels $L$ we can
-define a labelled transition system (LTS) on $X$ as a function $X \to BX$
+define a labelled transition system (LTS)~\cite{WinskelM95} on $X$ as a function $X \to BX$
 implementing the \emph{transition system} with $BX = L \times X$.  In
 particular, for a state $x_{1} \in X$, $c(x_{1})$ returns a pair $(l, x_{2})$
 where $l \in L$ is the observable action and $x_{2} \in X$ is the next state.
-In this case, we can even set some notation for the transition map:
-\[
-  x \xrightarrow{l} y \eqdef c_{X}(x) = (l, y)
-\]
+
 The category of $B$-coalgebras, denoted $B\Coalg$, is the category where objects
 are $B$-coalgebras and morphisms $f : (X, c_{X}) \to (Y, c_{Y})$ are
 $B$-coalgebra homomorphisms $f : A \to B$, that is
@@ -498,7 +496,7 @@ $(\nu B, \OutIso)$ with $\OutIso$ being the final $B$-coalgebra witnessing the
 isomorphism and $\OutIso^{\circ} : B\nu B \to \nu B$ being its inverse.
 
 For example, the terminal coalgebra for the functor $BX = A \times X$ is the set
-of infinite streams over the set $A$, that is the greatest solution to the domain equation
+of infinite streams over the set $A$, that is the greatest solution to the equation
 $\Str{A} \iso A \times \Str{A}$.  The uniqueness property of terminal
 $B$-coalgebras states that for any other $B$-coalgebra $(X, c_{X})$ there exists
 a unique $B$-coalgebra homomorphism into the terminal coalgebra
@@ -535,8 +533,8 @@ A solution to this equation does not exist for an arbitrary algebra and
 coalgebra pair and, in fact, a definition like this cannot be accepted by Coq.
 
 A coalgebra $(C,c)$ is \emph{recursive} if for every algebra $(A, a)$ there is a
-\emph{unique} hylo $(C,c ) \rightarrowtail (A, a)$. We denote these type of
-hylos by $\hylo{c}{a}$.
+\emph{unique} hylo $(C,c ) \rightarrowtail (A, a)$~\cite{CaprettaUV04,AdamekMM19}. We denote these
+type of hylos by $\hylo{c}{a}$.
 
 An example of a recursive coalgebra is the \coq{partition} function used in
 quicksort, which has the type $\text{List } A \to B(\text{List } A)$, where the
@@ -569,12 +567,12 @@ hylomorphisms yields the following fusion laws:
   c \circ f = F(f) \circ c'
 \end{align}
 Using the hylomorphism fusion laws, we can prove the well-known \emph{deforestation
-optimisation}, also known as the \emph{composition
+optimisation}~\cite{Wadler90}, also known as the \emph{composition
 law}~\cite{DBLP:conf/ifl/HinzeHJ10}. This is when two consecutive recursive
 computations, one that builds a data structure, and another one that consumes
-it, can be fused together into a single recursive definition. This, in turn,
-allows us to prove that a recursive hylomorphism is the composition of a
-catamorphism and a recursive anamorphism.
+it, can be fused together into a single recursive definition. % This, in turn,
+% allows us to prove that a recursive hylomorphism is the composition of a
+% catamorphism and a recursive anamorphism.
 
 \paragraph*{Recursive Anamorphisms}
 Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
@@ -590,7 +588,7 @@ and the fact that recursive anamorphisms satisfy the same equation.
 
 \subsection{Polynomial Functors}
 Recursion schemes are formulated using generic functors that encapsulate the
-structure of the recursive operator. However, since not all functors have the
+structure of the recursive operator. However, since not all functors have
 suitable fixed points, it is necessary to restrict our focus to \emph{strictly
 positive functors}.
 
@@ -639,8 +637,8 @@ of $F$ is given by post-composition, mapping an element \( (s, g) \) in
 We now consider the formalisation of hylomorphisms in Coq. We first formalise
 container functors as a tool to represent polynomial functors
 (Section~\ref{sec:containers}). Then we formalise algebras for container
-extensions (Section~\ref{sec:coq-algebras}), then we formalise coalgebras
-(Section~\ref{sec:coq-coalg}) and then we put together these notions to
+extensions (Section~\ref{sec:coq-algebras}). In
+Section~\ref{sec:coq-coalg} we formalise coalgebras and put together these notions to
 formalise recursive coalgebras and hylomorphisms
 (Section~\ref{sec:coq-rec-coalgebras}).
 
@@ -763,7 +761,7 @@ Definition ana_f_ (c : Coalg F A) :=
 
 Definition ana : forall `{setoid A}, Coalg F A ~> A ~> GFix F := (*...*)
 \end{coqcode}
-From this definition the universality property falls out:
+From this definition the universal property falls out:
 \begin{coqcode}
 Lemma ana_univ `{eA : setoid A} (h : Coalg F A) (f : A ~> GFix F)
 : f =e ana h <-> f =e g_in \o fmap f \o h.
@@ -895,47 +893,6 @@ Lemma deforest (h1 : RCoalg F A) (g2 : Alg F C) (g1 : Alg F B) (h2 : RCoalg F B)
   : h2 \o g1 =e id -> hylo g2 h2 \o hylo g1 h1 =e hylo g2 h1.
 \end{coqcode}
 
-% \subsection{Recursive Anamorphisms}
-% Anamorphisms applied to recursive coalgebras specialise to hylomorphisms into an
-% inductive data type in the following way.  Intuitively, a recursive coalgebra
-% can be applied only finitely many times, therefore when this is applied to an
-% anamorphism the only possible traces it can produce from the seed function are
-% the finite ones. We denote this special kind of recursion scheme \emph{recursive
-% anamorphism}.  We can show that recursive anamorphisms of type \coq{X -> GFix F}
-% can also be given the type \coq{X -> LFix F}. Moreover, these anamorphisms are
-% exactly hylomorphisms on the recursive \coq{F}-coalgebra and the
-% algebra \coq{In} for the inductive data type \coq{LFix F}. This fact falls out
-% from the universality property of the hylomorphism and the fact that recursive
-% anamorphisms satisfy the same equation.
-%
-% We now show how this is proven in the Coq development. First we define a
-% recursive anamorphism as a function into \coq{LFix F}:
-% \begin{coqcode}
-% Definition rana_f__ `{setoid A} (c : Coalg F A)
-%   : forall x : A, RecF c x -> LFix F
-%   := fix f (x : A) (H : RecF c x) :=
-%        let hx := c x in
-%        LFix_in (MkApp (shape hx) (fun e => f (cont hx e) (RecF_inv H e))).
-%
-% Definition rana `{eA : setoid A} : RCoalg A ~> A ~> LFix F := ...
-% \end{coqcode}
-% We omit the boilerplate details to obtain the setoid morphism.
-% The recursive anamorphism has the following universality property:
-% \begin{coqcode}
-% Lemma rana_univ A {eA : setoid A} (h : RCoalg A) (f : A ~> LFix F)
-%     : f =e rana h <-> f =e l_in \o fmap f \o h.
-% \end{coqcode}
-% We can now show that every hylomorphism is composed by a recursive anamorphism
-% followed by a catamorphism:
-% \begin{coqcode}
-% Corollary cata_ana_hylo `(F : Cont Sh P) `{setoid A} `{setoid B}
-%   (g : Alg F B) (h : RCoalg F A)
-% : cata g \o rana h =e hylo g h.
-% \end{coqcode}
-% This result will allow us to \emph{calculate} programs by providing small, easy
-% to verify implementations, and combining them into efficient recursive functions
-% by using Coq's proofs of hylomorphism laws as optimisation passes.
-
 \subsubsection{On the subtype of finite elements}
 As we mention in
 Section~\ref{sec:category-theory}, we define recursive anamorphisms as
@@ -949,7 +906,7 @@ element of a coinductive data type is finite:
 Definition FinF : GFix F -> Prop := RecF g_out.
 \end{coqcode}
 Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
-is isomorphic its corresponding the inductive data type \coq{LFix F}.
+is isomorphic to its corresponding inductive data type \coq{LFix F}.
 We show this by
 defining a catamorphism \coq{ccata_f_} from the
 subtype \coq{{x : GFix F | FinF x}} of finitary elements of \coq{GFix F} to
@@ -974,7 +931,7 @@ Lemma ccata_cata `{setoid A} : ccata l_in \o cata lg_in =e id.
 The finite subtype of \coq{GFix F} allows us to compose
 catamorphisms and anamorphisms, by using the above isomorphism. In our work,
 however, we use \emph{recursive} anamorphisms, defined as hylomorphisms on the
-recursive recursive coalgebra \coq{c}, and the initial \coq{F}-algebra:
+ recursive coalgebra \coq{c}, and the initial \coq{F}-algebra:
 \begin{coqcode}
 Definition rana c := hylo l_in c.
 \end{coqcode}
@@ -1279,7 +1236,7 @@ Definition qsort_times_two := Lmap times_two \o hylo merge qsplit.
 \end{coqcode}
 where \coq{Lmap times_two} is a list map function defined as a hylomorphism, and
 \coq{times_two} multiplies every element of the list by two. We can use Coq's
-generalised rewriting and \coq{hylo_fusion_l} to fuse \coq{times_two} into
+generalised rewriting~\cite{Sozeau09} and \coq{hylo_fusion_l} to fuse \coq{times_two} into
 \coq{hylo merge qsplit} which gives the program \coq{hylo (merge \o natural times_two) qsplit}.
 In this definition, \coq{natural} defines a natural transformation by applying
 \coq{times_two} to the shapes thus multiplying every pivot by two.
@@ -1338,8 +1295,7 @@ Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
   := headT \o hylo (consT \o pair a id) c.
 \end{coqcode}
 Note the map \coq{App G Table ~> A} corresponding to a map $G G_{\infty}A \to A$
-is not a $G$-algebra.  To recover the $G$-algebra we pair it with the identity
-map and  so we need to transmogrify it by pairing it with the identity map and
+is not a $G$-algebra.  To recover the $G$-algebra we need to transform it by pairing it with the identity map and
 post-composing it with \coq{consT}. This algebra uses this table to lookup
 elements, instead of triggering a further recursive call, then elements are
 inserted into the memoisation table by the use of \coq{consT} to the result of
@@ -1395,7 +1351,7 @@ Meijer~\cite{TakanoM95}
 \begin{coqcode}
 Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
 \end{coqcode}
-which uses three different hylomorphisms can be fused into one.
+which uses that three different hylomorphisms can be fused into one.
 Here \coq{sf1} is the composition of \coq{length},
 \coq{Lmap f} and \coq{append ys} which are, in particular,
 catamorphisms.
@@ -1515,7 +1471,7 @@ hylomorphisms as axioms.
 % \label{sec:reccoq}
 Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
 using a recursion scheme in which termination is entirely enforced by its
-typing. This is a significant advance, since it avoids \emph{completely} the
+typing. This is a significant advance, since it \emph{completely} avoids the
 need for termination proofs. Their work differs from ours in that they require
 the functional extensionality axiom, and the use of impredicative \coq{Set}. The
 authors justify well the use of impredicative \coq{Set} and its compatibility
@@ -1562,7 +1518,7 @@ compiler~\cite{10.1145/3133900}. The correctness of tree traversal fusion has
 been verified mechanically in Coq~\cite{10.1145/3377555.3377884}, but the
 authors do not formalise unfolds and hylomorphisms.
 
-Another related family transformations are worker/wrapper
+Another related family of transformations are worker/wrapper
 transformations~\cite{gill09}, which have been used in the context of optimising
 compilers, and have been mechanised in Agda~\cite{SCULTHORPE_HUTTON_2014}. This
 technique has been applied to improving the performance of programs defined
