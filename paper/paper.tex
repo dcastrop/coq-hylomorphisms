@@ -265,7 +265,7 @@ function directly:
 let rec sort_times_two = function
   | [] -> []
   | h :: t -> let (l, r) = partition (fun x -> x < h) t in
-  sort_times_two l @ (h * 2) :: sort_times_two t
+  sort_times_two l @ (h * 2) :: sort_times_two r
 \end{minted}
 
 This program is the same as composing a \emph{quicksort} OCaml implementation,
@@ -418,7 +418,7 @@ maps $\head : \Str{A} \to A$ and $\tail : \Str{A} \to \Str{A}$ can be easily
 constructed from the isomorphism.
 
 Given two functors $F, G : \CatC \to \CatD$, a \emph{natural transformation} is
-a map between functors is a family of morphisms $\phi_{X} : FX \to GX$ indexed
+is a family of morphisms $\phi_{X} : FX \to GX$ indexed
 by the objects $X \in \Obj(\CatC)$ and such that it is \emph{natural} in $X$,
 that is $ G(f) \cdot \phi_{X} = \phi_{Y} \cdot F(f)$. Intuitively, a natural
 transformation transforms the structure of a functor into the structure of
@@ -465,7 +465,7 @@ optimisation as we shall see.
 
 For example, for a set $A$ we define the functor $F : \Set \to \Set$ mapping
 $X \mapsto 1 + A \times X$. An $F$-algebra is a set $B$ together with a
-structure map $[b, i] : 1 + A \times B \to B$. The initial $F$-algebra is
+structure map $[base, step] : 1 + A \times B \to B$. The initial $F$-algebra is
 clearly the set of lists $\List{A}$ and the catamorphism associated with the
 type of lists is the unique arrow which recursively translates the initial
 algebra $[\nil,\cons]$ into the algebra $[base, step]$ while turning the operation
@@ -495,10 +495,10 @@ $ c_{Y} \circ f = F(f) \circ c_{X}$. The terminal object in this category is
 called the terminal, or final, $B$-coalgebra. The carrier of this coalgebra
 corresponds to the greatest fixed-point for the functor $B$, denoted by
 $(\nu B, \OutIso)$ with $\OutIso$ being the final $B$-coalgebra witnessing the
-isomorphism and $\OutIso : \nu B \to B\nu B$ being its inverse.
+isomorphism and $\OutIso^{\circ} : B\nu B \to \nu B$ being its inverse.
 
-For example, the terminal coalgebra for the functor $BX = L \times X$ is the set
-of infinite streams, that is the greatest solution to the domain equation
+For example, the terminal coalgebra for the functor $BX = A \times X$ is the set
+of infinite streams over the set $A$, that is the greatest solution to the domain equation
 $\Str{A} \iso A \times \Str{A}$.  The uniqueness property of terminal
 $B$-coalgebras states that for any other $B$-coalgebra $(X, c_{X})$ there exists
 a unique $B$-coalgebra homomorphism into the terminal coalgebra
@@ -538,11 +538,23 @@ A coalgebra $(C,c)$ is \emph{recursive} if for every algebra $(A, a)$ there is a
 \emph{unique} hylo $(C,c ) \rightarrowtail (A, a)$. We denote these type of
 hylos by $\hylo{c}{a}$.
 
-An example of a recursive coalgebra is the \coq{partition} function in quicksort
-which destructures a list into a pivot and two sub-list and as long as the
-sub-lists are smaller the partitioning function still yields a unique solution to
-the recursion scheme.  The uniqueness property of the hylomorphisms yields the following
-fusion laws:
+An example of a recursive coalgebra is the \coq{partition} function used in
+quicksort, which has the type $\text{List } A \to B(\text{List } A)$, where the
+functor $B$ is defined as $BX = X \times A \times X$. This function deconstructs
+a list by selecting a pivot element of type $A$ and splitting the remaining
+elements into two sublists.
+
+Notice that the initial algebra for lists corresponds to the functor
+$F X = 1 + A \times X$ and its associated algebra map (or its inverse, viewed as
+a coalgebra), $\InOp$ has the type $\text{List } A \to F(\text{List
+} A)$. Importantly, \coq{partition} is not this map, which means that it does
+not arise from the standard initial algebra structure, and thus catamorphisms
+here cannot be used to define recursive functions.
+
+Nevertheless, since \coq{partition} always produces sublists that are strictly
+smaller than the input list, it still supports a well-founded recursion scheme,
+ensuring the existence of a unique solution. The uniqueness property of the
+hylomorphisms yields the following fusion laws:
 \begin{align}
   \label{eq:hylo:fusion}
   f \circ \hylo{c}{a} & = \hylo{c}{a'}
@@ -624,7 +636,7 @@ of $F$ is given by post-composition, mapping an element \( (s, g) \) in
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
 %Recursion schemes provide an abstract way to consume and generate data.
-We now consider the formalisation hylomorphisms in Coq. We first formalise
+We now consider the formalisation of hylomorphisms in Coq. We first formalise
 container functors as a tool to represent polynomial functors
 (Section~\ref{sec:containers}). Then we formalise algebras for container
 extensions (Section~\ref{sec:coq-algebras}), then we formalise coalgebras
@@ -710,7 +722,7 @@ define it as a proper morphism:
 \begin{coqcode}
 cata : forall `{setoid A}, Alg F A ~> LFix ~> A
 \end{coqcode}
-Finally, we prove that catamorphisms satisfy their universality property (see
+Finally, we prove that catamorphisms satisfy their universal property (see
 Section~\ref{sec:category-theory}):
 \begin{coqcode}
 Lemma cata_univ `{eA : setoid A} (alg : Alg F A) (f : LFix ~> A)
