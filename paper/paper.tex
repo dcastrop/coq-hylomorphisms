@@ -167,7 +167,7 @@
 {University Of Kent, Canterbury, CT2 7NZ, United Kingdom}%
 {D.Castro-Perez@kent.ac.uk}%
 {0000-0002-6939-4189}%
-{}
+{EP/Y00339X/1, EP/T014512/1}
 \author{Marco Paviotti}%
 {University Of Kent, Canterbury, CT2 7NZ, United Kingdom}%
 {M.Paviotti@kent.ac.uk}%
@@ -647,7 +647,13 @@ formalise recursive coalgebras and hylomorphisms
 A direct encoding of containers as presented in
 Section~\ref{sec:category-theory} requires the use of the functional
 extensionality axiom, and axiom K to deal with equalities of objects of type
-$P(s) \to X$. Furthermore, upon extraction Coq will need to insert unsafe casts for
+$P(s) \to X$. Axiom K states that a predicate on equality proofs holds for all
+such proofs if it holds for reflexivity. This would be needed to reason about
+the equality of any two $f : P(s_1) \to X$ and $g : P(s_2) \to X$, when $s_1 =
+s_2$. In Coq, if we know $(s_1 , f) = (s_2 , g)$, we cannot extract a proof that
+$f = g$ unless we assume axiom K, or the equality on the type of $s_1$ and $s_2$
+is decidable.  Furthermore, upon extraction Coq will need to insert unsafe casts
+for
 anything of type $P(s)$.  To avoid these problems, we use \emph{setoids}, and
 encode families of positions using \emph{decidable validity predicates}.
 
@@ -687,8 +693,8 @@ given by the carrier \coq{A}, and the \emph{structure map} of type:
 \begin{coqcode}
 Notation Alg F A := (App F A ~> A).
 \end{coqcode}
-The initial \coq{F}-algebra can be defined as the inductive type with a finite
-number of \coq{App F}
+We define the initial \coq{F}-algebra as the inductive type which is constructed
+by applying \coq{App F} finitely many times.
 \begin{coqcode}
 Inductive LFix F : Type := LFix_in { LFix_out : App F (LFix F) }.
 \end{coqcode}
@@ -700,25 +706,30 @@ defined by the empty list \coq{Empty : unit -> LFix F} and the cons operation
 \coq{Cons : A * LFix F -> LFix F}.
 
 The \coq{LFix F} setoid equality is the least fixed point of the \coq{App F}
-setoid equality. We define smart constructors for the isomorphism of least fixed
+setoid equality, i.e. if \coq{LFixR F} represents the setoid equality of
+\coq{LFix F}, and we have two \coq{x y : LFix F}, then \coq{LFixR F x y} iff
+\begin{coqcode}
+shape x =e shape y /\ (forall p p', projT1 p = projT1 p' -> LFixR F (cont x p) (cont y p'))
+\end{coqcode}
+We define smart constructors for the isomorphism of least fixed
 points as proper morphisms:
 \begin{coqcode}
 l_in : App F (LFix F) ~> LFix F         l_out : LFix F ~> App F (LFix F)
 \end{coqcode}
-
 Catamorphisms are constructed so that they structurally deconstruct the
 datatype, call themselves recursively, and then compose the result using an
 \coq{F}-algebra.
 \begin{coqcode}
-Definition cata_f (a : Alg F A) : LFix -> A
+Definition cata_f (a : Alg F A) : LFix F -> A
   := fix f (x : LFix) := match x with
         | LFix_in x => a {shape := shape x; cont := fun e => f (cont x e)}
         end.
 \end{coqcode}
 It is easy to prove that catamorphisms respect setoid equalities.  In fact, we
-define it as a proper morphism:
+define it as a setoid morphism between the setoid of \coq{F}-algebras and the
+setoid of functions from \coq{LFix F} to \coq{A}:
 \begin{coqcode}
-cata : forall `{setoid A}, Alg F A ~> LFix ~> A
+cata : forall `{setoid A}, Alg F A ~> (LFix F ~> A)
 \end{coqcode}
 Finally, we prove that catamorphisms satisfy their universal property (see
 Section~\ref{sec:category-theory}):
@@ -777,9 +788,8 @@ algorithms where the input is first destructured (\emph{divide}) in smaller
 parts by means of a coalgebra which are computed recursively and then composed
 back together (\emph{conquer}) by means of an algebra.
 
-As we mentioned in Section~\ref{sec:category-theory}, given an $F$-algebra and
-$F$-coalgebra, the hylomorphism is the unique solution (when it exists) to the
-equation
+As we mentioned in Section~\ref{sec:category-theory}, given an $F$-algebra $a$ and
+$F$-coalgebra $c$, $f$ is a hylomorphism if it satisfies
 \[
   f = a \circ F\; f \circ c
 \]
@@ -798,12 +808,16 @@ on an input:
 Inductive RecF (h : Coalg F A) : A -> Prop :=
 | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
 \end{coqcode}
-For convenience, we equip recursive coalgebras with an additional proof of termination:
+\coq{RecF} represents that a coalgebra will eventually terminate on an input.
+The base case takes place when the set of valid positions in the
+container extension returned by \coq{h x} is empty.  For convenience, we equip
+recursive coalgebras with an additional proof of termination:
 \begin{coqcode}
 Notation RCoalg F A := ({ c : Coalg F A | forall x, RecF c x }).
 \end{coqcode}
-Recursive hylomorphisms are implemented in Coq recursively on the structure of
-the proof that the anamorphism terminates on an input:
+Recursive hylomorphisms are implemented by structural recursion on the proof
+that coalgebra \coq{c} eventually terminates for some input \coq{x}
+(\coq{RecF c x}).
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A) : forall (x : A), RecF c x -> B
   := fix f x H
@@ -899,12 +913,14 @@ Section~\ref{sec:category-theory}, we define recursive anamorphisms as
 hylomorphisms built by using a recursive coalgebra, and the respective
 initial \coq{F}-algebra.
 In other words, in this development we have defined recursive anamorphisms on
-inductive data types.  We might have as well defined them on the subtype of
+inductive data types.  We might as well have defined them on the subtype of
 finite elements of coinductive data types using a predicate which states when an
 element of a coinductive data type is finite:
 \begin{coqcode}
 Definition FinF : GFix F -> Prop := RecF g_out.
 \end{coqcode}
+\coq{FinF} represents finiteness since it must contain a base case with no
+positions, after a finite number of applications of \coq{g_out}.
 Now the subtype \coq{{x : GFix F | FinF x}} of finite elements for \coq{GFix F}
 is isomorphic to its corresponding inductive data type \coq{LFix F}.
 We show this by
@@ -932,9 +948,7 @@ The finite subtype of \coq{GFix F} allows us to compose
 catamorphisms and anamorphisms, by using the above isomorphism. In our work,
 however, we use \emph{recursive} anamorphisms, defined as hylomorphisms on the
  recursive coalgebra \coq{c}, and the initial \coq{F}-algebra:
-\begin{coqcode}
-Definition rana c := hylo l_in c.
-\end{coqcode}
+\coq{hylo l_in c}.
 The main advantage of this definition is that recursive anamorphisms compose
 with catamorphisms without the need to reason about termination and finiteness
 of values.
@@ -1078,7 +1092,7 @@ accompanying this paper, we formalise both mergesort and quicksort, but in this
 section, we focus solely on quicksort. The recursive structure of quicksort is
 given by the following functor
 \begin{coqcode}
-Inductive ITreeF N X := i_leaf | i_node (n : N) (l r : X)
+Inductive ITreeF A X := i_leaf | i_node (n : A) (l r : X)
 \end{coqcode}
 The idea is that a list is either empty or is split into a pivot which is
 represented by node of type \coq{N} and the two sublists of type \coq{X}.
@@ -1089,6 +1103,13 @@ nodes, and nodes have two positions, one for each sublist \coq{l r : X} in
 \begin{coqcode}
 Inductive Tshape A := | Leaf | Node (ELEM : A).
 Inductive Tpos := | Lbranch | Rbranch. 
+\end{coqcode}
+The validity predicate, \coq{valid_f} below, simply specifies that positions are
+only valid in \coq{Node}. Our tactics automatically discharge the necessary
+proofs to construct the respective setoid morphism.
+\begin{coqcode}
+Definition valid {A} (x : Tshape A * Tp) : bool :=
+  match x with | (Node _ _, _)  => true | _ => false end.
 \end{coqcode}
 The container for \coq{ITreeF} is denoted by \coq{TreeF}. For convenience, we
 define the wrappers \coq{a_leaf} and \coq{a_node} to construct values of the
@@ -1112,15 +1133,13 @@ Definition merge_f (x : App (TreeF int) (list int)) : list int :=
 \end{coqcode}
 The proofs that these are proper morphisms (called \coq{merge} and \coq{qsplit})
 are automatically discharged by our tactics, but we still have to prove that the
-coalgebra \coq{qsplit} is recursive. In this specific case we have to prove that
-the two sublists are smaller than the input list. In general, we are required to
-prove that the input is related to the data inside the structure functor, that
-is that the element of the carrier of the coalgebra is related to the content of
-the functor by some well-founded relation. Here we give a specialised property, the
-full general property can be found in the formalisation:
+coalgebra \coq{qsplit} is recursive. In general, we know that if the input is
+related to the data inside the structure functor returned by the coalgebra by
+some \emph{well-founded relation} \coq{R}, then the coalgebra is recursive. In
+this specific case, it is sufficient to show that the two sublists are smaller
+than the input list.
 \begin{coqcode}
-Definition respects_relation `{setoid A} (c : Coalg F B) B} (R : B -> B -> Prop)
-:= forall x (p : Pos (shape (c x))), R (length (cont (c x) p)) (length x).
+  forall x (p : Pos (shape (qsplit x))), length (cont (qsplit x) p) < length x.
 \end{coqcode}
 The resulting extracted code is similar to a hand-written implementation:
 \begin{ocamlcode}
@@ -1144,14 +1163,14 @@ uniqueness~\ref{sec:coq-rec-coalgebras}. The rest of the proof is standard.
 Overall, our proof is shorter than alternative implementations, and of
 comparable complexity.
 %% Commenting out footnote to save space, since we mention the Coq QSort in related work already...
-% \footnote{The QSort definition and correctness proof in the
-% equations
-% package is under 200LOC --
-% \href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
-% and other online proofs of correctness are of similar complexity
-% \href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
-% and can be found in the
-% formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
+\footnote{The QSort definition and correctness proof in the
+equations
+package is under 200LOC --
+\href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
+and other online proofs of correctness are of similar complexity
+\href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
+and can be found in the
+formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
 
 % \subsubsection{Mergesort}
 
@@ -1278,23 +1297,23 @@ In our framework, we formalise $G$ as a container with shape \coq{Sg} and
 position \coq{Pg}, then \coq{Memo} is the least fixed-point of the functor
 $F X = A \times GX$:
 \begin{coqcode}
-Instance Memo : Cont (A * Sg) Pg := { valid := valid \o pair (snd \o fst) snd }.
-Definition Table := LFix Memo.
+Instance Memo A : Cont (A * Sg) Pg := { valid := valid \o pair (snd \o fst) snd }.
+Definition Table A := LFix (Memo A).
 \end{coqcode}
 The operations of the cofree comonad \coq{Memo} are the \coq{Cons}, the \coq{headT} and the \coq{tailT}:
 \begin{coqcode}
-Definition consT : A * App G Table ~> Table := (* *)
-Definition headT : Table ~> A := (* *)
-Definition tailT : Table ~> App G Table := (* *)
+Definition consT A : A * App G (Table A) ~> Table A := (* *)
+Definition headT A : Table A ~> A := (* *)
+Definition tailT A : TableA  ~> App G (Table A) := (* *)
 \end{coqcode}
 Finally, we define a dynamorphism as a hylomorphism from a type \coq{B} into a
 type \coq{Table} post-composed with the \coq{headT} map which outputs the last
 result from the memory table:
 \begin{coqcode}
-Definition dyna (a : App G Table ~> A) (c : RCoalg G B) : B ~> A
+Definition dyna A (a : App G (Table A) ~> A) (c : RCoalg G B) : B ~> A
   := headT \o hylo (consT \o pair a id) c.
 \end{coqcode}
-Note the map \coq{App G Table ~> A} corresponding to a map $G G_{\infty}A \to A$
+Note the map \coq{App G (Table A) ~> A} corresponding to a map $G G_{\infty}A \to A$
 is not a $G$-algebra.  To recover the $G$-algebra we need to transform it by pairing it with the identity map and
 post-composing it with \coq{consT}. This algebra uses this table to lookup
 elements, instead of triggering a further recursive call, then elements are
