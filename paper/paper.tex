@@ -230,7 +230,7 @@
   This paper presents the first Coq formalisation of \emph{hylomorphisms}
   allowing for the mechanisation of all recognised recursive algorithms. The key
   contribution of this paper is that this formalisation is fully
-  \emph{axiom-free} allowing for the extraction of safe, idiomatic functional
+  \emph{axiom-free}, and it allows the extraction of safe, idiomatic functional
   code. We exemplify the framework by formalising a series of algorithms based
   on different recursive paradigms such as divide-and conquer, dynamic
   programming, and mutual recursion and demonstrate that the extracted
@@ -329,9 +329,9 @@ or even segmentation faults~\cite{forster:hal-04329663} and, moreover, it
 invalidates the fast-and-loose principle~\cite{DanielssonHJG06}.
 
 To preserve the generality of hylomorphisms, we encode data structures using
-polynomial functors. To ensure that the extracted code is runnable, we make a
-conscious effort to stay axiom-free and avoid using indexed types in the
-definition of our recursion schemes.
+polynomial functors. To ensure that the extracted code is runnable, avoid using
+indexed types in the definition of our recursion schemes. To strengthen the
+results of this paper, we avoid all axioms.
 
 We list the contributions of this paper. First, in
 Section~\ref{sec:category-theory}, we provide the theoretical background on
@@ -654,7 +654,9 @@ s_2$. In Coq, if we know $(s_1 , f) = (s_2 , g)$, we cannot extract a proof that
 $f = g$ unless we assume axiom K, or the equality on the type of $s_1$ and $s_2$
 is decidable.  Furthermore, upon extraction Coq will need to insert unsafe casts
 for
-anything of type $P(s)$.  To avoid these problems, we use \emph{setoids}, and
+anything of type $P(s)$, because OCaml requires the input value to have a type that is identical to the function parameter, and
+in the general case this cannot be done in OCaml.
+To avoid these problems, we use \emph{setoids}, and
 encode families of positions using \emph{decidable validity predicates}.
 
 In our formalisation, we require that every type is a setoid, where \coq{x =e y}
@@ -709,7 +711,8 @@ The \coq{LFix F} setoid equality is the least fixed point of the \coq{App F}
 setoid equality, i.e. if \coq{LFixR F} represents the setoid equality of
 \coq{LFix F}, and we have two \coq{x y : LFix F}, then \coq{LFixR F x y} iff
 \begin{coqcode}
-shape x =e shape y /\ (forall p p', projT1 p = projT1 p' -> LFixR F (cont x p) (cont y p'))
+shape x =e shape y /\ (forall p p', projT1 p = projT1 p'
+   -> LFixR F (cont x p) (cont y p'))
 \end{coqcode}
 We define smart constructors for the isomorphism of least fixed
 points as proper morphisms:
@@ -794,10 +797,10 @@ $F$-coalgebra $c$, $f$ is a hylomorphism if it satisfies
   f = a \circ F\; f \circ c
 \]
 As we stated earlier, a solution to this equation does not exist for an
-arbitrary  algebra/coalgebra pair and, in fact, this definition cannot be
-accepted by Coq.
+arbitrary  algebra/coalgebra pair and, in fact, a recursive function definition
+like this cannot be directly accepted by Coq.
 
-In order to find a solution we restrict ourselves to the so-called
+In order to find the unique solution we restrict ourselves to the so-called
 \emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  We mechanise
 \emph{recursive hylomorphisms} which are guaranteed to have a unique solution to
 the hylomorphism equation. These are hylomorphisms where the coalgebra is
@@ -1141,6 +1144,9 @@ than the input list.
 \begin{coqcode}
   forall x (p : Pos (shape (qsplit x))), length (cont (qsplit x) p) < length x.
 \end{coqcode}
+We can directly write mergesort as \coq{hylo merge qsplit}, or derive it by
+program calculation from the composition of \coq{cata merge}, and the
+recursive anamorphism \coq{hylo l_in qsplit}.
 The resulting extracted code is similar to a hand-written implementation:
 \begin{ocamlcode}
 let rec qsort = function
@@ -1159,9 +1165,9 @@ The proof is by induction on the fact that \coq{qsplit} is recursive. This means
 that \coq{qsplit} terminates on \coq{l}.  In practice this is done by using the
 tactic \coq{induction (recP qsplit l)}. Then we can unfold \coq{hylo merge qsplit} to
 \coq{merge \o fmap (hylo merge qsplit) \o qsplit} using hylomorphism
-uniqueness~\ref{sec:coq-rec-coalgebras}. The rest of the proof is standard.
+uniqueness (Section~\ref{sec:coq-rec-coalgebras}). The rest of the proof is standard.
 Overall, our proof is shorter than alternative implementations, and of
-comparable complexity.
+comparable complexity%
 %% Commenting out footnote to save space, since we mention the Coq QSort in related work already...
 \footnote{The QSort definition and correctness proof in the
 equations
@@ -1169,8 +1175,8 @@ package is under 200LOC --
 \href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
 and other online proofs of correctness are of similar complexity
 \href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
-and can be found in the
-formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
+% and can be found in the
+% formalisation\footnote{https://github.com/dcastrop/coq-hylomorphisms}. % [REF LINK].
 
 % \subsubsection{Mergesort}
 
@@ -1273,6 +1279,9 @@ let rec qsort_times_two = function | [] -> []
 The extracted OCaml code is a single recursive traversal. Note the similarity to
 a hand-written implementation, and that it has been derived by fusing two
 different recursive programs using regular Coq rewrite tactics.
+
+It would be straightforward to prove the correctness of the fused version, by
+simply proving that \coq{Lmap times_two} preserves the order of the elements.
 \newcommand{\Id}{\text{Id}}
 \subsection{Knapsack}\label{sec:knap}
 Dynamorphisms are hylomorphisms where the algebra has access to the memory table
@@ -1337,7 +1346,8 @@ accompanying code).
 % Definition knapsackA wvs : App NatF (Table NatF int) ~> int :=  (* ... *)
 % \end{coqcode}
 Finally, given the recursive coalgebra \coq{out_nat} on the natural numbers, we
-can define knapsack using the recursion scheme for dynamorphisms:
+can define knapsack, given a list of pairs of weights and values \coq{wvs},
+using the recursion scheme for dynamorphisms:
 \begin{coqcode}
 Example knapsack wvs : Ext (dyna (knapsackA wvs) out_nat).
 \end{coqcode}
@@ -1364,19 +1374,17 @@ the final result.
 \subsection{Shortcut Deforestation}\label{sec:shortcut}
 We now showcase the shortcut deforestation optimisation on lists.  This is used
 to remove the creation of intermediate data structures by fusing multiple
-recursive traversals into one.  For example, we can use it to show the following
+recursive traversals into one.  For example, we can use it to show that the following
 code from Takano and
-Meijer~\cite{TakanoM95}
+Meijer~\cite{TakanoM95}, which uses three different hylomorphisms, can be fused into one:
 \begin{coqcode}
 Definition sf1 (f : A ~> B) ys : Ext (length \o Lmap f \o append ys).
 \end{coqcode}
-which uses that three different hylomorphisms can be fused into one.
 Here \coq{sf1} is the composition of \coq{length},
 \coq{Lmap f} and \coq{append ys} which are, in particular,
 catamorphisms.
-
-To prove our goal we use the so called \emph{acid rain} theorem which states
-that given a parametric function of the following type:
+To prove our goal we use the so called \emph{acid rain} theorem~\cite{TakanoM95}
+which states that given a parametric function of the following type:
 \begin{coqcode}
   s  : forall A. (App F A -> A) -> (App F A -> A)
 \end{coqcode}
@@ -1472,9 +1480,9 @@ include hylomorphisms and dynamorphisms, and relies on the functional
 extensionality axiom, as well as further extensionality axioms for each
 coinductive datatype that they use. They do not discuss the extracted code from
 their formalisation.  Mu et al.\ formalise hylomorphisms in Agda, and can do
-relational program transformation~\cite{DBLP:journals/jfp/MuKJ09}. It is unclear
-how to extract runnable code from their definitions, and they do not seem to
-formalise hylomorphisms in terms of generic functors and datatypes.
+relational program transformation~\cite{DBLP:journals/jfp/MuKJ09}. Their paper
+does not discuss extracting runnable code from their encodings, and they do not
+seem to formalise hylomorphisms in terms of generic functors and datatypes.
 
 Larchey-Wendling and Monin encode recursion schemes in Coq,
 by formalising computational graphs of algorithms~\cite{larchey2022braga}.
