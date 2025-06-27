@@ -251,7 +251,7 @@
   requiring the assumption of additional axioms, and/or introducing unsafe casts
   into extracted code.
 
-  This paper presents the first Coq formalisation of \emph{hylomorphisms}
+  This paper presents the first Rocq formalisation of \emph{hylomorphisms}
   allowing for the mechanisation of all recognised recursive algorithms. The key
   contribution of this paper is that this formalisation is fully
   \emph{axiom-free}, and it allows the extraction of safe, idiomatic functional
@@ -355,16 +355,18 @@ or even segmentation faults~\cite{forster:hal-04329663} and, moreover, it
 invalidates the fast-and-loose principle~\cite{DanielssonHJG06}.
 
 To preserve the generality of hylomorphisms, we encode data structures using
-polynomial functors. To ensure that the extracted code is runnable, avoid using
-indexed types in the definition of our recursion schemes. To strengthen the
-results of this paper, we avoid all axioms.
+polynomial functors. To ensure that the extracted code is idiomatic and does not
+contain unsafe casts, we avoid using indexed types in the definition of the
+recursion schemes, and make sure that the definitions can be inlined by Rocq's
+extraction mechanism. To strengthen the results of this paper, we avoid all
+axioms.
 
 We list the contributions of this paper. First, in
 Section~\ref{sec:category-theory}, we provide the theoretical background on
-recursion schemes and hylomorphisms. We then provide a Coq formalisation of
+recursion schemes and hylomorphisms. We then provide a Rocq formalisation of
 \emph{hylomorphisms} (Section~\ref{sec:recursion-schemes}) that (1) is
 \emph{fully axiom-free}; (2) allows the extraction of idiomatic and efficient
-code; and (3) can use regular Coq equalities to do program calculation, derive
+code; and (3) can use regular Rocq equalities to do program calculation, derive
 correct implementations, and apply optimisations. In
 Section~\ref{sec:extraction}, we apply this framework to formalise practical
 examples of divide-and-conquer, dynamic programming, and mutual recursion
@@ -556,7 +558,8 @@ satisfies
   h = a \circ F(h) \circ c
 \end{equation}
 A solution to this equation does not exist for an arbitrary algebra and
-coalgebra pair and, in fact, a definition like this cannot be accepted by Coq.
+coalgebra pair and, in fact, a recursive function definition like this is not
+accepted by Rocq.
 
 A coalgebra $(C,c)$ is \emph{recursive} if for every algebra $(A, a)$ there is a
 \emph{unique} hylo $(C,c ) \rightarrowtail (A, a)$~\cite{CaprettaUV04,AdamekMM19}. We denote these
@@ -564,7 +567,7 @@ type of hylos by $\hylo{c}{a}$.
 
 An example of a recursive coalgebra is the \coq{partition} function used in
 quicksort, which has the type $\text{List } A \to B(\text{List } A)$, where the
-functor $B$ is defined as $BX = X \times A \times X$. This function deconstructs
+functor $B$ is defined as $BX = 1 + X \times A \times X$. This function deconstructs
 a list by selecting a pivot element of type $A$ and splitting the remaining
 elements into two sublists.
 
@@ -573,7 +576,7 @@ $F X = 1 + A \times X$ and its associated algebra map (or its inverse, viewed as
 a coalgebra), $\InOp$ has the type $\text{List } A \to F(\text{List
 } A)$. Importantly, \coq{partition} is not this map, which means that it does
 not arise from the standard initial algebra structure, and thus catamorphisms
-here cannot be used to define recursive functions.
+here cannot be used to define this recursive function.
 
 Nevertheless, since \coq{partition} always produces sublists that are strictly
 smaller than the input list, it still supports a well-founded recursion scheme,
@@ -632,7 +635,7 @@ F(X) = \sum_{s \in S} (P(s) \to X)
 \]
 The functorial action
 of $F$ is given by post-composition, mapping an element \( (s, g) \) in
-\( F(X) \) to \( (s, f \vcomp g ) \) in \( F(Y) \), for $f : A \to B$.
+\( F(A) \) to \( (s, f \vcomp g ) \) in \( F(B) \), for $f : A \to B$.
 
 
 % First off, a Given a universe of types $\Type$, a container $S \triangleright P$
@@ -660,7 +663,7 @@ of $F$ is given by post-composition, mapping an element \( (s, g) \) in
 \section{Formalising Recursion Schemes}
 \label{sec:recursion-schemes}
 %Recursion schemes provide an abstract way to consume and generate data.
-We now consider the formalisation of hylomorphisms in Coq. We first formalise
+We now consider the formalisation of hylomorphisms in Rocq. We first formalise
 container functors as a tool to represent polynomial functors
 (Section~\ref{sec:containers}). Then we formalise algebras for container
 extensions (Section~\ref{sec:coq-algebras}). In
@@ -676,9 +679,9 @@ extensionality axiom, and axiom K to deal with equalities of objects of type
 $P(s) \to X$. Axiom K states that a predicate on equality proofs holds for all
 such proofs if it holds for reflexivity. This would be needed to reason about
 the equality of any two $f : P(s_1) \to X$ and $g : P(s_2) \to X$, when $s_1 =
-s_2$. In Coq, if we know $(s_1 , f) = (s_2 , g)$, we cannot extract a proof that
+s_2$. In Rocq, if we know $(s_1 , f) = (s_2 , g)$, we cannot extract a proof that
 $f = g$ unless we assume axiom K, or the equality on the type of $s_1$ and $s_2$
-is decidable.  Furthermore, upon extraction Coq will need to insert unsafe casts
+is decidable.  Furthermore, upon extraction Rocq will need to insert unsafe casts
 for
 anything of type $P(s)$, because OCaml requires the input value to have a type that is identical to the function parameter, and
 in the general case this cannot be done in OCaml.
@@ -754,8 +757,8 @@ Definition cata_f (a : Alg F A) : LFix F -> A
         | LFix_in x => a {shape := shape x; cont := fun e => f (cont x e)}
         end.
 \end{coqcode}
-It is easy to prove that catamorphisms respect setoid equalities.  In fact, we
-define it as a setoid morphism between the setoid of \coq{F}-algebras and the
+It is easy to prove that catamorphisms respect setoid equalities.  We
+define \coq{cata} as a setoid morphism between the setoid of \coq{F}-algebras and the
 setoid of functions from \coq{LFix F} to \coq{A}:
 \begin{coqcode}
 cata : forall `{setoid A}, Alg F A ~> (LFix F ~> A)
@@ -820,11 +823,11 @@ back together (\emph{conquer}) by means of an algebra.
 As we mentioned in Section~\ref{sec:category-theory}, given an $F$-algebra $a$ and
 $F$-coalgebra $c$, $f$ is a hylomorphism if it satisfies
 \[
-  f = a \circ F\; f \circ c
+  f = a \circ F\; f \circ c.
 \]
 As we stated earlier, a solution to this equation does not exist for an
 arbitrary  algebra/coalgebra pair and, in fact, a recursive function definition
-like this cannot be directly accepted by Coq.
+like this cannot be directly accepted by Rocq.
 
 In order to find the unique solution we restrict ourselves to the so-called
 \emph{recursive coalgebras}~\cite{AdamekMM19,CaprettaUV04}.  We mechanise
@@ -992,21 +995,21 @@ of values.
 
 % Note that such proofs will be erased when extracting code to OCaml, and this is
 % standard practice when building general recursive functions in
-% Coq\footnote{\dcas{This technique had a name in the community, but I cannot
+% Rocq\footnote{\dcas{This technique had a name in the community, but I cannot
 % remember. Something predicates}}. The core definitions are the following:
 % \begin{coqcode}
 % Lemma RecF_inv (h : Coalg F A) x : RecF h x -> forall e, RecF h (cont (h x) e).
 
 % \end{coqcode}
 % Here, \coq{RecF_inv} provides the structurally smaller element for
-% the Coq recursive definition. We then couple coalgebras with a proof that they
+% the Rocq recursive definition. We then couple coalgebras with a proof that they
 % are recursive, and add a coercion from recursive coalgebras to coalgebras.
 % \begin{coqcode}
 % Definition RCoalg F A = Rec {coalg :> Coalg F A; recP : forall x, RecF coalg x}.
 % \end{coqcode}
 % In some cases, proving that coalgebras can only be applied finitely many
 % times is straightforward (e.g.\ they are recursive on some inductive type in
-% Coq). However, in many cases, proving that a coalgebra is recursive directly
+% Rocq). However, in many cases, proving that a coalgebra is recursive directly
 % can be tedious and cumbersome. To ease development, we prove that if a
 % given coalgebra respects a \emph{well-founded relation}, then it is
 % necessarily recursive.
@@ -1077,14 +1080,14 @@ show an example of the shortcut deforestation optimisation
 %The steps are the following:
 %\begin{enumerate}
 %  \item Write a specification as a morphism \coq{f : A ~> B}.
-%  \item Use Coq's generalised rewriting and the laws of morphisms to 
+%  \item Use Rocq's generalised rewriting and the laws of morphisms to
 %    rewrite it to some \coq{g : A ~> B} such that \coq{f =e g}.
 %  \item Project the function \coq{h : A -> B} from \coq{g}
 %    (i.e. \coq{h = app g}).
 %  \item Extract \coq{h} to OCaml.
 %\end{enumerate}
 %Note that steps 2 and 3 are \emph{proofs} that \coq{f} and \coq{h} are
-%\emph{extensionally equal}. Then, Coq's extraction mechanism will erase any
+%\emph{extensionally equal}. Then, Rocq's extraction mechanism will erase any
 %proofs from the code, and inline our definitions. To ease the application of
 %these steps, we provide the following helper type:
 %\begin{coqcode}
@@ -1194,11 +1197,11 @@ tactic \coq{induction (recP qsplit l)}. Then we can unfold \coq{hylo merge qspli
 uniqueness (Section~\ref{sec:coq-rec-coalgebras}). The rest of the proof is standard.
 Overall, our proof is shorter than alternative implementations, and of
 comparable complexity%
-%% Commenting out footnote to save space, since we mention the Coq QSort in related work already...
+%% Commenting out footnote to save space, since we mention the Rocq QSort in related work already...
 \footnote{The QSort definition and correctness proof in the
 equations
 package is under 200LOC --
-\href{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Coq-Equations/blob/8.20/examples/quicksort.v},
+\href{https://github.com/mattam82/Rocq-Equations/blob/8.20/examples/quicksort.v}{https://github.com/mattam82/Rocq-Equations/blob/8.20/examples/quicksort.v},
 and other online proofs of correctness are of similar complexity
 \href{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}{https://gist.github.com/RyanGlScott/ff36cd6f6479b33becca83379a36ce49}}.
 % and can be found in the
@@ -1210,7 +1213,7 @@ and other online proofs of correctness are of similar complexity
 % container \coq{(TreeF (list int) unit)}.
 % The computationally expensive part of the Mergesort implementation is the
 % algebra, since this is where most of the comparisons happen. The recursive
-% coalgebra for Mergesort is defined as the following Coq functions:
+% coalgebra for Mergesort is defined as the following Rocq functions:
 % \begin{coqcode}
 % Fixpoint splitL (x : list int) (accL accR : list int) :=
 %   match x with
@@ -1286,7 +1289,7 @@ composition of these two programs is given by the following:
 Definition qsort_times_two := Lmap times_two \o hylo merge qsplit.
 \end{coqcode}
 where \coq{Lmap times_two} is a list map function defined as a hylomorphism, and
-\coq{times_two} multiplies every element of the list by two. We can use Coq's
+\coq{times_two} multiplies every element of the list by two. We can use Rocq's
 generalised rewriting~\cite{Sozeau09} and \coq{hylo_fusion_l} to fuse \coq{times_two} into
 \coq{hylo merge qsplit} which gives the program \coq{hylo (merge \o natural times_two) qsplit}.
 In this definition, \coq{natural} defines a natural transformation by applying
@@ -1304,7 +1307,7 @@ let rec qsort_times_two = function | [] -> []
 \end{ocamlcode}
 The extracted OCaml code is a single recursive traversal. Note the similarity to
 a hand-written implementation, and that it has been derived by fusing two
-different recursive programs using regular Coq rewrite tactics.
+different recursive programs using regular Rocq rewrite tactics.
 
 It would be straightforward to prove the correctness of the fused version, by
 simply proving that \coq{Lmap times_two} preserves the order of the elements.
@@ -1418,7 +1421,7 @@ we can conclude, by parametricity, that the following equation holds:
 \begin{coqcode}
   hylo a l_out \o hylo (s l_in) c =e hylo (s a) c
 \end{coqcode}
-Unfortunately, this is not provable in Coq without adding the parametricity
+Unfortunately, this is not provable in Rocq without adding the parametricity
 axiom~\cite{keller_et_al:LIPIcs.CSL.2012.381}, but we can prove it for specific
 functors, e.g. the functor of lists.
 
@@ -1438,12 +1441,11 @@ Our acid rain theorem is stated as follows:
 \begin{coqcode}
   hylo a l_out \o hylo (tau l l_in) c =e hylo (tau l a) c
 \end{coqcode}
-
 Now we use \coq{tau} to define the \coq{append} function as follows:
 \begin{coqcode}
 Definition append (l : list A) := hylo (tau l l_in) ilist_coalg.
 \end{coqcode}
-Here, \coq{ilist_coalg} is a recursive coalgebra from Coq lists to the
+Here, \coq{ilist_coalg} is a recursive coalgebra from Rocq lists to the
 \coq{ListF} container. The acid rain theorem allows us to fuse this definition
 of append with the maps \coq{Lmap} and \coq{length} which is the optimisation we
 wanted in the first place. The following is the extracted OCaml code from the
@@ -1485,9 +1487,9 @@ function we obtain the original length function.
 %  \item Sized Types \cite{HughesPS96, abs-1202-3496}
 %  \item Copatterns \cite{AbelPTS13, AbelP16}
 %  \item Not that related: extraction for mutable arrays~\cite{SAKAGUCHI2020102372}
-%        \item Extraction of Distributed Mobile code in Coq~\cite{MiculanP12}.
+%        \item Extraction of Distributed Mobile code in Rocq~\cite{MiculanP12}.
 %\end{itemize}
-% and recursion schemes in Coq
+% and recursion schemes in Rocq
 % (Sections~\ref{sec:calccoq} and~\ref{sec:reccoq}). Additionally, we compare our
 % encoding of recursion schemes to other forms of termination checking for
 % nonstructural recursion (Section~\ref{sec:termcheck}), and we discuss other
@@ -1497,11 +1499,11 @@ function we obtain the original length function.
 % \label{sec:calccoq}
 
 There is existing prior work on formalising recursion schemes in a proof
-assistant.  Tesson et al.\ demonstrated the efficacy of leveraging Coq to
+assistant.  Tesson et al.\ demonstrated the efficacy of leveraging Rocq to
 establish an approach for implementing a robust system dedicated to verifying
 the correctness of program transformations for functions that manipulate
 lists~\cite{10.1007/978-3-642-17796-5_10}. Murata and Emoto went further and
-formalised recursion schemes in Coq~\cite{MurataE19}. Their development does not
+formalised recursion schemes in Rocq~\cite{MurataE19}. Their development does not
 include hylomorphisms and dynamorphisms, and relies on the functional
 extensionality axiom, as well as further extensionality axioms for each
 coinductive datatype that they use. They do not discuss the extracted code from
@@ -1510,7 +1512,7 @@ relational program transformation~\cite{DBLP:journals/jfp/MuKJ09}. Their paper
 does not discuss extracting runnable code from their encodings, and they do not
 seem to formalise hylomorphisms in terms of generic functors and datatypes.
 
-Larchey-Wendling and Monin encode recursion schemes in Coq,
+Larchey-Wendling and Monin encode recursion schemes in Rocq,
 by formalising computational graphs of algorithms~\cite{larchey2022braga}.
 Their work does not focus on encoding higher-order generic recursion schemes,
 and proving their algebraic laws. Castro-Perez et al.~\cite{farmsCastro} encode
@@ -1522,7 +1524,7 @@ hylomorphisms as axioms.
 %\mvol{Need more general citations for program calculation.}
 % \textbf{Divide and Conquer Recursion}.%
 % \label{sec:reccoq}
-Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Coq,
+Abreu et al.~\cite{AbreuDHJMS23} encode divide-and-conquer computations in Rocq,
 using a recursion scheme in which termination is entirely enforced by its
 typing. This is a significant advance, since it \emph{completely} avoids the
 need for termination proofs. Their work differs from ours in that they require
@@ -1551,11 +1553,11 @@ divide-and-conquer algorithms) is well-studied~\cite{BoveKS16}.
 % for more flexibility.
 Certain functions that are not structurally recursive can be reformulated using
 a nonstandard approach to achieve structural recursion.  For example, the
-mergesort in Coq's standard library uses an ``explicit stack of pending merges''
+mergesort in Rocq's standard library uses an ``explicit stack of pending merges''
 in order to avoid issues with nonstructural definitions. There is a major
 downside, however; as noted by Abreu et al., the result is ``barely recognisable
 as a form of mergesort''~\cite{AbreuDHJMS23}.  There are common approaches in
-Coq to deal with termination~\cite{DBLP:journals/pacmpl/SozeauM19,
+Rocq to deal with termination~\cite{DBLP:journals/pacmpl/SozeauM19,
   DBLP:conf/icfp/Sozeau07}, but none of these approaches address program
 calculation techniques, and the mechanisation of fusion laws.
 
@@ -1568,7 +1570,7 @@ applied to recursive tree traversals, in order to reduce the number of times
 each section of the tree must be visited. Research has demonstrated that this
 sort of fusion can be performed automatically by a
 compiler~\cite{10.1145/3133900}. The correctness of tree traversal fusion has
-been verified mechanically in Coq~\cite{10.1145/3377555.3377884}, but the
+been verified mechanically in Rocq~\cite{10.1145/3377555.3377884}, but the
 authors do not formalise unfolds and hylomorphisms.
 
 Another related family of transformations are worker/wrapper
@@ -1588,7 +1590,7 @@ programs by a compiler.
 % \emph{syntactic} check that definitions avoid the introduction of
 % non-normalizable terms. This sort of check generally looks for a
 % \emph{structural decrease} of arguments in the recursive calls of a function.
-% Coq uses such a check, and it works for many classic functional programming
+% Rocq uses such a check, and it works for many classic functional programming
 % patterns (like \haskell{map} and \haskell{foldr}). However, some desirable
 % definitions will not be accepted by such checks.
 %In particular,
@@ -1624,7 +1626,7 @@ programs by a compiler.
 % single traversal, further optimizing computations and minimizing intermediate
 % data structures.
 
-% In the context of Coq, Danvy explains the use of fold/unfold lemmas to mechanize
+% In the context of Rocq, Danvy explains the use of fold/unfold lemmas to mechanize
 % equational reasoning about recursive programs~\cite{DANVY_2022}. Fold-unfold
 % lemmas enable optimizations like fusion by allowing programs to be
 % systematically simplified, including eliminating intermediate structures.
@@ -1636,7 +1638,7 @@ programs by a compiler.
 In this work we mechanise hylomorphisms and their algebraic laws and use them to
 perform program calculation and optimisations. The resulting programs can be
 later extracted into idiomatic and runnable code. Our mechanisation is
-\emph{fully axiom-free}. This formalisation allows us to use Coq as a framework
+\emph{fully axiom-free}. This formalisation allows us to use Rocq as a framework
 for program calculation in a way that is close to common practice in pen and
 paper program calculation proofs. This implies that every rewriting step is the
 result of applying a formal, machine-checked proof that the resulting program is
@@ -1650,9 +1652,9 @@ Generalised rewriting in proofs involving setoids tends to be quite slow, due to
 the large size of the terms that need to be rewritten. Sometimes, this size is
 hidden in implicit arguments and coercions. We will study alternative
 formulations to try to improve the performance of the rewriting tactics
-(e.g.\ canonical structures).  Currently, Coq is unable to inline a number of
+(e.g.\ canonical structures).  Currently, Rocq is unable to inline a number of
 trivially inlineable definitions.  We will study alternative definitions, or
-extensions to Coq's code extraction mechanisms to force the full inlining of all
+extensions to Rocq's code extraction mechanisms to force the full inlining of all
 container code that is used in hylomorphisms.  Finally, proving termination
 still remains a hurdle. In our framework this reduces to proving that the
 anamorphism terminates in all inputs, and we provide a convenient connection to
@@ -1685,7 +1687,7 @@ This functor is built as the sum of two functors: $X \mapsto \mathbb{N}$ and $X 
 X \times X$. Consider first $X \mapsto \mathbb{N}$. This is a constant functor
 that maps $X$ to the type $\mathbb{N}$. More generally, a functor that, given a
 type $A$, maps everything to it, $X \mapsto A$, only needs one shape ($A$, L9
-of Fig~\ref{fig:poly}), and zero positions (In Coq, \coq{False},
+of Fig~\ref{fig:poly}), and zero positions (In Rocq, \coq{False},
 L10 of Fig~\ref{fig:poly}). The reason why there are zero valid positions in
 a constant container extension is because, given something of type
 \coq{App (Const (Ks A) Kp) X}, it should be impossible to get
@@ -1724,10 +1726,10 @@ Our final container extension is the following:
 \coq{Sum (Const nat) (Prod Id Id)}.
 The shape of this functor is:
 \coq{nat + unit * unit}. The positions of this functor
-are \mintinline[breaklines]{Coq}{False + (unit + unit)}, which is isomorphic
+are \mintinline[breaklines]{Rocq}{False + (unit + unit)}, which is isomorphic
 to \coq{unit + unit}, which will only be valid in the RHS.
 
-The Coq value \coq{inl n} of type
+The Rocq value \coq{inl n} of type
 \coq{nat + bool * bool} would look as follows as a container
 extension
 \coq{App (Sum (Const nat) (Prod Id Id)) bool}:
@@ -1740,7 +1742,7 @@ fact that \coq{e} for \coq{inl n} implies
 \footnote{Note that, since \coq{e} is uninhabited we could return
 any arbitrary value instead of \coq{uninhabited e}.}.
 
-Similarly, the Coq value \coq{inr (true, false)} as a container
+Similarly, the Rocq value \coq{inr (true, false)} as a container
 extension is as follows:
 \begin{coqcode}
   {| shape := inr (tt,tt);
@@ -1758,7 +1760,7 @@ Of the two remaining positions, the left one will return
 \coq{true}, and the right position \coq{false}.
 \begin{figure}[t!]
 \begin{minipage}{.52\textwidth}
-  \begin{minted}[linenos, fontsize=\small]{Coq}
+  \begin{minted}[linenos, fontsize=\small]{Rocq}
 Context `(C1 : Cont S1 P1)
         `(C2 : Cont S2 P2).
 
@@ -1784,7 +1786,7 @@ Instance Prod : Cont Ps Pp := {
 \end{minted}
 \end{minipage}
 \begin{minipage}{.47\textwidth}
-  \begin{minted}[linenos, firstnumber=23, fontsize=\small]{Coq}
+  \begin{minted}[linenos, firstnumber=23, fontsize=\small]{Rocq}
 Definition Ss : Type := S1 + S2.
 Definition Sp : Type := P1 + P2.
 Instance Sum : Cont Ss Sp := {
@@ -1822,12 +1824,12 @@ the contained elements generically: the
 contained types may not have (yet) an associated equivalence. In other words, we
 would need to provide an equivalence for \coq{LFix}, but the only way to do this
 is to define such equivalence simultaneously to the definition for  \coq{LFix}.
-Such definition would be rejected by Coq. There are other approaches that can
+Such definition would be rejected by Rocq. There are other approaches that can
 circumvent this problem, by separating the definition of least fixed points from
 the proofs that the functions that get the contained elements are proper
 morphisms. But this leads to longer, unnecessarily complicated proofs.
 Furthermore, this extra layer interferes with code extraction, in that it
-requires destructing/constructing subsequent \coq{LFix} and \coq{App}, and Coq
+requires destructing/constructing subsequent \coq{LFix} and \coq{App}, and Rocq
 may not always able to inline them.
 
 \mpav{Dumped here}
