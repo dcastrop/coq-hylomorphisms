@@ -188,7 +188,31 @@
 
 \Copyright{Jane Open Access and Joan R. Public} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
 
-\ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm
+% \ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm
+
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10003752.10010124.10010125.10010127</concept_id>
+       <concept_desc>Theory of computation~Functional constructs</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003752.10003790.10011740</concept_id>
+       <concept_desc>Theory of computation~Type theory</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003752.10010124.10010138.10010142</concept_id>
+       <concept_desc>Theory of computation~Program verification</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Theory of computation~Functional constructs}
+\ccsdesc[300]{Theory of computation~Type theory}
+\ccsdesc[500]{Theory of computation~Program verification}
 
 \keywords{hylomorphisms, program calculation, divide and conquer, fusion} %TODO mandatory; please add comma-separated list of keywords
 
@@ -261,6 +285,8 @@ same algorithms.
 Suppose, for example, that we want to write a program that sorts a list of
 integers and multiplies them by 2 at the same time. In OCaml, we may write this
 function directly:
+
+\pagebreak
 \begin{minted}{ocaml}
 let rec sort_times_two = function
   | [] -> []
