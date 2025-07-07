@@ -852,8 +852,10 @@ that coalgebra \coq{c} eventually terminates for some input \coq{x}
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A) : forall (x : A), RecF c x -> B
   := fix f x H
-     := match c x as cx return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B with
-        | cx => fun H => a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
+     := match c x as cx 
+            return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B with
+        | cx => fun H => 
+            a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
         end (RecF_inv H).
 \end{coqcode}
 
