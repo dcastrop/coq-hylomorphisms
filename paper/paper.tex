@@ -1661,18 +1661,21 @@ formulations to try to improve the performance of the rewriting tactics
 (e.g.\ canonical structures).  Currently, Rocq is unable to inline a number of
 trivially inlineable definitions.  We will study alternative definitions, or
 extensions to Rocq's code extraction mechanisms to force the full inlining of all
-container code that is used in hylomorphisms.  Finally, proving termination
-still remains a hurdle. In our framework this reduces to proving that the
-anamorphism terminates in all inputs, and we provide a convenient connection to
-well-founded recursion. Furthermore, recursive coalgebras compose with natural
-transformations, which allows the reuse of a number of core recursive
-coalgebras. A possible interesting future line of work is the use of the
-approach by Abreu et al.~\cite{AbreuDHJMS23} in combination with ours to improve
-code extraction from divide-and-conquer computations whose termination does not
-require an external proof.
+container code that is used in hylomorphisms.  Following work by Miculan and
+Paviotti~\cite{MiculanP12} an interesting next step would be to embed the notion
+of hylomorphism into a type theory with a notion of distributed computations
+(e.g. ML5), the resulting extracted code would be then implemented in a
+distributed programming language (e.g. Erlang).
+Finally, proving termination still remains a hurdle. In our framework this
+reduces to proving that the anamorphism terminates in all inputs, and we provide
+a convenient connection to well-founded recursion. Furthermore, recursive
+coalgebras compose with natural transformations, which allows the reuse of a
+number of core recursive coalgebras. A possible interesting future line of work
+is the use of the approach by Abreu et al.~\cite{AbreuDHJMS23} in combination
+with ours to improve code extraction from divide-and-conquer computations whose
+termination does not require an external proof.
 
 
-\newpage
 
 \bibliography{references.bib}
 
