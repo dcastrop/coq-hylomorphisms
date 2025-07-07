@@ -297,8 +297,8 @@ let rec sort_times_two = function
 This program is the same as composing a \emph{quicksort} OCaml implementation,
 with the function \ocaml{map (fun x -> x * 2)} which is a known program
 optimisation called \emph{fusion}.  A lot of program calculations have this
-pattern: start from a simple specification, e.g.\
-$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
+pattern: start from a simple specification, e.g.
+\\$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
 equivalences and algebraic laws to rewrite it to an optimised version. We will
 revisit a similar example in Section~\ref{sec:sorting}.
 
