@@ -4,6 +4,7 @@ util/ export-ignore
 theories/ export-ignore
 extraction/ export-ignore
 examples/ export-ignore
+paper-scripts/ export-ignore
 attic/ export-ignore
 gen_makefile.sh export-ignore
 README.md export-ignore
