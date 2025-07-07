@@ -417,7 +417,9 @@ For example, the category of sets, denoted by $\Set$, is the category where
 objects are sets and arrows are functions between sets. The initial object $0$
 in $\Set$ is the empty set $\emptyset$ and the terminal object $1$ is any
 singleton set. The reader who is not accustomed with category theory can assume
-types are sets and programs are functions, giving the intuition that the category $\Set$ can also be viewed as the category of (simple) types and programs between them.
+for simplicity that  types may be viewed as sets and programs as functions
+between sets, giving the intuition that the category $\Set$ can also be viewed
+as the category of (simple) types and programs between them.
 
 A \emph{functor} $F : \CatC \to \CatD$ is a map between categories mapping both
 objects and arrows from one category to another. Hence a functor has two
@@ -534,7 +536,7 @@ $B$-coalgebras states that for any other $B$-coalgebra $(X, c_{X})$ there exists
 a unique $B$-coalgebra homomorphism into the terminal coalgebra
 $(\nu B, \OutIso)$ which is denoted by $\ana{c_{X}}$ and pronounced
 ``\emph{anamorphism}'' or ``\emph{unfold}''. We spell out the uniqueness
-property:
+property of unfolds:
 \begin{equation}
   \label{eq:ana:unique}
   f = \ana{c_{X}} \iff f = \OutOp \circ B(f) \circ c_{X}
@@ -742,7 +744,7 @@ defined by the empty list \coq{Empty : unit -> LFix F} and the cons operation
 
 The \coq{LFix F} setoid equality is the least fixed point of the \coq{App F}
 setoid equality, i.e. if \coq{LFixR F} represents the setoid equality of
-\coq{LFix F}, and we have two \coq{x y : LFix F}, then \coq{LFixR F x y} iff
+\coq{LFix F}. Let \coq{x y : LFix F}, then \coq{LFixR F x y} iff
 \begin{coqcode}
 shape x =e shape y /\ (forall p p', projT1 p = projT1 p'
    -> LFixR F (cont x p) (cont y p'))
