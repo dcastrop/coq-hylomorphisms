@@ -451,9 +451,9 @@ that is $ G(f) \cdot \phi_{X} = \phi_{Y} \cdot F(f)$, for all morphisms
 $f : X \to Y$. Intuitively, a natural transformation is akin to a polymorphic
 function transforming the structure of a functor into the structure of another
 functor without assuming what is the type of data contained in them.  For
-example, a program $f : \texttt{List }X \to \texttt{Maybe} X$ which returns
-nothing if the list is empty and the head of the list otherwise can work for all
-types $X$ uniformly because it needs not to inspect the data inside the list.
+example, a program $\phi_{X} : \texttt{List }X \to \texttt{Maybe} X$, which returns
+nothing if the list is empty and the head of the list otherwise, does not need to know the content of the list to perform its task, in other words, it can work for all
+types $X$ \emph{uniformly}.
 
 
 \subsection{Algebras and Catamorphisms}
@@ -475,7 +475,7 @@ isomorphism $F\mu F \iso \mu F$, furthermore  $\InOp : \mu F \to F \mu F$ is the
 inverse of $\InIso$. The uniqueness property of initial $F$-algebras states that for any other
 $F$-algebra $(X, a_{X})$ there exists a unique $F$-algebra homomorphism, denoted
 by $\cata{\alpha_{X}} : (\mu F, \InIso) \to (X, a_{X})$ and pronounced
-``\emph{catamorphism}'' or ``\emph{fold}'' satisfying:
+``\emph{catamorphism}'' or ``\emph{fold}''. This is formally stated as follows:
 \begin{equation}
   \label{eq:cata:unique}
   f = \cata{a_{X}} \iff f = a_{X} \circ F(f) \circ \InOp
