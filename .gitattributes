@@ -1,3 +1,4 @@
+LICENSE.txt export-ignore
 _CoqProject export-ignore
 other/ export-ignore
 util/ export-ignore
