@@ -13,3 +13,4 @@
 Makefile
 Makefile.conf
 archive/
+*_minted
