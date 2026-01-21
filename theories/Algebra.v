@@ -23,7 +23,7 @@ Section AlgDef.
           P (LFix_in x))
       -> forall l : LFix, P l.
   Proof.
-    intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. Guarded.
+    intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. 
   Defined.
   Lemma LFix_rec [P : LFix -> Set]
     : (forall x : App F LFix,

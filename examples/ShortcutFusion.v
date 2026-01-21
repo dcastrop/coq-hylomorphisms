@@ -16,8 +16,8 @@ Require Import Util.Utils.
 Require Import Examples.BTree.
 Require Import Examples.CList.
 
-Require Import List.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+From Stdlib Require Import List.
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 
 (** Example 1 from shortcut fusion in calc form [length \o map f \o append ys] *)
 Definition tau_alg_ {A} `{setoid B} (l : list A) (a : Alg (ListF A) B)

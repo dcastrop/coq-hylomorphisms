@@ -17,8 +17,8 @@ Require Import Util.Utils.
 Require Import Examples.BTree.
 Require Import Examples.CList.
 
-Require Import List.
-Require Import Coq.Numbers.Cyclic.Int63.Sint63.
+From Stdlib Require Import List.
+Require Import Stdlib.Numbers.Cyclic.Int63.Sint63.
 
 
 (* Memoisation tables for a container C, indexed by 'A' *)

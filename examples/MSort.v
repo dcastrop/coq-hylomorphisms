@@ -14,10 +14,10 @@ Require Import Util.Utils.
 
 Require Import Examples.BTree.
 
-Require Import Lia.
-Require List.
+From Stdlib Require Import Lia.
+From Stdlib Require Import List.
 (* Require Import Nat. *)
-Require Import Coq.Numbers.Cyclic.Int63.Sint63.
+Require Import Stdlib.Numbers.Cyclic.Int63.Sint63.
 
 Fixpoint mergeL l1 l2 {struct l1} :=
   let fix merge_aux l2 :=

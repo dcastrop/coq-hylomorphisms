@@ -10,7 +10,7 @@ Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
 
-Require List.
+From Stdlib Require List.
 
 (* Defining a tree *)
 Unset Auto Template Polymorphism.
@@ -146,5 +146,5 @@ Qed.
 Lemma tree_itree_iso2 {L A}
   : tree_to_itree \o itree_to_tree =e id (A:=itree L A).
   unfold tree_to_itree, itree_to_tree, Tree. rewrite cata_ana_hylo.
-  symmetry. rewrite hylo_univ, fmap_id, idKr. intros[]; simpl; trivial.
+  symmetry. rewrite hylo_uniq, fmap_id, idKr. intros[]; simpl; trivial.
 Qed.

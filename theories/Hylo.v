@@ -28,7 +28,7 @@ Section HyloDef.
     fix Ih 2. intros x0 [x Fx] F2. clear x0. destruct F2 as [x Fy]. simpl.
     generalize dependent (h x).  clear x. intros [s_x c_x] Fx Fy. simpl in *.
     apply app_eq. split; [reflexivity|intros d1 d2 e].
-    rewrite (elem_val_eq e). simpl in *. apply Ih. Guarded.
+    rewrite (elem_val_eq e). simpl in *. apply Ih.
   Qed.
 
   Definition hylo_f__ (g : Alg F B) (h : RCoalg F A)
@@ -65,7 +65,7 @@ Section HyloDef.
   Definition hylo : Alg F B ~> RCoalg F A ~> A ~> B :=
     Eval unfold hylo_f in MkMorph hylo_f_arr.
 
-  Lemma hylo_univ_r (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
+  Lemma hylo_uniq_r (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e g \o fmap f \o h -> f =e hylo g h.
   Proof.
     intros H x. simpl.  unfold hylo_f__.
@@ -73,10 +73,10 @@ Section HyloDef.
     fix Ih 2. intros x Fx. rewrite (H _). simpl. unfold comp. unfold fmap.
     destruct Fx as [x Fx]. simpl. destruct (h x) as [s_x c_x]. simpl in *.
     apply app_eq. simpl. split; [reflexivity|simpl; intros d1 d2 e].
-    rewrite (elem_val_eq e). apply Ih. Guarded.
+    rewrite (elem_val_eq e). apply Ih. 
   Qed.
 
-  Lemma hylo_univ_l (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
+  Lemma hylo_uniq_l (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h -> f =e g \o fmap f \o h.
   Proof.
     intros H. rewrite H. clear H f. simpl. intros x. unfold hylo_f__.
@@ -86,13 +86,13 @@ Section HyloDef.
     rewrite (elem_val_eq e). apply hylo_def_irr.
   Qed.
 
-  Lemma hylo_univ (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
+  Lemma hylo_uniq (g : Alg F B) (h : RCoalg F A) (f : A ~> B)
     : f =e hylo g h <-> f =e g \o fmap f \o h.
-  Proof. split;[apply hylo_univ_l|apply hylo_univ_r]. Qed.
+  Proof. split;[apply hylo_uniq_l|apply hylo_uniq_r]. Qed.
 
   Corollary hylo_unr (g : Alg F B) (h : RCoalg F A)
     : hylo g h =e g \o fmap (hylo g h) \o h.
-  Proof. rewrite <-hylo_univ. reflexivity. Qed.
+  Proof. rewrite <-hylo_uniq. reflexivity. Qed.
 
 End HyloDef.
 
@@ -101,10 +101,10 @@ Section HyloFusion.
   Context `{eA : setoid A} `{eB : setoid B} `{eC : setoid C}.
 
   Lemma hylo_cata (g : Alg F B) : cata g =e hylo g l_out.
-  Proof. rewrite hylo_univ. rewrite<-cata_univ. reflexivity. Qed.
+  Proof. rewrite hylo_uniq. rewrite<-cata_univ. reflexivity. Qed.
 
   Lemma hylo_ana (h : RCoalg F A) : rana h =e hylo l_in h.
-  Proof. rewrite hylo_univ. rewrite <-rana_univ. reflexivity. Qed.
+  Proof. rewrite hylo_uniq. rewrite <-rana_univ. reflexivity. Qed.
 
   Lemma splitC (f1 f2 : B ~> C) (g1 g2 : A ~> B)
     : f1 =e f2 -> g1 =e g2 -> f1 \o g1 =e f2 \o g2.
@@ -114,7 +114,7 @@ Section HyloFusion.
     (f2 : B ~> C) (E2 : f2 \o g1 =e g2 \o fmap f2)
     : f2 \o hylo g1 h1 =e hylo g2 h1.
   Proof.
-    rewrite hylo_univ.
+    rewrite hylo_uniq.
     rewrite fmap_comp.
     rewrite compA.
     rewrite <- E2.
@@ -129,7 +129,7 @@ Section HyloFusion.
     (f1 : A ~> B) (E1 : h1 \o f1 =e fmap f1 \o h2)
     : hylo g1 h1 \o f1 =e hylo g1 h2.
   Proof.
-    rewrite hylo_univ.
+    rewrite hylo_uniq.
     rewrite fmap_comp.
     rewrite <- compA.
     rewrite <- compA.
@@ -180,7 +180,7 @@ Corollary hylo_map_shift `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
   (g : Alg G B) (m : naturalM F G) (h : RCoalg F A)
   : hylo (g \o natural m) h =e hylo g (natural m \o h).
 Proof.
-  apply hylo_univ. rewrite hylo_unr at 1.
+  apply hylo_uniq. rewrite hylo_unr at 1.
   rewrite (compA _ (natural m) h), <- (compA g _ (natural m)).
   unfold natural. rewrite <- eta_is_natural, compA.
   reflexivity.
@@ -220,7 +220,7 @@ Definition everywhere `{F : Cont Sf P} `{setoid Sg} {G : Cont Sg P}
 Lemma everywhere_id `{F : Cont Sf P} :
   everywhere id =e id (A:=LFix F).
 Proof.
-  unfold everywhere. symmetry. apply hylo_univ.
+  unfold everywhere. symmetry. apply hylo_uniq.
   rewrite fmap_id, idKr, natural_idI, idKr, l_in_out.
   reflexivity.
 Qed.

@@ -4,7 +4,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Import Coq.Logic.Eqdep_dec.
+Require Import Stdlib.Logic.Eqdep_dec.
 Require Export Setoid.
 
 Module BoolEq <: DecidableType.
@@ -20,6 +20,7 @@ Definition bool_irrelevance {b1 b2 : bool} (p1 p2 : b1 = b2) : p1 = p2 :=
   DecBool.UIP b1 b2 p1 p2.
 
 Reserved Notation "f =e g" (at level 70, no associativity).
+#[mode = "-"]
 Class setoid A : Type :=
   MkSetoid
     { eqRel : A -> A -> Prop;
@@ -102,6 +103,7 @@ Proof with eauto with ffix.
   apply (@ MkSetoid _ (fun px py => proj1_sig px =e proj1_sig py))...
 Defined.
 
+#[mode = "-"]
 Class equivs (A : list Type) : Prop.
 #[export] Instance e_nil : equivs (@nil Type).
 Defined.

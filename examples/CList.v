@@ -10,7 +10,7 @@ Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
 
-Require List.
+From Stdlib Require List.
 
 (* Defining a tree *)
 Unset Auto Template Polymorphism.
@@ -124,7 +124,7 @@ Qed.
 Lemma ilist_List_iso {A} : @List_to_ilist A \o ilist_to_List =e id.
 Proof.
   unfold ilist_to_List, List_to_ilist, List.
-  rewrite cata_ana_hylo. symmetry. apply hylo_univ.
+  rewrite cata_ana_hylo. symmetry. apply hylo_uniq.
   rewrite fmap_id, idKr. intros [|h t]; auto with ffix.
 Qed.
 
@@ -158,7 +158,7 @@ Lemma list_map_nat {A B} (f : A ~> B) :
 Proof.
   unfold ilist_to_List, List, Lmap, everywhere.
   rewrite <- hylo_cata, cata_ana_hylo, hylo_ana. symmetry.
-  apply hylo_univ. rewrite hylo_unr at 1. rewrite <- !compA.
+  apply hylo_uniq. rewrite hylo_unr at 1. rewrite <- !compA.
   rewrite ifmap_fmap, <- !compA. rewrite (compA (fmap _)).
   unfold natural. rewrite <- eta_is_natural. rewrite <- !compA.
   rewrite (compA (fmap _)), <- fmap_comp, !compA.
@@ -170,7 +170,7 @@ Lemma list_ww2 {A B} (f : A ~> B) :
 Proof.
   unfold List_to_ilist, Lmap, List, everywhere.
   rewrite hylo_map_shift, <- hylo_ana,cata_ana_hylo, hylo_cata. symmetry.
-  apply hylo_univ. rewrite <- !compA.
+  apply hylo_uniq. rewrite <- !compA.
   rewrite (compA _ (natural (natural_list f)) l_out).
   rewrite <- natural_fmap, fmap_comp, !compA.
   rewrite <- fmap_ifmap. rewrite <- !compA.

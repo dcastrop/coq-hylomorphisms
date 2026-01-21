@@ -41,6 +41,7 @@ Require Export HYLO.Morphism.
   * generated OCaml code, and a priority of this experiment was extracting
   * "somewhat reasonable/clean" OCaml code.
   *)
+#[mode = "! - -"]
 Class Cont `{Esh : setoid Sh} (P : Type) :=
   { valid : Sh * P ~> bool
   }.

@@ -14,8 +14,8 @@ Require Import Util.Utils.
 
 Require Import Examples.BTree.
 
-Require Import List.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+From Stdlib Require Import List.
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 
 Definition merge : App (TreeF unit int) (list int) ~> list int.
 |{ x : (App (TreeF unit int) (list int)) ~> (
@@ -89,7 +89,7 @@ Definition qsort_times_two
   assert (RW1 : Lmap times_two \o cata merge
                 =e hylo (merge \o natural (nt_shape id times_two)) l_out).
   {
-    apply hylo_univ.
+    apply hylo_uniq.
     rewrite fmap_comp, <- !compA. rewrite compA, compA.
     rewrite <- Lmap_merge, <- !compA, (compA merge), <- cata_unfold.
     reflexivity.
@@ -120,6 +120,7 @@ Extraction Inline posL.
 Extraction Inline posR.
 Set Extraction Flag 2047.
 Recursive Extraction qsort.
+Set Extraction Flag 2047.
 Recursive Extraction qsort_times_two.
 
 Section QSortOK.

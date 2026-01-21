@@ -152,7 +152,7 @@ Section FCoalgDef.
     generalize (terminating h x) (terminating h y). revert x y.
     fix Ih 3. intros x y [x' Fx] [y' Fy] Hxy. simpl in *. split.
     - destruct (app_eq h Hxy). auto.
-    - intros e d1 d2. simpl. apply Ih. Guarded.
+    - intros e d1 d2. simpl. apply Ih.
       destruct (app_eq h Hxy). auto.
   Qed.
 
@@ -172,7 +172,7 @@ Section FCoalgDef.
     intros Exy. simpl.
     assert (He : f x =e g y) by (rewrite Exy; apply Efg).
     destruct He as [Sxy Kxy]. split; trivial.
-    intros e1 e2 Hv. apply Ih. Guarded.
+    intros e1 e2 Hv. apply Ih.
     apply Kxy. trivial.
   Qed.
 
@@ -229,7 +229,7 @@ Section CAlgDef.
   Proof.
     fix Ih 2. intros x F1 F2. destruct F1 as [x F1]. destruct F2 as [x F2].
     apply app_eq. simpl. constructor; simpl; try reflexivity.
-    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply Ih. Guarded.
+    intros e1 e2 Hv. rewrite (elem_val_eq Hv). apply Ih.
   Qed.
 
   Definition ccata_f `{eA : setoid A} (g : Alg F A) : {x : GFix F | FinF x} -> A
@@ -243,8 +243,7 @@ Section CAlgDef.
     destruct Fx as [x Fx]. destruct Fy as [y Fy]. simpl in *.
     intros Rxy. apply GFixR_unfold in Rxy. destruct Rxy as [ES EK].
     apply app_eq. simpl. constructor; simpl; trivial. intros e1 e2 Hv.
-    apply Ih. Guarded.
-    apply EK. trivial.
+    apply Ih. apply EK. trivial.
   Qed.
 
   Definition ccata_ `{eA : setoid A} g : {x : GFix F | FinF x} ~> A

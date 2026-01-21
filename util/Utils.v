@@ -2,9 +2,9 @@ Generalizable All Variables.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Require Import PeanoNat.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
-Require Import List.
+From Stdlib Require Import PeanoNat.
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
+From Stdlib Require Import List.
 
 Coercion is_true b := b = true.
 
@@ -17,7 +17,7 @@ Proof.
   - intros H x. apply (H (S x) x), PeanoNat.Nat.lt_succ_diag_r.
   - fix Ih 1. intros [|x] y LT.
     + destruct (PeanoNat.Nat.nlt_0_r _ LT).
-    + constructor. intros y' LT'. apply (Ih x). Guarded.
+    + constructor. intros y' LT'. apply (Ih x).
       rewrite PeanoNat.Nat.lt_succ_r in LT.
       apply (PeanoNat.Nat.lt_le_trans _ _ _ LT' LT).
 Defined.
