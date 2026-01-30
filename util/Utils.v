@@ -5,6 +5,7 @@ Unset Strict Implicit.
 From Stdlib Require Import PeanoNat.
 Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 From Stdlib Require Import List.
+Require Import Psatz.
 
 Coercion is_true b := b = true.
 
@@ -14,12 +15,10 @@ Proof. destruct p; trivial. Qed.
 Lemma wf_lt : well_founded lt.
 Proof.
   cut (forall x y, y < x -> Acc lt y).
-  - intros H x. apply (H (S x) x), PeanoNat.Nat.lt_succ_diag_r.
-  - fix Ih 1. intros [|x] y LT.
-    + destruct (PeanoNat.Nat.nlt_0_r _ LT).
-    + constructor. intros y' LT'. apply (Ih x).
-      rewrite PeanoNat.Nat.lt_succ_r in LT.
-      apply (PeanoNat.Nat.lt_le_trans _ _ _ LT' LT).
+  - intros H x. apply (H (S x) x); lia.
+  - fix Ih 1.
+    intros [|x] y LT; try lia.
+    constructor. intros z LZ. apply (Ih x). lia.
 Defined.
 
 Lemma negb_lt_le x h : negb (x <? h)%uint63 -> (h <=? x)%uint63.
