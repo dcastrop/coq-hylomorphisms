@@ -4,6 +4,7 @@ other/ export-ignore
 util/ export-ignore
 theories/ export-ignore
 extraction/ export-ignore
+extraction-setup/ export-ignore
 examples/ export-ignore
 paper-scripts/ export-ignore
 attic/ export-ignore

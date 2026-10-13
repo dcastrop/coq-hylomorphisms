@@ -52,15 +52,15 @@ Create HintDb ffix.
 |}.
 
 #[export] Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
-Proof with eauto with ffix.
-  apply (@MkSetoid _ (fun f g =>forall x, eqRel (f x) (g x)))...
+Proof.
+  apply (@MkSetoid _ (fun f g =>forall x, eqRel (f x) (g x))); eauto with ffix.
 Defined.
 
 #[export] Instance pair_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A * B).
-Proof with eauto with ffix.
-  apply (@MkSetoid _ (fun x y => fst x =e fst y /\ snd x =e snd y))...
-  - intros x y [->->]...
-  - intros x y z [->->]...
+Proof.
+  apply (@MkSetoid _ (fun x y => fst x =e fst y /\ snd x =e snd y)); eauto with ffix.
+  - intros x y [->->]; eauto with ffix.
+  - intros x y z [->->]; eauto with ffix.
 Defined.
 
 Add Parametric Morphism `{eA : setoid A} `{eB : setoid B}
@@ -76,23 +76,23 @@ Proof.
 Qed.
 
 #[export] Instance sum_eq `{eq_A : setoid A} `{eq_B : setoid B} : setoid (A + B).
-Proof with eauto with ffix.
+Proof.
   apply (@MkSetoid _ (fun x y =>
                         match x, y with
                         | inl u, inl v => u =e v
                         | inr u, inr v => u =e v
                         | _, _ => False
                         end
-        ))...
-  - intros []...
-  - intros [x|x] [y|y]...
-  - intros [x|x] [y|y] [z|z]...
+        )); eauto with ffix.
+  - intros []; eauto with ffix.
+  - intros [x|x] [y|y]; eauto with ffix.
+  - intros [x|x] [y|y] [z|z]; eauto with ffix.
     * intros [].
     * intros [].
 Defined.
 
 #[export] Instance prop_eq : setoid Prop.
-Proof with eauto with ffix.
+Proof.
   apply (@MkSetoid _ (fun p q => p <-> q)).
   - intros. split; trivial.
   - intros. rewrite H; split;  trivial.
@@ -101,8 +101,8 @@ Defined.
 
 #[export] Instance pred_sub `{eA : setoid A} {P : A -> Prop}
   : setoid {a : A | P a}.
-Proof with eauto with ffix.
-  apply (@ MkSetoid _ (fun px py => proj1_sig px =e proj1_sig py))...
+Proof.
+  apply (@ MkSetoid _ (fun px py => proj1_sig px =e proj1_sig py)); eauto with ffix.
 Defined.
 
 #[mode = "-"]

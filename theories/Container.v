@@ -4,7 +4,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Export Util.Utils.
+Require Export HYLO.Util.Utils.
 Require Export HYLO.Equivalence.
 Require Export HYLO.Morphism.
 
@@ -102,15 +102,15 @@ Inductive AppR `{F : Cont Sh P} (X : Type) {e : setoid X}
 
 #[export]
   Instance App_setoid `{F : Cont Sh P} `{e : setoid X} : setoid (App F X).
-Proof with eauto with ffix.
+Proof.
   apply (@MkSetoid _ (@AppR Sh _ P F X e)).
-  - intros [shx kx]. constructor...
+  - intros [shx kx]. constructor; eauto with ffix.
     simpl.  intros [x1 d1] [x2 d2] Eq. simpl in *. subst.
     rewrite (bool_irrelevance d1 d2).
     reflexivity.
-  - intros x y [Sxy Exy]. split...
+  - intros x y [Sxy Exy]. split; eauto with ffix.
   - intros x y z [Sxy Exy] [Syz Eyz]; simpl; split.
-    * rewrite Sxy...
+    * rewrite Sxy; eauto with ffix.
     * intros e1 e2 V1.
       destruct (elem_valid_irr Sxy e1) as [e3 V2].
       apply (e_trans (Exy e1 e3 V2)), Eyz.
@@ -123,9 +123,9 @@ Proof. trivial. Qed.
 Lemma cont_ext_eq `{F : Cont Sh P} (s : Sh) `{setoid X}
   (k k' : Pos s -> X)
   : (forall x, k x =e k' x) -> AppR (MkCont s k) (MkCont s k').
-Proof with simpl in *; auto with ffix.
-  intros Heq. constructor...
-  intros e1 e2 Hv. rewrite (elem_val_eq Hv)...
+Proof.
+  intros Heq. constructor; simpl in *; auto with ffix.
+  intros e1 e2 Hv. rewrite (elem_val_eq Hv); simpl in *; auto with ffix.
 Qed.
 
 Definition fmapA `{F : Cont Sh P} `{setoid A} `{setoid B}
@@ -134,7 +134,7 @@ Definition fmapA `{F : Cont Sh P} `{setoid A} `{setoid B}
 
 Lemma fmapA_eqF `{F : Cont Sh P} `{setoid A} `{setoid B} (f : A ~> B)
   : forall (x y : App F A), x =e y -> fmapA (F:= F) f x =e fmapA f y.
-Proof with eauto with ffix.
+Proof.
   intros [sx kx] [sy ky] [Es Ek]. split; auto. intros.  apply app_eq. auto.
 Qed.
 

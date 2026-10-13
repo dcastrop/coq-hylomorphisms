@@ -11,9 +11,9 @@ Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
 
-Require Import Util.Utils.
+Require Import HYLO.Util.Utils.
 
-Require Import Examples.BTree.
+Require Import HYLO.Examples.BTree.
 
 From Stdlib Require Import List.
 From Stdlib Require Import Uint63.

@@ -20,8 +20,8 @@ Section Defn.
   Hint Resolve app_eq : ffix.
 
   #[export] Instance eq_morph : setoid morph.
-  Proof with eauto with ffix.
-    apply (@MkSetoid _ (fun f g =>forall x, app f x =e app g x))...
+  Proof.
+    apply (@MkSetoid _ (fun f g =>forall x, app f x =e app g x)); eauto with ffix.
   Defined.
 End Defn.
 Arguments morph A {eA} B {eB}.

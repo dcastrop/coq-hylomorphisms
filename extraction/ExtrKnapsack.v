@@ -2,8 +2,8 @@ Require Import HYLO.Morphism.
 Require Import HYLO.Container.
 Require Import HYLO.Algebra.
 Require Import HYLO.Coalgebra.
-Require Import HYLO.Extraction.
-Require Import Examples.Knapsack.
+Require Import HYLO.Extraction.Common.
+Require Import HYLO.Examples.Knapsack.
 
 From Stdlib Require ExtrOcamlNatInt.
 Extraction Inline LFix_out.

@@ -64,11 +64,11 @@ Section FCoalgDef.
   Arguments Rec {A eA} coalg recP.
 
   #[export] Instance equiv_rcoalg `{setoid A} : setoid (RCoalg A).
-  Proof with auto with ffix.
+  Proof.
     refine {|
         eqRel := fun x y => coalg x =e coalg y
-      |}...
-    intros x y z H1 H2. transitivity y...
+      |}; auto with ffix.
+    intros x y z H1 H2. transitivity y; auto with ffix.
   Defined.
 
   Lemma terminating `{setoid A} : forall (h : RCoalg A) x, RecF h x.

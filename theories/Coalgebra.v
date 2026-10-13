@@ -5,7 +5,7 @@ Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
 From Paco Require Import paco.
-Require Import Util.Cofix.
+Require Import HYLO.Util.Cofix.
 
 Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.

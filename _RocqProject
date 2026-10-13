@@ -1,5 +1,6 @@
--R _build/default/util Util
+-R _build/default/util HYLO.Util
 -R _build/default/theories HYLO
--R _build/default/examples Examples
+-R _build/default/examples HYLO.Examples
+-R _build/default/extraction-setup HYLO.Extraction
 -arg -w
 -arg -rewrite-rw,-missing-proof-command
