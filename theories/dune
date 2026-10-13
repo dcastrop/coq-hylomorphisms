@@ -1,9 +1,5 @@
-; PolyF and CoHylo are left out: they do not compile against the current
-; definitions.
 (rocq.theory
  (name HYLO)
  (package rocq-hylomorphisms)
  (theories Stdlib Paco Util)
- (modules Equivalence Morphism Container Algebra Coalgebra FCoalgebra Hylo
-  Extraction)
  (flags :standard -w -rewrite-rw,-missing-proof-command))

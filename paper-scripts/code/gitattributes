@@ -1,5 +1,8 @@
 other/ export-ignore
 paper/ export-ignore
-.gitattributes export-ignore  
+paper-scripts/ export-ignore
+attic/ export-ignore
+.github/ export-ignore
+.gitattributes export-ignore
 .gitignore export-ignore
 zipfile.sh export-ignore

@@ -19,4 +19,3 @@ archive/
 # dune
 _build/
 *.install
-*_minted

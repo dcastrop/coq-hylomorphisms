@@ -29,3 +29,12 @@
  (extracted_modules shortcutfusion)
  (theories Stdlib Paco Util HYLO Examples)
  (flags :standard -w -extraction-default-directory))
+
+; Compile the extracted code, so that broken extraction is caught by the build.
+; Uint63 comes from the Rocq kernel.
+
+(library
+ (name extracted)
+ (modules qsort msort knapsack mutualrec shortcutfusion)
+ (libraries rocq-runtime.kernel)
+ (flags :standard -w -a))

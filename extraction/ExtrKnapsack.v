@@ -16,6 +16,5 @@ Extraction Inline fst.
 Extraction Inline snd.
 Extraction Inline pair.
 Extraction Inline Morphism.app.
-Extraction Inline Nat.pred.
 Set Extraction Flag 2047.
 Extraction "knapsack" ToExtract.
