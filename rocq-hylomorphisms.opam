@@ -7,7 +7,7 @@ license: "GPL-3.0-or-later"
 homepage: "https://github.com/dcastrop/coq-hylomorphisms"
 bug-reports: "https://github.com/dcastrop/coq-hylomorphisms/issues"
 depends: [
-  "dune" {>= "3.21"}
+  "dune" {>= "3.22"}
   "rocq-core" {>= "9.2"}
   "rocq-stdlib"
   "coq-paco" {>= "4.2.3"}
