@@ -26,6 +26,13 @@ jobs:
         with:
           opam_file: 'rocq-hylomorphisms.opam'
           custom_image: ${{ matrix.image }}
+          # Unpinning dune because we need >= 3.22 for several rocq.extraction
+          # stanzas in one directory.
+          before_install: |
+            startGroup "Unpin dune"
+              opam pin remove -n -y dune || true
+              opam update -y
+            endGroup
           before_script: |
             startGroup "Workaround permission issue"
               sudo chown -R 1000:1000 .
