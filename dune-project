@@ -7,7 +7,7 @@
 
 (source (github dcastrop/coq-hylomorphisms))
 (authors "David Castro-Perez" "Marco Paviotti" "Michael Vollmer")
-(license GPL-3.0-only)
+(license GPL-3.0-or-later)
 (maintainers "David Castro-Perez <David.CastroPerez@rhul.ac.uk>")
 
 (package
