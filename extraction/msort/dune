@@ -1,0 +1,14 @@
+; Extracts msort.ml (in _build/default/extraction/msort/) and compiles it, so that
+; broken extraction is caught by the build. Uint63 comes from the Rocq kernel.
+
+(rocq.extraction
+ (prelude ExtrMSort)
+ (extracted_modules msort)
+ (theories Stdlib Paco HYLO.Util HYLO HYLO.Examples HYLO.Extraction)
+ (flags :standard -w -extraction-default-directory))
+
+(library
+ (name extracted_msort)
+ (modules msort)
+ (libraries rocq-runtime.kernel)
+ (flags :standard -w -a))

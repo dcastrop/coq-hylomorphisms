@@ -1,0 +1,14 @@
+; Extracts mutualrec.ml (in _build/default/extraction/mutualrec/) and compiles it, so that
+; broken extraction is caught by the build. Uint63 comes from the Rocq kernel.
+
+(rocq.extraction
+ (prelude ExtrMutualRec)
+ (extracted_modules mutualrec)
+ (theories Stdlib Paco HYLO.Util HYLO HYLO.Examples HYLO.Extraction)
+ (flags :standard -w -extraction-default-directory))
+
+(library
+ (name extracted_mutualrec)
+ (modules mutualrec)
+ (libraries rocq-runtime.kernel)
+ (flags :standard -w -a))
