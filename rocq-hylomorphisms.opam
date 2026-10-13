@@ -4,8 +4,8 @@ synopsis: "Hylomorphisms in Rocq"
 maintainer: ["David Castro-Perez <David.CastroPerez@rhul.ac.uk>"]
 authors: ["David Castro-Perez" "Marco Paviotti" "Michael Vollmer"]
 license: "GPL-3.0-or-later"
-homepage: "https://github.com/dcastrop/coq-hylomorphisms"
-bug-reports: "https://github.com/dcastrop/coq-hylomorphisms/issues"
+homepage: "https://github.com/dcastrop/rocq-hylomorphisms"
+bug-reports: "https://github.com/dcastrop/rocq-hylomorphisms/issues"
 depends: [
   "dune" {>= "3.22"}
   "rocq-core" {>= "9.2"}
@@ -27,5 +27,5 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/dcastrop/coq-hylomorphisms.git"
+dev-repo: "git+https://github.com/dcastrop/rocq-hylomorphisms.git"
 x-maintenance-intent: ["(latest)"]
