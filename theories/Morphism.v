@@ -58,7 +58,7 @@ Qed.
 Section Id.
   Context `{eA : setoid A}.
 
-  Notation id_ := (fun x => x).
+  Abbreviation id_ := (fun x => x).
 
   Lemma id_eq : forall x y : A, x =e y -> id_ x =e id_ y.
   Proof. auto. Qed.
@@ -68,7 +68,7 @@ End Id.
 
 Section Const.
   Context `{eA : setoid A} `{eB : setoid B}.
-  Notation const_ := (fun (k : B) (_ : A) => k).
+  Abbreviation const_ := (fun (k : B) (_ : A) => k).
 
   Lemma const_eq1 (k : B)
     : forall x y : A, x =e y -> (const_ k) x =e (const_ k) y.
@@ -87,7 +87,7 @@ End Const.
 Section Exp.
   Context `{setoid A} `{setoid B} `{setoid C}.
 
-  Notation eapp_ := (fun x : (_ ~> _) * _ => let (f, v) := x in f v).
+  Abbreviation eapp_ := (fun x : (_ ~> _) * _ => let (f, v) := x in f v).
 
   Lemma eapp_eq : forall x y : (A ~> B) * A, x =e y -> eapp_ x =e eapp_ y.
   Proof.
@@ -97,7 +97,7 @@ Section Exp.
 
   Definition eapp := MkMorph eapp_eq.
 
-  Notation papp_ f := (fun x y => f y x).
+  Abbreviation papp_ f := (fun x y => f y x).
   Lemma papp_eq (f : A ~> B ~> C) (v : B)
     : forall x y : A, x =e y -> papp_ f v x =e papp_ f v y.
   Proof. intros ?? E. simpl. apply (f_equal v), app_eq,E. Qed.
@@ -107,17 +107,17 @@ End Exp.
 Reserved Notation "f \o g" (at level 50, format "f  \o '/ '  g").
 Section Comp.
   Context `{setoid A} `{setoid B} `{setoid C}.
-  Notation comp_ := (fun f g => (fun x => f (g x))).
+  Abbreviation comp_ := (fun f g => (fun x => f (g x))).
 
   Lemma comp_eq2 (g : B ~> C) (f : A ~> B)
     : forall x y, x =e y -> (comp_ g f) x =e (comp_ g f) y.
   Proof. intros. apply app_eq,app_eq. trivial. Qed.
-  Notation comp2 := (fun g f => MkMorph (comp_eq2 g f)).
+  Abbreviation comp2 := (fun g f => MkMorph (comp_eq2 g f)).
 
   Lemma comp_eq1 (g : B ~> C)
     : forall x y : A ~> B, x =e y -> (comp2 g) x =e (comp2 g) y.
   Proof. intros ?? E ?. simpl. apply app_eq, E. Qed.
-  Notation comp1 := (fun g => MkMorph (comp_eq1 g)).
+  Abbreviation comp1 := (fun g => MkMorph (comp_eq1 g)).
 
   Lemma comp_eq : forall x y : B ~> C, x =e y -> comp1 x =e comp1 y.
   Proof. intros ?? E ??. apply E. Qed.
@@ -135,8 +135,8 @@ Proof. intros x. simpl. reflexivity. Qed.
 
 Section Pairs.
   Context `{eA : setoid A} `{eB : setoid B} `{eC : setoid C}.
-  Notation fst_ := (fun x : _ * _ => let (y, _) := x in y).
-  Notation snd_ := (fun x : _ * _ => let (_, y) := x in y).
+  Abbreviation fst_ := (fun x : _ * _ => let (y, _) := x in y).
+  Abbreviation snd_ := (fun x : _ * _ => let (_, y) := x in y).
   Lemma fst_eq :
     forall x y : A * B, x =e y -> fst_ x =e fst_ y.
   Proof. intros [][][]; trivial. Qed.
@@ -147,18 +147,18 @@ Section Pairs.
   Definition snd : A * B ~> B := MkMorph snd_eq.
 
 
-  Notation pair_ f g := (fun x => (f x, g x)).
+  Abbreviation pair_ f g := (fun x => (f x, g x)).
 
   Lemma pair_feq2 (f : A ~> B) (g : A ~> C) :
     forall x y : A, x =e y -> (pair_ f g) x =e (pair_ f g) y.
   Proof. intros; split; apply app_eq; trivial. Qed.
 
-  Notation pair2 := (fun f g => MkMorph (pair_feq2 f g)).
+  Abbreviation pair2 := (fun f g => MkMorph (pair_feq2 f g)).
 
   Lemma pair_feq1 (f : A ~> B)
     : forall x y : A ~> C, x =e y -> (pair2 f) x =e (pair2 f) y.
   Proof. intros ?? E ?. split; [reflexivity|apply E]. Qed.
-  Notation pair1 := (fun f => MkMorph (pair_feq1 f)).
+  Abbreviation pair1 := (fun f => MkMorph (pair_feq1 f)).
 
   Lemma pair_feq
     : forall x y : A ~> B, x =e y -> pair1 x =e pair1 y.
@@ -187,18 +187,18 @@ Section Sums.
   Definition inj1 : A ~> A + C := MkMorph inj1_eq.
   Definition inj2 : A ~> C + A := MkMorph inj2_eq.
 
-  Notation fcase_ f g
+  Abbreviation fcase_ f g
     := (fun x => match x with | inl y => f y | inr y => g y end).
 
   Lemma fcase_eq2 (f : A ~> C) (g : B ~> C) :
     forall x y : A + B, x =e y -> (fcase_ f g) x =e (fcase_ f g) y.
   Proof. intros [][]; simpl; try intros[]; apply app_eq; trivial. Qed.
-  Notation fcase2 := (fun f g => MkMorph (fcase_eq2 f g)).
+  Abbreviation fcase2 := (fun f g => MkMorph (fcase_eq2 f g)).
 
   Lemma fcase_eq1 (f : A ~> C) :
     forall x y : B ~> C, x =e y -> (fcase2 f) x =e (fcase2 f) y.
   Proof. intros ?? E []; simpl; try reflexivity; try apply E. Qed.
-  Notation fcase1 := (fun f => MkMorph (fcase_eq1 f)).
+  Abbreviation fcase1 := (fun f => MkMorph (fcase_eq1 f)).
 
   Lemma fcase_eq : forall x y : A ~> C, x =e y -> fcase1 x =e fcase1 y.
   Proof. intros ?? E [][]; simpl; try reflexivity; try apply E. Qed.

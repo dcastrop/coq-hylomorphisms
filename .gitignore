@@ -1,4 +1,5 @@
 *.lia.cache
+*.nia.cache
 *~
 *.swp
 *.#*
@@ -9,7 +10,13 @@
 *.aux
 .auctex-auto
 .coqdeps.d
+.rocqdeps.d
 .Makefile.d
 Makefile
 Makefile.conf
 archive/
+
+# dune
+_build/
+*.install
+*_minted

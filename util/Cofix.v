@@ -1,14 +1,14 @@
-Require Export ssreflect.
-Require Import Paco.paco.
+From Corelib Require Export ssreflect.
+From Paco Require Import paco.
 
 Unset Auto Template Polymorphism.
-
+(* 
 Ltac done :=
   eauto; hnf; intros; solve
    [ do ![solve [eauto | apply: sym_equal; eauto]
          | discriminate | contradiction | split]
    | case not_locked_false_eq_true; assumption
-   | match goal with H : ~ _ |- _ => solve [case H; eauto] end ].
+   | match goal with H : ~ _ |- _ => solve [case H; eauto] end ]. *)
 
 Inductive _co_marker := _co_marker_constr.
 

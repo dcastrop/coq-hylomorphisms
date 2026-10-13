@@ -22,7 +22,7 @@ Lemma LFix_rect [Sh : Type] [Esh : equiv Sh] [Po : Type]
         P (LFix_in x))
     -> forall l : LFix F, P l.
 Proof.
-  intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. Guarded.
+  intros H. fix Ih 1. intros []. apply H. intros e. apply Ih.
 Defined.
 
 Lemma LFix_rec [Sh : Type] [Esh : equiv Sh] [Po : Type]
@@ -428,7 +428,7 @@ Lemma ana_f_irr `{F : Container Sh P} `{eA : equiv A} (h : CoAlg F A)
 Proof.
   simpl. fix Ih 2. intros x0 [x Fx] F2. clear x0. destruct F2 as [x Fy].
   simpl. split; [reflexivity| intros e1 e2 d]. rewrite (elem_val_eq d).
-  apply Ih. Guarded.
+  apply Ih.
 Qed.
 
 Definition ana_f `{F : Container Sh P} `{eA : equiv A} (h : FCoAlg F A)
@@ -441,7 +441,7 @@ Proof.
   unfold ana_f. intros x y. generalize (finite h x) (finite h y). revert x y.
   fix Ih 3. intros x y [x' Fx] [y' Fy] Hxy. simpl. split.
   - destruct (f_eq h Hxy). auto.
-  - intros e d1 d2. simpl. apply Ih. Guarded.
+  - intros e d1 d2. simpl. apply Ih.
     destruct (f_eq h Hxy). auto.
 Qed.
 
@@ -508,7 +508,7 @@ Proof.
   fix Ih 2. intros x0 [x Fx] F2. clear x0. destruct F2 as [x Fy]. simpl.
   generalize dependent (h x).  clear x. intros [s_x c_x] Fx Fy. simpl in *.
   apply f_eq. split; [reflexivity|intros d1 d2 e].
-  rewrite (elem_val_eq e). simpl in *. apply Ih. Guarded.
+  rewrite (elem_val_eq e). simpl in *. apply Ih.
 Qed.
 
 Definition hylo_f `{F : Container Sh P}
@@ -528,7 +528,7 @@ Proof.
   generalize (h x') (h y'). intros [s_x c_x] [s_y c_y]. simpl.
   intros Fx Fy [Exy Ec]. simpl in *.
   apply f_eq. split; [trivial|simpl; intros d1 d2 e].
-  apply Ih. Guarded. apply Ec, e.
+  apply Ih. apply Ec, e.
 Qed.
 
 Definition hylo `{F : Container Sh P}
@@ -561,7 +561,7 @@ Proof.
   fix Ih 2. intros x Fx. rewrite (H _). simpl. unfold comp. unfold fmap.
   destruct Fx as [x Fx]. simpl. destruct (h x) as [s_x c_x]. simpl in *.
   apply f_eq. simpl. split; [reflexivity|simpl; intros d1 d2 e].
-  rewrite (elem_val_eq e). apply Ih. Guarded.
+  rewrite (elem_val_eq e). apply Ih.
 Qed.
 
 Lemma hylo_univ_l `{F : Container Sh P}
@@ -712,7 +712,7 @@ Proof. rewrite hylo_cata,hylo_ana. apply deforest,l_out_in. Qed.
 (*   Defined. *)
 (* End Sums. *)
 
-Require List.
+From Stdlib Require List.
 Section ExQsort.
 
   (* Defining a tree *)
@@ -860,7 +860,7 @@ Section ExQsort.
 End ExQsort.
 
 
-Require Import Program.
+From Stdlib Require Import Program.
 
 Program Fixpoint qsort_proc (l : list nat) {measure (length l)} :=
   match l with
@@ -881,7 +881,7 @@ Next Obligation.
   - apply Arith_prebase.lt_n_S_stt, IHt.
 Qed.
 
-From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
+From Stdlib Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Extract Inlined Constant Nat.leb => "(<=)".
 Set Extraction TypeExpand.
 (* Set Extraction Conservative Types. *)

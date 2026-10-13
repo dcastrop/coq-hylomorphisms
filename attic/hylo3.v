@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco paco2.
-Require Import Setoid.
+From Stdlib Require Import Setoid.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -626,7 +626,7 @@ Section ExQsort.
   Definition msort : seq nat -> seq nat := func (hylo merge tsplit).
 End ExQsort.
 
-From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
+From Stdlib Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Set Extraction TypeExpand.
 Set Extraction Flag 2047.
 Extract Inductive sigT => "(*)"  [ "(,)" ].

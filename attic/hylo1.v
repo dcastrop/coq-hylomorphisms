@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco paco2.
-Require Import Setoid.
+From Stdlib Require Import Setoid.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -924,7 +924,7 @@ Module ExInfTree.
     ana tree_gen.
 End ExInfTree.
 
-From Coq Require Extraction.
+From Stdlib Require Extraction.
 (* Unset Extraction SafeImplicits. *)
 Extract Inductive sigT => "(*)"  [ "(,)" ].
 Extraction Implicit vcons [n].
@@ -1006,8 +1006,8 @@ Module QSort.
   Definition qsort : list nat -> list nat := hylo p_merge p_split_terminates.
 End QSort.
 
-(* From Coq Require Extraction ExtrHaskellBasic ExtrHaskellNatInteger. *)
-From Coq Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
+(* From Stdlib Require Extraction ExtrHaskellBasic ExtrHaskellNatInteger. *)
+From Stdlib Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 Set Extraction TypeExpand.
 Set Extraction Flag 2047.
 Extraction Implicit Vector.cons [n].

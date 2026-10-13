@@ -8,7 +8,7 @@ Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.
 Require Import HYLO.Container.
 
-Notation Alg F A := (App F A ~> A).
+Abbreviation Alg F A := (App F A ~> A).
 
 Section AlgDef.
   Context `(F : Cont Sh Po).
@@ -23,7 +23,7 @@ Section AlgDef.
           P (LFix_in x))
       -> forall l : LFix, P l.
   Proof.
-    intros H. fix Ih 1. intros []. apply H. intros e. apply Ih. Guarded.
+    intros H. fix Ih 1. intros []. apply H. intros e. apply Ih.
   Defined.
   Lemma LFix_rec [P : LFix -> Set]
     : (forall x : App F LFix,
@@ -37,6 +37,10 @@ Section AlgDef.
           P (LFix_in x))
       -> forall l : LFix, P l.
   Proof. intros H. apply LFix_rect, H. Defined.
+
+  Register Scheme LFix_rect as rect_dep for LFix.
+  Register Scheme LFix_rec as rec_dep for LFix.
+  Register Scheme LFix_ind as ind_dep for LFix.
 
   Fixpoint LFixR (x y : LFix) : Prop :=
     let f_x := LFix_out x in

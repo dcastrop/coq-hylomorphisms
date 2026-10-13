@@ -36,7 +36,7 @@
 \newcolumntype{C}{>{$}c<{$}} % math-mode version of "l" column type
 \newcolumntype{L}{>{$}l<{$}} % math-mode version of "l" column type
 
-\usepackage{inconsolata}
+% \usepackage{inconsolata}
 % \usepackage{draftwatermark}
 % \SetWatermarkText{Confidential}
 % \SetWatermarkScale{4}
@@ -221,21 +221,26 @@
 % \acknowledgements{I want to thank \dots}
 % optional
 
-%\nolinenumbers %uncomment to disable line numbering
+\nolinenumbers %uncomment to disable line numbering
 
 %Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\EventEditors{}
+\EventEditors{Yannick Forster and Chantal Keller}
 \EventNoEds{2}
-\EventLongTitle{ITP 2025)}
+\EventLongTitle{16th International Conference on Interactive Theorem Proving (ITP 2025)}
 \EventShortTitle{ITP 2025}
 \EventAcronym{ITP}
 \EventYear{2025}
-\EventDate{December 24--27, 2016}
-\EventLocation{Little Whinging, United Kingdom}
+\EventDate{September 29--October 2, 2025}
+\EventLocation{Reykjavik, Iceland}
 \EventLogo{}
-\SeriesVolume{42}
-\ArticleNo{23}
+\SeriesVolume{352}
+\ArticleNo{32}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\supplement{}
+
+\supplementdetails[subcategory={Source Code}, cite={}, swhid={}]{Software}{https://github.com/dcastrop/coq-hylomorphisms}
+
 
 \begin{document}
 
@@ -297,8 +302,8 @@ let rec sort_times_two = function
 This program is the same as composing a \emph{quicksort} OCaml implementation,
 with the function \ocaml{map (fun x -> x * 2)} which is a known program
 optimisation called \emph{fusion}.  A lot of program calculations have this
-pattern: start from a simple specification, e.g.\
-$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
+pattern: start from a simple specification, e.g.
+\\$\mathsf{map}\;(\lambda x.\;x \times 2) \circ \mathsf{sort}$, and use program
 equivalences and algebraic laws to rewrite it to an optimised version. We will
 revisit a similar example in Section~\ref{sec:sorting}.
 
@@ -397,7 +402,7 @@ A \emph{category} is a collection of objects $A, B, C$, denoted by $\Obj(\CatC)$
 and a collection of arrows $f, g, h$ between these objects, denoted by $\Arr
 (\CatC)$, such that there always exists an identity arrow $id_{A} : A \to A$ for
 each object $A$ and for two arrows $A \xrightarrow{f} B$ and $B \xrightarrow{g}
-C$ there always exists an arrow $A \xrightarrow{g\circ f} C$ obeying the
+C$ there always exists an arrow $A \xrightarrow{g\circ f} C$ obeying the identity and
 associativity law. We denote $\Hom_{\CatC} (A, B)$ the set of arrows from $A$ to
 $B$ and we use the letters $\CatC$, $\CatD$, $\CatE\dots$ for
 categories\footnote[1]{For presentation purposes we shall not deal with size
@@ -412,7 +417,8 @@ For example, the category of sets, denoted by $\Set$, is the category where
 objects are sets and arrows are functions between sets. The initial object $0$
 in $\Set$ is the empty set $\emptyset$ and the terminal object $1$ is any
 singleton set. The reader who is not accustomed with category theory can assume
-types are sets, giving the intuition that the category $\Set$ can also be viewed
+for simplicity that  types may be viewed as sets and programs as functions
+between sets, giving the intuition that the category $\Set$ can also be viewed
 as the category of (simple) types and programs between them.
 
 A \emph{functor} $F : \CatC \to \CatD$ is a map between categories mapping both
@@ -452,9 +458,9 @@ that is $ G(f) \cdot \phi_{X} = \phi_{Y} \cdot F(f)$, for all morphisms
 $f : X \to Y$. Intuitively, a natural transformation is akin to a polymorphic
 function transforming the structure of a functor into the structure of another
 functor without assuming what is the type of data contained in them.  For
-example, a program $f : \texttt{List }X \to \texttt{Maybe} X$ which returns
-nothing if the list is empty and the head of the list otherwise can work for all
-types $X$ uniformly because it needs not to inspect the data inside the list.
+example, a program $\phi_{X} : \texttt{List }X \to \texttt{Maybe} X$, which returns
+nothing if the list is empty and the head of the list otherwise, does not need to know the content of the list to perform its task, in other words, it can work for all
+types $X$ \emph{uniformly}.
 
 
 \subsection{Algebras and Catamorphisms}
@@ -476,7 +482,7 @@ isomorphism $F\mu F \iso \mu F$, furthermore  $\InOp : \mu F \to F \mu F$ is the
 inverse of $\InIso$. The uniqueness property of initial $F$-algebras states that for any other
 $F$-algebra $(X, a_{X})$ there exists a unique $F$-algebra homomorphism, denoted
 by $\cata{\alpha_{X}} : (\mu F, \InIso) \to (X, a_{X})$ and pronounced
-``\emph{catamorphism}'' or ``\emph{fold}'' satisfying:
+``\emph{catamorphism}'' or ``\emph{fold}''. This is formally stated as follows:
 \begin{equation}
   \label{eq:cata:unique}
   f = \cata{a_{X}} \iff f = a_{X} \circ F(f) \circ \InOp
@@ -530,7 +536,7 @@ $B$-coalgebras states that for any other $B$-coalgebra $(X, c_{X})$ there exists
 a unique $B$-coalgebra homomorphism into the terminal coalgebra
 $(\nu B, \OutIso)$ which is denoted by $\ana{c_{X}}$ and pronounced
 ``\emph{anamorphism}'' or ``\emph{unfold}''. We spell out the uniqueness
-property:
+property of unfolds:
 \begin{equation}
   \label{eq:ana:unique}
   f = \ana{c_{X}} \iff f = \OutOp \circ B(f) \circ c_{X}
@@ -738,7 +744,7 @@ defined by the empty list \coq{Empty : unit -> LFix F} and the cons operation
 
 The \coq{LFix F} setoid equality is the least fixed point of the \coq{App F}
 setoid equality, i.e. if \coq{LFixR F} represents the setoid equality of
-\coq{LFix F}, and we have two \coq{x y : LFix F}, then \coq{LFixR F x y} iff
+\coq{LFix F}. Let \coq{x y : LFix F}, then \coq{LFixR F x y} iff
 \begin{coqcode}
 shape x =e shape y /\ (forall p p', projT1 p = projT1 p'
    -> LFixR F (cont x p) (cont y p'))
@@ -853,8 +859,10 @@ that coalgebra \coq{c} eventually terminates for some input \coq{x}
 \begin{coqcode}
 Definition hylo_def (a : Alg F B) (c : Coalg F A) : forall (x : A), RecF c x -> B
   := fix f x H
-     := match c x as cx return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B with
-        | cx => fun H => a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
+     := match c x as cx 
+            return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B with
+        | cx => fun H => 
+            a { shape := shape cx ; cont := fun e => f (cont cx e) (H e) }
         end (RecF_inv H).
 \end{coqcode}
 
@@ -1120,7 +1128,7 @@ show an example of the shortcut deforestation optimisation
 \subsection{Sorting Algorithms}\label{sec:sorting}
 We now focus on divide-and-conquer sorting algorithms and demonstrate how to use
 program calculation to apply a fusion optimisation. In the supplemental material
-accompanying this paper, we formalise both mergesort and quicksort, but in this
+accompanying this paper (\url{https://github.com/dcastrop/coq-hylomorphisms}), we formalise both mergesort and quicksort, but in this
 section, we focus solely on quicksort. The recursive structure of quicksort is
 given by the following functor
 \begin{coqcode}
@@ -1655,18 +1663,21 @@ formulations to try to improve the performance of the rewriting tactics
 (e.g.\ canonical structures).  Currently, Rocq is unable to inline a number of
 trivially inlineable definitions.  We will study alternative definitions, or
 extensions to Rocq's code extraction mechanisms to force the full inlining of all
-container code that is used in hylomorphisms.  Finally, proving termination
-still remains a hurdle. In our framework this reduces to proving that the
-anamorphism terminates in all inputs, and we provide a convenient connection to
-well-founded recursion. Furthermore, recursive coalgebras compose with natural
-transformations, which allows the reuse of a number of core recursive
-coalgebras. A possible interesting future line of work is the use of the
-approach by Abreu et al.~\cite{AbreuDHJMS23} in combination with ours to improve
-code extraction from divide-and-conquer computations whose termination does not
-require an external proof.
+container code that is used in hylomorphisms.  Following work by Miculan and
+Paviotti~\cite{MiculanP12} an interesting next step would be to embed the notion
+of hylomorphism into a type theory with a notion of distributed computations
+(e.g. ML5), the resulting extracted code would be then implemented in a
+distributed programming language (e.g. Erlang).
+Finally, proving termination still remains a hurdle. In our framework this
+reduces to proving that the anamorphism terminates in all inputs, and we provide
+a convenient connection to well-founded recursion. Furthermore, recursive
+coalgebras compose with natural transformations, which allows the reuse of a
+number of core recursive coalgebras. A possible interesting future line of work
+is the use of the approach by Abreu et al.~\cite{AbreuDHJMS23} in combination
+with ours to improve code extraction from divide-and-conquer computations whose
+termination does not require an external proof.
 
 
-\newpage
 
 \bibliography{references.bib}
 

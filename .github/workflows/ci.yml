@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported Rocq (Abbreviation needs 9.2) and the latest release.
+        image:
+          - 'rocq/rocq-prover:9.2'
+          - 'rocq/rocq-prover:latest'
+        include:
+          # Upcoming Rocq: reported, but does not fail the workflow.
+          - image: 'rocq/rocq-prover:dev'
+            experimental: true
+    continue-on-error: ${{ matrix.experimental == true }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rocq-community/docker-coq-action@v1
+        with:
+          opam_file: 'rocq-hylomorphisms.opam'
+          custom_image: ${{ matrix.image }}
+          before_script: |
+            startGroup "Workaround permission issue"
+              sudo chown -R 1000:1000 .
+            endGroup
+          # Plain `dune build` (rather than `opam install`) also builds the
+          # extraction targets, which are not part of the installed package.
+          script: |
+            startGroup "Build"
+              dune build --display short
+            endGroup
+            startGroup "Check generated opam file is up to date"
+              git diff --exit-code rocq-hylomorphisms.opam
+            endGroup
+          uninstall: ''

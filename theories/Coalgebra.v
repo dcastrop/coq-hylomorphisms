@@ -4,14 +4,14 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Import Paco.paco.
+From Paco Require Import paco.
 Require Import Util.Cofix.
 
 Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.
 Require Import HYLO.Container.
 
-Notation Coalg F A := (A ~> App F A) (only parsing).
+Abbreviation Coalg F A := (A ~> App F A) (only parsing).
 
 Section CoalgDef.
   Context `(F : Cont Sh P).
@@ -20,9 +20,9 @@ Section CoalgDef.
   CoInductive GFix : Type := GFix_in { GFix_out : App F GFix }.
   Unset Primitive Projections.
 
-  Notation gshape x := (shape (GFix_out x)).
-  Notation gcont x := (cont (GFix_out x)).
-  Notation grelT := (GFix -> GFix -> Prop) (only parsing).
+  Abbreviation gshape x := (shape (GFix_out x)).
+  Abbreviation gcont x := (cont (GFix_out x)).
+  Abbreviation grelT := (GFix -> GFix -> Prop) (only parsing).
 
   Inductive GFixR_ (G : grelT) (x y : GFix) : Prop :=
   | GFixR_in_
@@ -46,6 +46,7 @@ Section CoalgDef.
     apply (GFixR_in_ sh).
     intros e1 e2 Ev. apply H, k, Ev.
   Qed.
+  Create HintDb gfix.
   Hint Resolve GFixR_mon : gfix.
 
   Lemma GFixR_unfold x y (R : GFixR x y)
@@ -108,7 +109,7 @@ Section CoalgDef.
     intros e1 e2 Veq. destruct (ElemE e1 e2 Veq) as [Gf|[]]. trivial.
   Qed.
 
-  Notation Alg F A := (App F A ~> A) (only parsing).
+  Abbreviation Alg F A := (App F A ~> A) (only parsing).
 
   Definition g_in : Alg F GFix := MkMorph l_in_eq.
   Definition g_out : Coalg F GFix := MkMorph g_out_eq.

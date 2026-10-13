@@ -41,6 +41,7 @@ Require Export HYLO.Morphism.
   * generated OCaml code, and a priority of this experiment was extracting
   * "somewhat reasonable/clean" OCaml code.
   *)
+#[mode = "! - -"]
 Class Cont `{Esh : setoid Sh} (P : Type) :=
   { valid : Sh * P ~> bool
   }.
@@ -137,7 +138,7 @@ Proof with eauto with ffix.
   intros [sx kx] [sy ky] [Es Ek]. split; auto. intros.  apply app_eq. auto.
 Qed.
 
-Notation fmapU f :=
+Abbreviation fmapU f :=
   ({| app := fun x => MkCont (shape x) (fun e => f (cont x e));
      app_eq := fmapA_eqF f
    |}).
@@ -179,8 +180,8 @@ Defined.
 Section Product.
   Context `{setoid S1} `{setoid S2} (P1 P2 : Type).
   Context (C1 : Cont S1 P1) (C2 : Cont S2 P2).
-  Notation Ps := ((S1 * S2)%type).
-  Notation Pp := ((P1 + P2)%type).
+  Abbreviation Ps := ((S1 * S2)%type).
+  Abbreviation Pp := ((P1 + P2)%type).
   Instance Prod : Cont Ps Pp.
   refine {| valid := {| app := fun x : Ps * Pp  =>
                                match snd x with
@@ -198,8 +199,8 @@ End Product.
 Section Sum.
   Context `{setoid S1} `{setoid S2} (P1 P2 : Type).
   Context (C1 : Cont S1 P1) (C2 : Cont S2 P2).
-  Notation Ps := ((S1 + S2)%type).
-  Notation Pp := ((P1 + P2)%type).
+  Abbreviation Ps := ((S1 + S2)%type).
+  Abbreviation Pp := ((P1 + P2)%type).
   Instance Sum : Cont Ps Pp.
   refine {| valid := {| app := fun x : Ps * Pp  =>
                                match fst x, snd x with

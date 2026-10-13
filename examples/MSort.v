@@ -14,10 +14,10 @@ Require Import Util.Utils.
 
 Require Import Examples.BTree.
 
-Require Import Lia.
-Require List.
+From Stdlib Require Import Lia.
+From Stdlib Require Import List.
 (* Require Import Nat. *)
-Require Import Coq.Numbers.Cyclic.Int63.Sint63.
+From Stdlib Require Import Sint63.
 
 Fixpoint mergeL l1 l2 {struct l1} :=
   let fix merge_aux l2 :=
@@ -43,7 +43,7 @@ Fixpoint splitL (x : list int) (accL accR : list int) :=
   | cons x xs => splitL xs accR (cons x accL)
   end.
 
-Notation max := Nat.max.
+Abbreviation max := Nat.max.
 
 Definition len_pair (p : list int * list int) : nat
   := max (length (fst p)) (length (snd p)).
@@ -97,19 +97,13 @@ Defined.
 Module Tests.
   Import List.
   Definition test := (1 :: 7 :: 2 :: 8 :: 10 :: 8 :: 1 :: nil)%sint63.
-  Fixpoint cycle n :=
+    Fixpoint cycle n :=
     match n with
-    | 0 => test
+      | 0 => test
     | S n => test ++ cycle n
     end.
   Definition largeTest := Eval compute in cycle 10.
-  Eval compute in msort largeTest.
+  (* Uncomment to run the tests:
+    Eval compute in msort largeTest.
+  *)
 End Tests.
-
-
-From Coq Require Extraction ExtrOcamlBasic ExtrOCamlInt63.
-Extract Inlined Constant Nat.leb => "(<=)".
-Set Extraction TypeExpand.
-Extraction Inline val.
-Set Extraction Flag 2047.
-Recursive Extraction msort.

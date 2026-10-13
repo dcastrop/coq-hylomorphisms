@@ -10,15 +10,14 @@ Require Import HYLO.Algebra.
 Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
-Require Import HYLO.Extraction.
 
 Require Import Util.Utils.
 
 Require Import Examples.BTree.
 Require Import Examples.CList.
 
-Require Import List.
-Require Import Coq.Numbers.Cyclic.Int63.Sint63.
+From Stdlib Require Import List.
+From Stdlib Require Import Sint63.
 
 
 (* Memoisation tables for a container C, indexed by 'A' *)
@@ -102,7 +101,6 @@ Arguments Table {Sg}%_type_scope {Esh} {Pg}%_type_scope G A%_type_scope {H}.
 Arguments Cons & {Sg}%_type_scope {Esh} {Pg}%_type_scope {G} {A}%_type_scope {_}.
 Arguments headT {Sg}%_type_scope {Esh} {Pg}%_type_scope {G} {A}%_type_scope {H}.
 Arguments tailT {Sg}%_type_scope {Esh} {Pg}%_type_scope {G} {A}%_type_scope {H}.
-About tailT.
 
 Definition dyna `{setoid A} `{setoid B} `{C : Cont Sc Pc}
   (a : App C (Table C A) ~> A) (c : RCoalg C B) : B ~> A
@@ -230,19 +228,3 @@ Defined.
 Module ToExtract.
   Definition knapsack := Eval unfold ex1 in ex1.
 End ToExtract.
-
-Require ExtrOcamlNatInt.
-Extraction Inline LFix_out.
-Extraction Inline shape.
-Extraction Inline headT_.
-Extraction Inline tailT_.
-Extraction Inline l_out.
-Extraction Inline LFix_out.
-Extraction Inline Memo.
-Extraction Inline fst.
-Extraction Inline snd.
-Extraction Inline pair.
-Extraction Inline Morphism.app.
-Extraction Inline Nat.pred.
-Set Extraction Flag 2047.
-Recursive Extraction ToExtract.

@@ -1,0 +1,17 @@
+LICENSE.txt export-ignore
+_RocqProject export-ignore
+other/ export-ignore
+util/ export-ignore
+theories/ export-ignore
+extraction/ export-ignore
+examples/ export-ignore
+paper-scripts/ export-ignore
+attic/ export-ignore
+dune-project export-ignore
+rocq-hylomorphisms.opam export-ignore
+.github/ export-ignore
+README.md export-ignore
+paper/submissions export-ignore
+.gitattributes export-ignore  
+.gitignore export-ignore
+zipfile.sh export-ignore

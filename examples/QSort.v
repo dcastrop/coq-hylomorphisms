@@ -1,6 +1,7 @@
 Generalizable All Variables.
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Auto Template Polymorphism.
 
 Require Import HYLO.Equivalence.
 Require Import HYLO.Morphism.
@@ -14,8 +15,8 @@ Require Import Util.Utils.
 
 Require Import Examples.BTree.
 
-Require Import List.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+From Stdlib Require Import List.
+From Stdlib Require Import Uint63.
 
 Definition merge : App (TreeF unit int) (list int) ~> list int.
 |{ x : (App (TreeF unit int) (list int)) ~> (
@@ -28,7 +29,7 @@ Definition merge : App (TreeF unit int) (list int) ~> list int.
 Defined.
 
 Open Scope uint63_scope.
-Definition c_split : Coalg (TreeF unit int) (list int) :=
+Definition c_split : list int ~> App (TreeF unit int) (list int) :=
   ltac:(|{ x ~> match x with
              | nil => a_leaf tt
              | cons h t =>
@@ -37,12 +38,6 @@ Definition c_split : Coalg (TreeF unit int) (list int) :=
              end}|).
 Close Scope uint63_scope.
 
-(* Needs to be defined, otherwise qsort does not reduce!
- * UPDATE 12/09/2023: what's the nonsense above???
- * UPDATE 25/02/2024: AAH! nope, the *termination* proof needs to be defined
- * if we want to do Eval compute and the like (otherwise the fixpoint will
-  * never reduce)
- *)
 Lemma split_fin : respects_relation c_split (@length int) lt.
 Proof.
   intros [|h t] p; simpl in *; try (apply (dom_leaf _ p)).
@@ -89,12 +84,12 @@ Definition qsort_times_two
   assert (RW1 : Lmap times_two \o cata merge
                 =e hylo (merge \o natural (nt_shape id times_two)) l_out).
   {
-    apply hylo_univ.
+    apply hylo_uniq.
     rewrite fmap_comp, <- !compA. rewrite compA, compA.
     rewrite <- Lmap_merge, <- !compA, (compA merge), <- cata_unfold.
     reflexivity.
   }
-  rewrite RW1, hylo_ana, deforest.
+  rewrite RW1, hylo_ana. rewrite deforest.
   2:{ apply l_out_in. }
   Opaque wf_lt. simpl. Transparent wf_lt.
   reflexivity.
@@ -109,18 +104,11 @@ Module Tests.
     | S n => test ++ cycle n
     end.
   Definition largeTest := Eval compute in cycle 10.
-  Eval compute in qsort largeTest.
-  Eval compute in qsort_times_two largeTest.
+  (* Uncomment to run the tests:
+    Eval compute in qsort largeTest.
+    Eval compute in qsort_times_two largeTest.
+  *)
 End Tests.
-
-From Coq Require Extraction ExtrOcamlBasic ExtrOCamlInt63.
-Set Extraction TypeExpand.
-Extraction Inline val.
-Extraction Inline posL.
-Extraction Inline posR.
-Set Extraction Flag 2047.
-Recursive Extraction qsort.
-Recursive Extraction qsort_times_two.
 
 Section QSortOK.
 Inductive Sorted {A : Type} (R : A -> A -> bool) : list A -> Prop :=
@@ -163,9 +151,10 @@ Inductive Sorted {A : Type} (R : A -> A -> bool) : list A -> Prop :=
       Sorted leb (hylo merge tsplit l) /\ Permutation l (hylo merge tsplit l).
   Proof.
     Opaque hylo.
-    intros l. apply hylo_ind. clear l. intros l Ih. rewrite hylo_unr; simpl.
-    destruct l as [|h t]; simpl in *.
-    + do ! constructor; auto with *.
+    intros l.
+    induction (recP tsplit l) as [x _ Ih]. rewrite hylo_unr; simpl.
+    destruct x as [|h t]; simpl in *.
+    + repeat constructor; trivial.
     + rewrite partition_as_filter in *; simpl in *.
       pose proof (Ih (posL h)) as IhL; specialize (Ih (posR h)).
       rename Ih into IhR; simpl in *.

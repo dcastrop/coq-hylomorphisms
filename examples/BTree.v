@@ -10,7 +10,7 @@ Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
 
-Require List.
+From Stdlib Require List.
 
 (* Defining a tree *)
 Unset Auto Template Polymorphism.
@@ -62,8 +62,8 @@ Proof. intros []. simpl in *. discriminate. Qed.
 Definition dom_leaf L A B (e : L) (x : Pos (F:=TreeF L A) (Leaf A e)) : B :=
   False_rect _ (dom_leaf_false x).
 
-Notation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
-Notation a_node x l r :=
+Abbreviation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
+Abbreviation a_node x l r :=
   (MkCont (Node _ x) (fun p => match val p with
                               | Lbranch => l
                               | Rbranch => r
@@ -76,10 +76,10 @@ Definition rnode_valid {L A} (x : Ts L A)
   : forall (n : A), x = Node L n -> valid (x, Rbranch) = true.
 Proof. intros n ->. reflexivity. Qed.
 
-Notation e_lbranch k H := (k (MkElem Lbranch (lnode_valid H))).
-Notation e_rbranch k H := (k (MkElem Rbranch (rnode_valid H))).
-Notation leftB  k := (e_lbranch k eq_refl).
-Notation rightB k := (e_rbranch k eq_refl).
+Abbreviation e_lbranch k H := (k (MkElem Lbranch (lnode_valid H))).
+Abbreviation e_rbranch k H := (k (MkElem Rbranch (rnode_valid H))).
+Abbreviation leftB  k := (e_lbranch k eq_refl).
+Abbreviation rightB k := (e_rbranch k eq_refl).
 
 Definition posL {A} (h : A) : Pos (Node unit h) :=
   MkElem Lbranch eq_refl.
@@ -146,5 +146,5 @@ Qed.
 Lemma tree_itree_iso2 {L A}
   : tree_to_itree \o itree_to_tree =e id (A:=itree L A).
   unfold tree_to_itree, itree_to_tree, Tree. rewrite cata_ana_hylo.
-  symmetry. rewrite hylo_univ, fmap_id, idKr. intros[]; simpl; trivial.
+  symmetry. rewrite hylo_uniq, fmap_id, idKr. intros[]; simpl; trivial.
 Qed.

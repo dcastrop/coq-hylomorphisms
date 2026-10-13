@@ -93,7 +93,7 @@ Section HyloDef.
     fix Ih 2. intros x0 [x Fx] F2. clear x0. destruct F2 as [x Fy]. simpl.
     generalize dependent (h x).  clear x. intros [s_x c_x] Fx Fy. simpl in *.
     apply app_eq. split; [reflexivity|intros d1 d2 e].
-    rewrite (elem_val_eq e). simpl in *. apply Ih. Guarded.
+    rewrite (elem_val_eq e). simpl in *. apply Ih.
   Qed.
 
   Definition hylo_f__ (g : Alg F B) (h : RCoalg F A)
@@ -138,7 +138,7 @@ Section HyloDef.
     fix Ih 2. intros x Fx. rewrite (H _). simpl. unfold comp. unfold fmap.
     destruct Fx as [x Fx]. simpl. destruct (h x) as [s_x c_x]. simpl in *.
     apply app_eq. simpl. split; [reflexivity|simpl; intros d1 d2 e].
-    rewrite (elem_val_eq e). apply Ih. Guarded.
+    rewrite (elem_val_eq e). apply Ih.
   Qed.
 
   Lemma hylo_univ_l (g : Alg F B) (h : RCoalg F A) (f : A ~> B)

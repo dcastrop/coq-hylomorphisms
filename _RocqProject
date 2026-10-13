@@ -1,0 +1,5 @@
+-R _build/default/util Util
+-R _build/default/theories HYLO
+-R _build/default/examples Examples
+-arg -w
+-arg -rewrite-rw,-missing-proof-command

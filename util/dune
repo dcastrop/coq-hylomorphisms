@@ -1,0 +1,5 @@
+(rocq.theory
+ (name Util)
+ (package rocq-hylomorphisms)
+ (theories Stdlib Paco)
+ (flags :standard -w -rewrite-rw,-missing-proof-command))

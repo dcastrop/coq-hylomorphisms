@@ -9,15 +9,14 @@ Require Import HYLO.Algebra.
 Require Import HYLO.Coalgebra.
 Require Import HYLO.FCoalgebra.
 Require Import HYLO.Hylo.
-Require Import HYLO.Extraction.
 
 Require Import Util.Utils.
 
 Require Import Examples.BTree.
 Require Import Examples.CList.
 
-Require Import List.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+From Stdlib Require Import List.
+From Stdlib Require Import Uint63.
 
 (** Example 1 from shortcut fusion in calc form [length \o map f \o append ys] *)
 Definition tau_alg_ {A} `{setoid B} (l : list A) (a : Alg (ListF A) B)
@@ -159,5 +158,3 @@ Module ToExtract.
   Definition ex2 := Eval unfold example2 in @example2.
 End ToExtract.
 
-Set Extraction Flag 2047.
-Recursive Extraction ToExtract.
