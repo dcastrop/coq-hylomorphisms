@@ -122,7 +122,7 @@ Proof. destruct o; reflexivity. Qed.
 (** * Monoid algebras *)
 
 Section MAlg.
-  Context `{Esh : setoid Sh} (F : FinCont Sh) `{eW : setoid W} (M : Monoid W).
+  Context `{Esh : setoid Sh} {P : Type} (F : FinCont Sh P) `{eW : setoid W} (M : Monoid W).
 
   Abbreviation FC := (fin_cont F).
 
@@ -147,7 +147,7 @@ Section MAlg.
     apply mconcat_proper, opt_cons_proper.
     - apply app_eq, Es.
     - apply map_cont_rel; trivial.
-      rewrite !elems_val, (arity_proper F Es). reflexivity.
+      rewrite !elems_val, (positions_proper F Es). reflexivity.
   Qed.
 
   Definition malg (leaf : Sh ~> option W) : Alg FC W := MkMorph (malg_morph leaf).
@@ -156,7 +156,7 @@ End MAlg.
 (** * Fusion with monoid homomorphisms *)
 
 Section Fusion.
-  Context `{Esh : setoid Sh} (F : FinCont Sh).
+  Context `{Esh : setoid Sh} {P : Type} (F : FinCont Sh P).
   Context `{eW : setoid W} `{eV : setoid V} (M : Monoid W) (N : Monoid V).
   Context (h : W ~> V) (Hh : MonoidHom M N h).
 
