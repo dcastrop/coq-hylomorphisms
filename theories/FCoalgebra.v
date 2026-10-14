@@ -10,10 +10,12 @@ Require Import Hylo.Container.
 Require Import Hylo.Algebra.
 Require Import Hylo.Coalgebra.
 
+From Stdlib Require Extraction.
+
 Section FCoalgDef.
   Context `(F : Cont Sh P).
 
-  Inductive RecF `{setoid A} (h : Coalg F A) : A -> Prop :=
+  Inductive RecF `{eA : setoid A} (h : Coalg F A) : A -> Prop :=
   | RecF_fold x : (forall e, RecF h (cont (h x) e)) -> RecF h x.
   Hint Constructors RecF : ffix.
 
@@ -70,11 +72,12 @@ Section FCoalgDef.
       |}; auto with ffix.
     intros x y z H1 H2. transitivity y; auto with ffix.
   Defined.
+  #[export] Instance rcoalg_no_def_eq `{setoid A} : NoDefEq (RCoalg A) := {}.
 
   Lemma terminating `{setoid A} : forall (h : RCoalg A) x, RecF h x.
   Proof. destruct h. trivial. Defined.
 
-  Definition respects_relation `{setoid A} (c : Coalg F A)
+  Definition respects_relation `{eA : setoid A} (c : Coalg F A)
     {B} (m : A -> B) (R : B -> B -> Prop)
     := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
 
@@ -211,12 +214,18 @@ Section FCoalgDef.
 End FCoalgDef.
 Arguments RCoalg {Sh Esh P} F A {eA}.
 
+(** A coalgebra [c] can be used where an [RCoalg] is expected once a canonical
+  * [RCoalg] for it is declared, e.g.
+  * [Canonical Structure c_rec := Rec (proof : RecP c)].
+  * Rocq then inserts [reverse_coercion], which extraction inlines. *)
+Extraction Inline reverse_coercion.
+
 Arguments rana & {Sh}%_type_scope {Esh} {P}%_type_scope {F} {A}%_type_scope {eA}.
 
 Arguments f_out & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
 
 Section CAlgDef.
-  Context `{F : Cont Sh Po}.
+  Context `{F : Cont Sh P}.
 
   Definition ccata_f_ `{eA : setoid A} (g : Alg F A)
     : forall x : GFix F, FinF x -> A
@@ -338,7 +347,7 @@ Section CAlgDef.
 End CAlgDef.
 
 Section FinRec.
-  Context `{F : Cont Sh Po}.
+  Context `{F : Cont Sh P}.
 
   Lemma cata_ccata `{setoid A} (f : Alg F A) : cata f \o ccata l_in =e ccata f.
   Proof.

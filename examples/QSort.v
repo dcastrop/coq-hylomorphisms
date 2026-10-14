@@ -11,24 +11,22 @@ Require Import Hylo.Examples.BTree.
 From Stdlib Require Import List.
 From Stdlib Require Import Uint63.
 
-Definition merge : App (TreeF unit int) (list int) ~> list int.
-|{ x : (App (TreeF unit int) (list int)) ~> (
-           let (sx, kx) := x in
-               match sx return (Container.Pos sx -> _) -> _ with
-               | Leaf _ _ => fun _ => nil
-               | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
-               end kx
-  )}|.
-Defined.
+Definition merge (x : App (TreeF unit int) (list int)) : list int :=
+  let (sx, kx) := x in
+  match sx return (Container.Pos sx -> _) -> _ with
+  | Leaf _ _ => fun _ => nil
+  | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
+  end kx.
 
 Open Scope uint63_scope.
-Definition c_split : list int ~> App (TreeF unit int) (list int) :=
-  ltac:(|{ x ~> match x with
-             | nil => a_leaf tt
-             | cons h t =>
-                 let (l, r) := List.partition (fun x => x <? h) t in
-                 a_node h l r
-             end}|).
+Definition c_split (x : list int) : App (TreeF unit int) (list int) :=
+  match x with
+  | nil => a_leaf tt
+  | cons h t =>
+      let (l, r) := List.partition (fun x => x <? h) t in
+      a_node h l r
+  end.
+Arguments c_split x /.
 Close Scope uint63_scope.
 
 Lemma split_fin : respects_relation c_split (@length int) lt.
@@ -41,9 +39,7 @@ Qed.
 Definition tsplit : RCoalg (TreeF unit int) (list int)
   := mk_wf_coalg wf_lt split_fin.
 
-Definition Lmap {A B} (f : A ~> B) : list A ~> list B.
-|{ x ~> (List.map f x) }|.
-Defined.
+Definition Lmap {A B} (f : A ~> B) (x : list A) : list B := List.map f x.
 
 Ltac eq_args :=
   repeat (f_equal; auto with ffix; try apply bool_irrelevance).
@@ -52,7 +48,7 @@ Lemma Lmap_merge (f : int ~> int)
   : Lmap f \o merge =e merge \o natural (nt_shape id f) \o fmap (Lmap f).
 Proof.
   intros [[n|n] kx]; simpl in *; auto with *.
-  rewrite map_app; simpl. unfold posL, posR.
+  unfold Lmap. rewrite map_app; simpl. unfold posL, posR.
   eq_args.
 Qed.
 
@@ -66,9 +62,8 @@ Definition qsort : Ext (cata merge \o rana tsplit).
 Defined.
 
 Open Scope uint63_scope.
-Definition times_two : int ~> int.
-|{ x ~> (2 * x) }|.
-Defined.
+Definition times_two (x : int) : int := 2 * x.
+Arguments times_two x /.
 Close Scope uint63_scope.
 
 Definition qsort_times_two

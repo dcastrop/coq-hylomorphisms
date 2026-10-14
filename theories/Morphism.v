@@ -6,6 +6,8 @@ Unset Auto Template Polymorphism.
 
 Require Import Hylo.Equivalence.
 
+From Stdlib Require Export Morphisms.
+
 Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
 
 Section Defn.
@@ -23,10 +25,21 @@ Section Defn.
   Proof.
     apply (@MkSetoid _ (fun f g =>forall x, app f x =e app g x)); eauto with ffix.
   Defined.
+  #[export] Instance morph_no_def_eq : NoDefEq morph := {}.
 End Defn.
 Arguments morph A {eA} B {eB}.
 Notation "x ~> y" := (morph x y).
 #[export] Hint Resolve app_eq : ffix.
+
+(** [morph_of f] is the morphism of a function [f] whose properness,
+  * [Proper (eqRel ==> eqRel) f], is found by typeclass resolution. It is a
+  * notation, so it leaves nothing behind in extracted code. *)
+Abbreviation morph_of f := (@MkMorph _ _ _ _ f%function (_ : Proper (eqRel ==> eqRel)%signature f%function)).
+
+(** Functions out of a type whose equivalence is [=] are always proper. *)
+#[export] Instance proper_def_eq {A} `{eB : setoid B} (f : A -> B)
+  : Proper (@eqRel A (def_eq A) ==> eqRel) f.
+Proof. intros x y ->. reflexivity. Qed.
 
 Lemma f_equal `{setoid A} `{setoid B} (f g : A ~> B)
   : forall x, f =e g -> f x =e g x.
@@ -255,28 +268,3 @@ Section PredSubty.
 End PredSubty.
 
 Arguments liftP {A}%_type_scope {eA} {B}%_type_scope {eB} f {P} Pf%_function_scope.
-
-(* Solves stuff of the shape App F X =e App F X where (=e) for shapes of F is
-Coq's [=].
- TODO: generalise *)
-Ltac auto_proper_app :=
-  let sx := fresh "sx" in
-  let sy := fresh "sy" in
-  let kx := fresh "kx" in
-  let ky := fresh "ky" in
-  let E1 := fresh "E1" in
-  let E2 := fresh "E2" in
-  intros [sx kx] [sy ky] [E1 E2];
-  simpl in *;
-  subst;
-  destruct sy;
-  auto with ffix;
-  repeat (f_equal; auto with ffix; try apply E2; auto with ffix).
-
-Tactic Notation "|{" ident(x) ":" uconstr(A) "~>" uconstr(T) "}|" :=
-  refine {| app := fun x : A => T |};
-  try auto_proper_app;
-  try (let H := fresh "H" in intros ?? H; simpl in H; subst; reflexivity);
-  try (intros ??->; reflexivity).
-
-Tactic Notation "|{" ident(x)  "~>" uconstr(T) "}|" := |{ x : _ ~> T }|.

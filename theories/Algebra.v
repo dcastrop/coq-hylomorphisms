@@ -11,31 +11,31 @@ Require Import Hylo.Container.
 Abbreviation Alg F A := (App F A ~> A).
 
 Section AlgDef.
-  Context `(F : Cont Sh Po).
+  Context `(F : Cont Sh P).
 
   Unset Elimination Schemes.
   Inductive LFix  : Type := LFix_in { LFix_out : App F LFix }.
   Set Elimination Schemes.
 
-  Lemma LFix_rect [P : LFix -> Type]
+  Lemma LFix_rect [Q : LFix -> Type]
     : (forall x : App F LFix,
-          (forall e : Pos (shape x), P (cont x e)) ->
-          P (LFix_in x))
-      -> forall l : LFix, P l.
+          (forall e : Pos (shape x), Q (cont x e)) ->
+          Q (LFix_in x))
+      -> forall l : LFix, Q l.
   Proof.
     intros H. fix Ih 1. intros []. apply H. intros e. apply Ih.
   Defined.
-  Lemma LFix_rec [P : LFix -> Set]
+  Lemma LFix_rec [Q : LFix -> Set]
     : (forall x : App F LFix,
-          (forall e : Pos (shape x), P (cont x e)) ->
-          P (LFix_in x))
-      -> forall l : LFix, P l.
+          (forall e : Pos (shape x), Q (cont x e)) ->
+          Q (LFix_in x))
+      -> forall l : LFix, Q l.
   Proof. intros H. apply LFix_rect, H. Defined.
-  Lemma LFix_ind [P : LFix -> Prop]
+  Lemma LFix_ind [Q : LFix -> Prop]
     : (forall x : App F LFix,
-          (forall e : Pos (shape x), P (cont x e)) ->
-          P (LFix_in x))
-      -> forall l : LFix, P l.
+          (forall e : Pos (shape x), Q (cont x e)) ->
+          Q (LFix_in x))
+      -> forall l : LFix, Q l.
   Proof. intros H. apply LFix_rect, H. Defined.
 
   Register Scheme LFix_rect as rect_dep for LFix.
@@ -82,6 +82,7 @@ Section AlgDef.
       e_sym := LFixR_sym;
       e_trans := LFixR_trans;
     |}.
+  #[export] Instance LFix_no_def_eq : NoDefEq LFix := {}.
 
   Lemma l_in_eq  (x y : App F LFix) : x =e y -> LFix_in x =e  LFix_in y.
   Proof. simpl. intros []; auto with ffix. Qed.
@@ -178,6 +179,6 @@ Section AlgDef.
   Qed.
 End AlgDef.
 
-Arguments l_in & {Sh}%_type_scope {Esh} {Po}%_type_scope {F}.
-Arguments l_out & {Sh}%_type_scope {Esh} {Po}%_type_scope {F}.
-Arguments cata & {Sh}%_type_scope {Esh} {Po}%_type_scope {F} {A}%_type_scope {eA}.
+Arguments l_in & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
+Arguments l_out & {Sh}%_type_scope {Esh} {P}%_type_scope {F}.
+Arguments cata & {Sh}%_type_scope {Esh} {P}%_type_scope {F} {A}%_type_scope {eA}.

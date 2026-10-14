@@ -22,13 +22,12 @@ Fixpoint mergeL l1 l2 {struct l1} :=
     end%sint63
   in merge_aux l2.
 
-Definition merge : App (TreeF (list int) unit) (list int) ~> list int :=
-  ltac:(|{ x ~>
-             match a_out x with
-             | node _ l r => mergeL l r
-             | leaf e => e
-             end
-    }|).
+Definition merge (x : App (TreeF (list int) unit) (list int)) : list int :=
+  match a_out x with
+  | node _ l r => mergeL l r
+  | leaf e => e
+  end.
+Arguments merge x /.
 
 Fixpoint splitL (x : list int) (accL accR : list int) :=
   match x with
@@ -50,13 +49,13 @@ Proof.
   - specialize (Ih a2 (cons h a1)). simpl in *. lia.
 Qed.
 
-Definition c_split : Coalg (TreeF (list int) unit) (list int) :=
-  ltac:(|{ x ~> match x with
-             | nil | cons _ nil => a_leaf x
-             | _ => let (l, r) := splitL x nil nil in
-                    a_node tt l r
-             end
-    }|).
+Definition c_split (x : list int) : App (TreeF (list int) unit) (list int) :=
+  match x with
+  | nil | cons _ nil => a_leaf x
+  | _ => let (l, r) := splitL x nil nil in
+         a_node tt l r
+  end.
+Arguments c_split x /.
 
 (* Needs to be defined, otherwise msort does not reduce!
  * UPDATE 12/09/2023 by DC: what's the nonsense above???

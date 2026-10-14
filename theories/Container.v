@@ -46,6 +46,7 @@ Class Cont `{Esh : setoid Sh} (P : Type) :=
   { valid : Sh * P ~> bool
   }.
 Arguments Cont Sh {Esh} P.
+Arguments valid {Sh Esh P F} : rename.
 
 Record Pos `{Cont Sh P} (s : Sh) :=
   MkElem {
@@ -83,7 +84,7 @@ Arguments App {Sh _ P} F X.
 Arguments cont {Sh _ P F X} a k.
 Arguments MkCont {Sh _ P F X} shape cont.
 
-Lemma cont_valid_irrelevant `{F : Cont Sh Po} (X : Type) :
+Lemma cont_valid_irrelevant `{F : Cont Sh P} (X : Type) :
   forall (x : App F X) (e1 e2 : Pos (shape x)),
     val e1 = val e2 -> cont x e1 = cont x e2.
 Proof.
@@ -92,7 +93,7 @@ Proof.
   reflexivity.
 Qed.
 
-Inductive AppR `{F : Cont Sh P} (X : Type) {e : setoid X}
+Inductive AppR `{F : Cont Sh P} (X : Type) {eX : setoid X}
            (x y : App F X) : Prop :=
   | AppR_ext
       (Es : shape x =e shape y)
@@ -101,9 +102,9 @@ Inductive AppR `{F : Cont Sh P} (X : Type) {e : setoid X}
   Hint Constructors AppR : ffix.
 
 #[export]
-  Instance App_setoid `{F : Cont Sh P} `{e : setoid X} : setoid (App F X).
+  Instance App_setoid `{F : Cont Sh P} `{eX : setoid X} : setoid (App F X).
 Proof.
-  apply (@MkSetoid _ (@AppR Sh _ P F X e)).
+  apply (@MkSetoid _ (@AppR Sh _ P F X eX)).
   - intros [shx kx]. constructor; eauto with ffix.
     simpl.  intros [x1 d1] [x2 d2] Eq. simpl in *. subst.
     rewrite (bool_irrelevance d1 d2).
@@ -116,6 +117,7 @@ Proof.
       apply (e_trans (Exy e1 e3 V2)), Eyz.
       rewrite <- V2. trivial.
 Defined.
+#[export] Instance App_no_def_eq `{F : Cont Sh P} X : NoDefEq (App F X) := {}.
 
 Lemma fold_eq A (x y : A) : x =e y -> x = y.
 Proof. trivial. Qed.
@@ -128,7 +130,7 @@ Proof.
   intros e1 e2 Hv. rewrite (elem_val_eq Hv); simpl in *; auto with ffix.
 Qed.
 
-Definition fmapA `{F : Cont Sh P} `{setoid A} `{setoid B}
+Definition fmapA `{F : Cont Sh P} `{eA : setoid A} `{eB : setoid B}
   (f : A -> B) (x : App F A) : App F B
   := MkCont (shape x) (fun e => f (cont x e)).
 
@@ -276,7 +278,7 @@ Section Nest.
   #[export]
     Instance Nest : Cont (App F X) Pg := { valid := nest_v }.
 End Nest.
-Arguments Nest {Shape}%_type_scope {SS} {Pf Pg}%_type_scope F G X {SX}.
+Arguments Nest {Sh Esh Pf Pg} F G X {eX} : rename.
 
 Section NaturalTransformation.
   Context `(F : Cont S1 P1) `(G : Cont S2 P2).
@@ -315,9 +317,7 @@ Section NaturalTransformation.
   Qed.
 End NaturalTransformation.
 
-Arguments eta {S1}%_type_scope {Esh} {P1}%_type_scope [F] {S2}%_type_scope {Esh0}
-  {P2}%_type_scope [G eta_S] [eta_P]%_function_scope eta_C%_function_scope
-  X%_type_scope {Ex}.
+Arguments eta {S1 Esh P1} [F] {S2 Esh2 P2} [G eta_S] [eta_P] eta_C X {eX} : rename.
 
 Section NatShape.
   Context `(F : Cont S1 P) `{SS2 : setoid S2} (G : Cont S2 P).
@@ -332,7 +332,9 @@ Section NatShape.
     eta (eta_P:=fun x=>x) (@natC f) X.
 End NatShape.
 
-Arguments natural {S1 _ P F} {S2 _ G}  {X _} f.
+Arguments natural {S1 Esh P F S2 Esh2 G X eX} f : rename.
+Arguments naturalM {S1 Esh P} F {S2 Esh2} G : rename.
+Arguments CompCont {S1 Esh P1} F {S2 Esh2 P2} G : rename.
 
 Lemma id_is_nat `{F : Cont Sf P} : forall s p, valid (id s, p) -> valid(s, p).
 Proof.

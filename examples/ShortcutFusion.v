@@ -60,20 +60,16 @@ Qed.
 
 Definition append {A} (l : list A) := hylo (tau_alg l l_in) ilist_coalg.
 
-Lemma tt_cons {A} (a : A) : valid (Cont:=ListF A)(s_cons a, tt).
+Lemma tt_cons {A} (a : A) : valid (F:=ListF A)(s_cons a, tt).
 Proof. simpl. reflexivity. Qed.
-Definition len_alg {A} : App (ListF A) int ~> int.
-|{ x : (App (ListF A) _) ~> (
-           match x with
-           | MkCont sx kx =>
-               match sx as s return (Container.Pos s -> _) -> _ with
-               | s_nil => fun _ => 0%uint63
-               | s_cons _ => fun k => (1 + k (MkElem tt (@tt_cons _ _)))%uint63
-               end kx
-           end
-         )
-  }|.
-Defined.
+Definition len_alg {A} (x : App (ListF A) int) : int :=
+  match x with
+  | MkCont sx kx =>
+      match sx as s return (Container.Pos s -> _) -> _ with
+      | s_nil => fun _ => 0%uint63
+      | s_cons _ => fun k => (1 + k (MkElem tt (@tt_cons _ _)))%uint63
+      end kx
+  end.
 
 Definition length {A} := cata (@len_alg A).
 
@@ -132,7 +128,7 @@ Definition example2 {A} : Ext (hylo len_alg ilist_coalg \o @reverse A).
         ((hylo len_alg ilist_coalg \o hylo (tau_alg (h :: nil) ilist_alg) ilist_coalg) (kx {| val := tt; Valid := tt_cons h |}))by reflexivity.
       rewrite <- tau_fusion. simpl.
       induction (kx _) as [|x t Ih]; rewrite hylo_unr; simpl.
-      rewrite hylo_unr; simpl. rewrite hylo_unr. simpl. reflexivity.
+      rewrite hylo_unr; simpl. reflexivity.
       rewrite Ih.
       rewrite hylo_unr at 2. simpl. reflexivity.
 

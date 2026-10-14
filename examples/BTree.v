@@ -18,26 +18,23 @@ Inductive Ts L A := | Leaf (ELEM : L) | Node (ELEM : A).
 Inductive Tp := | Lbranch | Rbranch. (* positions *)
 (* position valid in shape? *)
 
-Definition t_dom {L A} : Ts L A * Tp ~> bool.
-|{ x ~> match x with
-     | (Node _ _, _)  => true
-     | _            => false
-     end
-  }|.
-Defined.
+Definition t_dom {L A} (x : Ts L A * Tp) : bool :=
+  match x with
+  | (Node _ _, _)  => true
+  | _            => false
+  end.
 #[local]
   Instance TreeF (L A : Type) : Cont (Ts L A) Tp :=
   { valid := @t_dom L A }.
 Definition Tree L A := LFix (TreeF L A).
 
-Definition nt_shape {L L' A A'} (f : L ~> L') (g : A ~> A') : Ts L A ~> Ts L' A'.
-|{
-    x ~> match x with
-                    | Leaf _ l => Leaf _ (f l)
-                    | Node _ n => Node _ (g n)
-                    end
-  }|.
-Defined.
+(* A named morphism, not a plain function: it is the key of the canonical
+   [naturalM] structure [nt_tree] below. *)
+Definition nt_shape {L L' A A'} (f : L ~> L') (g : A ~> A') : Ts L A ~> Ts L' A' :=
+  morph_of (fun x => match x with
+                     | Leaf _ l => Leaf _ (f l)
+                     | Node _ n => Node _ (g n)
+                     end).
 
 Lemma nt_shape_is_nat {L L' A A'} (f : L ~> L') (g : A ~> A')
   : NaturalIn (TreeF L A) (TreeF L' A') (nt_shape f g).
@@ -81,26 +78,20 @@ Definition posR {A} (h : A) : Pos (Node unit h) :=
 
   MkElem Rbranch eq_refl.
 
-Definition a_out {L A X : Type} : App (TreeF L A) X ~> ITreeF L A X.
-|{ x : (App (TreeF L A) X) ~> (
-               let (s, k) := x in
-               match s as s' return s = s' -> ITreeF L A X with
-               | Leaf _ x => fun _ => leaf x
-               | Node _ n => fun E => node n (e_lbranch k E) (e_rbranch k E)
-               end eq_refl
-         )
-}|.
-Defined.
+Definition a_out {L A X : Type} (x : App (TreeF L A) X) : ITreeF L A X :=
+  let (s, k) := x in
+  match s as s' return s = s' -> ITreeF L A X with
+  | Leaf _ x => fun _ => leaf x
+  | Node _ n => fun E => node n (e_lbranch k E) (e_rbranch k E)
+  end eq_refl.
+Arguments a_out {L A X} x /.
 
 Inductive itree L A := | i_leaf (l : L) | i_node (x : A) (l r : itree L A).
-Definition to_tree {L A} : itree L A ~> App (TreeF L A) (itree L A).
-|{ x ~>
-     match x with
-     | i_leaf _ l => a_leaf l
-     | i_node n l r => a_node n l r
-     end
-  }|.
-Defined.
+Definition to_tree {L A} (x : itree L A) : App (TreeF L A) (itree L A) :=
+  match x with
+  | i_leaf _ l => a_leaf l
+  | i_node n l r => a_node n l r
+  end.
 
 Lemma to_tree_rec {L A} : RecP (@to_tree L A).
 Proof.
@@ -114,14 +105,11 @@ Definition fto_tree {L A}: RCoalg (TreeF L A) (itree L A) := Rec to_tree_rec.
 Definition itree_to_tree {L A} : itree L A ~> Tree L A :=
   rana fto_tree.
 
-Definition to_itree {L A} : App (TreeF L A) (itree L A) ~> itree L A.
-|{ x ~>
-     match a_out x with
-     | leaf l => i_leaf _ l
-     | node n l r => i_node n l r
-     end
-  }|.
-Defined.
+Definition to_itree {L A} (x : App (TreeF L A) (itree L A)) : itree L A :=
+  match a_out x with
+  | leaf l => i_leaf _ l
+  | node n l r => i_node n l r
+  end.
 Definition tree_to_itree {L A} : Tree L A ~> itree L A := cata to_itree.
 
 Lemma tree_itree_iso1 {L A} : itree_to_tree (L:=L) (A:=A) \o tree_to_itree =e id.

@@ -20,22 +20,21 @@ Arguments s_nil & {H}.
 Definition Lpos := unit. (* positions *)
 (* position valid in shape? *)
 
-Definition l_valid {H} : Lshape H * Lpos ~> bool.
-|{ x ~> match x with
-     | (s_cons _, _)  => true
-     | _              => false
-     end
-  }|.
-Defined.
+Definition l_valid {H} (x : Lshape H * Lpos) : bool :=
+  match x with
+  | (s_cons _, _)  => true
+  | _              => false
+  end.
 
 #[local]
 Instance ListF (H : Type) : Cont (Lshape H) Lpos := { valid := @l_valid H }.
 
 Definition List H := LFix (ListF H).
 
-Definition l_map_shape {H H'} (f : H ~> H') : Lshape H ~> Lshape H'.
-|{x ~> match x with | s_nil => s_nil | s_cons h => s_cons (f h) end}|.
-Defined.
+(* A named morphism, not a plain function: it is the key of the canonical
+   [naturalM] structure [natural_list] below. *)
+Definition l_map_shape {H H'} (f : H ~> H') : Lshape H ~> Lshape H' :=
+  morph_of (fun x => match x with s_nil => s_nil | s_cons h => s_cons (f h) end).
 
 Lemma map_shape_is_nt {H H'} (f : H ~> H')
   : NaturalIn (ListF H) (ListF H') (l_map_shape f).
@@ -55,50 +54,41 @@ Hint Extern 0 => (apply nil_uninhabited) : ffix.
 Abbreviation a_nil := (MkCont (@s_nil _) (@nil_uninhabited _ _)).
 Abbreviation a_cons h t := (MkCont (s_cons h) (fun _ => t)).
 
-Local Definition a_in {H X : Type} : IListF H X ~> App (ListF H) X.
-|{ x ~> match x with
-     | i_nil => a_nil
-     | i_cons h t => a_cons h t
-     end
-  }|.
-Defined.
+Local Definition a_in {H X : Type} (x : IListF H X) : App (ListF H) X :=
+  match x with
+  | i_nil => a_nil
+  | i_cons h t => a_cons h t
+  end.
 
 Lemma p_cons {H s} {h : H} : s = s_cons h -> valid(s, tt).
 Proof. intros->. reflexivity. Qed.
 
 Abbreviation get_tail k E := (k (MkElem tt (p_cons E))).
 
-Local Definition a_out {H X : Type} : App (ListF H) X ~> IListF H X.
-|{ x : (App (ListF H) X) ~> (
-           let (s, k) := x in
-           match s as s' return s = s' -> IListF H X with
-           | s_nil => fun E => i_nil
-           | s_cons h => fun E => i_cons h (get_tail k E)
-           end eq_refl
-         )}|.
-Defined.
+Local Definition a_out {H X : Type} (x : App (ListF H) X) : IListF H X :=
+  let (s, k) := x in
+  match s as s' return s = s' -> IListF H X with
+  | s_nil => fun E => i_nil
+  | s_cons h => fun E => i_cons h (get_tail k E)
+  end eq_refl.
 
-Definition ilist_alg {A} : App (ListF A) (list A) ~> list A.
-|{ x : (App (ListF A) (list A)) ~> (let (s, k) := x in
-     match s as s' return s = s' -> list A with
-     | s_nil => fun _ => nil
-     | s_cons h => fun E => cons h (get_tail k E)
-     end eq_refl)
-}|.
-Defined.
+Definition ilist_alg {A} (x : App (ListF A) (list A)) : list A :=
+  let (s, k) := x in
+  match s as s' return s = s' -> list A with
+  | s_nil => fun _ => nil
+  | s_cons h => fun E => cons h (get_tail k E)
+  end eq_refl.
 
-Definition ilist_coalg {A} : list A ~> App (ListF A) (list A).
-|{ x : (list A) ~>
-         match x with
-         | nil => a_nil
-         | cons h t => a_cons h t
-         end
-}|.
-Defined.
+Definition ilist_coalg {A} (x : list A) : App (ListF A) (list A) :=
+  match x with
+  | nil => a_nil
+  | cons h t => a_cons h t
+  end.
+Arguments ilist_coalg {A} x /.
 Lemma ilist_coalg_rec {A} : RecP (@ilist_coalg A).
 Proof. intros x; induction x; constructor; auto with ffix. Qed.
 
-Canonical Structure ilist_rcoalg {A} := Rec (@ilist_coalg_rec A).
+#[export] Instance ilist_coalg_terminates {A} : Terminates (@ilist_coalg A) := ilist_coalg_rec.
 
 Definition ilist_to_List {A} : list A ~> List A := rana ilist_coalg.
 Definition List_to_ilist {A} : List A ~> list A := cata ilist_alg.
@@ -127,9 +117,7 @@ Definition Lmap {A B} (f : A ~> B) : List A ~> List B :=
   everywhere (natural_list f).
 
 (* TODO: get rid of all of these with canonical structures *)
-Definition ILmap {A B} (f : A ~> B) : list A ~> list B.
-|{ x ~> (List.map f x) }|.
-Defined.
+Definition ILmap {A B} (f : A ~> B) (x : list A) : list B := List.map f x.
 
 Lemma ifmap_fmap {A B} (f : A ~> B) :
   ilist_coalg (A:=B) \o ILmap f

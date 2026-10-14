@@ -101,7 +101,7 @@ Definition dyna `{setoid A} `{setoid B} `{C : Cont Sc Pc}
 
 Definition NatF := Sum (K unit) Id.
 
-Lemma valid_inr_tt : valid (Cont:=NatF) (inr tt, inr tt).
+Lemma valid_inr_tt : valid (F:=NatF) (inr tt, inr tt).
 Proof. reflexivity. Qed.
 Fixpoint lookupT (x : nat) (t : Table NatF int) {struct x}: option int :=
   match x with
@@ -134,20 +134,17 @@ Qed.
 (* Definition lookupT : nat * Table NatF int ~> option int *)
 (*   := MkMorph lookupT_morph. *)
 
-Definition out_nat : nat ~> App NatF nat.
-|{ n ~>
+Definition out_nat (n : nat) : App NatF nat :=
   match n with
   | 0 => MkCont (inl tt) (fun e => 0)
   | S n => MkCont (inr tt) (fun _ => n)
-  end
-}|.
-Defined.
+  end.
 
 Lemma out_nat_rec : RecP out_nat.
 intros x; induction x as  [|x Ih]; constructor; trivial.
 simpl. intros [[[]|]V]. simpl in V. discriminate.
 Qed.
-Canonical Structure out_natR := Rec out_nat_rec.
+#[export] Instance out_nat_terminates : Terminates out_nat := out_nat_rec.
 
 Fixpoint max_int acc (l : list int) :=
   match l with

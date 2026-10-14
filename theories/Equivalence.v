@@ -44,12 +44,25 @@ Create HintDb ffix.
 #[export] Hint Resolve e_trans : ffix.
 
 (* Import Module when standard equality is needed *)
-#[export] Instance def_eq A : setoid A | 100 :=
+Definition def_eq A : setoid A :=
 {| eqRel := @eq A;
   e_refl := @eq_refl A;
   e_sym := @eq_sym A;
   e_trans := @eq_trans A;
 |}.
+
+(** [=] is the fallback equivalence, for types that have no instance of their
+  * own. It is never offered for an unknown type, nor for a type marked with
+  * [NoDefEq] (declared next to each type's own [setoid] instance): otherwise
+  * typeclass backtracking can pick [=] where the specific instance was meant. *)
+Class NoDefEq (A : Type) : Prop := {}.
+
+Ltac def_eq_fallback A :=
+  tryif is_evar A then fail else
+  tryif assert_succeeds (let x := constr:(_ : NoDefEq A) in idtac) then fail
+  else exact (def_eq A).
+
+#[export] Hint Extern 100 (setoid ?A) => def_eq_fallback A : typeclass_instances.
 
 #[export] Instance ext_eq (A : Type) `{eq_B : setoid B} : setoid (A -> B).
 Proof.
@@ -104,6 +117,12 @@ Defined.
 Proof.
   apply (@ MkSetoid _ (fun px py => proj1_sig px =e proj1_sig py)); eauto with ffix.
 Defined.
+
+#[export] Instance ext_no_def_eq A B : NoDefEq (A -> B) := {}.
+#[export] Instance pair_no_def_eq A B : NoDefEq (A * B) := {}.
+#[export] Instance sum_no_def_eq A B : NoDefEq (A + B) := {}.
+#[export] Instance prop_no_def_eq : NoDefEq Prop := {}.
+#[export] Instance sig_no_def_eq A (P : A -> Prop) : NoDefEq {a : A | P a} := {}.
 
 #[mode = "-"]
 Class equivs (A : list Type) : Prop.

@@ -98,6 +98,7 @@ Section CoalgDef.
       e_sym := GFixR_sym;
       e_trans := GFixR_trans;
     |}.
+  #[export] Instance GFix_no_def_eq : NoDefEq GFix := {}.
 
   Lemma l_in_eq (x y : App F GFix) : x =e y -> GFix_in x =e  GFix_in y.
   Proof. simpl. intros []; auto with ffix. Qed.

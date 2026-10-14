@@ -10,7 +10,7 @@ Require Import Hylo.Coalgebra.
 Require Import Hylo.FCoalgebra.
 
 Section HyloDef.
-  Context `{F : Cont Sh Po} `{eA : setoid A} `{eB : setoid B}.
+  Context `{F : Cont Sh P} `{eA : setoid A} `{eB : setoid B}.
 
   Definition hylo_def (a : Alg F B) (c : Coalg F A)
     : forall (x : A), RecF c x -> B :=
@@ -97,7 +97,7 @@ Section HyloDef.
 End HyloDef.
 
 Section HyloFusion.
-  Context `{F : Cont Sh Po}.
+  Context `{F : Cont Sh P}.
   Context `{eA : setoid A} `{eB : setoid B} `{eC : setoid C}.
 
   Lemma hylo_cata (g : Alg F B) : cata g =e hylo g l_out.
