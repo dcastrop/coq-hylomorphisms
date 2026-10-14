@@ -4,7 +4,7 @@
 (rocq.extraction
  (prelude ExtrMutualRec)
  (extracted_modules mutualrec)
- (theories Stdlib Paco HYLO.Util HYLO HYLO.Examples HYLO.Extraction)
+ (theories Stdlib Paco Hylo Hylo.Examples Hylo.Extraction)
  (flags :standard -w -extraction-default-directory))
 
 (library

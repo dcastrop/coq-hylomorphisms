@@ -4,11 +4,11 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Import HYLO.Equivalence.
-Require Import HYLO.Morphism.
-Require Import HYLO.Container.
-Require Import HYLO.Algebra.
-Require Import HYLO.Coalgebra.
+Require Import Hylo.Equivalence.
+Require Import Hylo.Morphism.
+Require Import Hylo.Container.
+Require Import Hylo.Algebra.
+Require Import Hylo.Coalgebra.
 
 Section FCoalgDef.
   Context `(F : Cont Sh P).

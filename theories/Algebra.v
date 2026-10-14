@@ -4,9 +4,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Import HYLO.Equivalence.
-Require Import HYLO.Morphism.
-Require Import HYLO.Container.
+Require Import Hylo.Equivalence.
+Require Import Hylo.Morphism.
+Require Import Hylo.Container.
 
 Abbreviation Alg F A := (App F A ~> A).
 

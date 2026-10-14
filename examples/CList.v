@@ -2,13 +2,8 @@ Generalizable All Variables.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Require Import HYLO.Equivalence.
-Require Import HYLO.Morphism.
-Require Import HYLO.Container.
-Require Import HYLO.Algebra.
-Require Import HYLO.Coalgebra.
-Require Import HYLO.FCoalgebra.
-Require Import HYLO.Hylo.
+From Hylo Require Import Hylo.
+Require Import Hylo.Utils.
 
 From Stdlib Require List.
 

@@ -4,7 +4,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
-Require Import HYLO.Equivalence.
+Require Import Hylo.Equivalence.
 
 Reserved Notation "x ~> y" (at level 95, right associativity, y at level 200).
 

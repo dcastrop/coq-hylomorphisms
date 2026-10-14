@@ -5,11 +5,11 @@ Unset Strict Implicit.
 Unset Auto Template Polymorphism.
 
 From Paco Require Import paco.
-Require Import HYLO.Util.Cofix.
+Require Import Hylo.Cofix.
 
-Require Import HYLO.Equivalence.
-Require Import HYLO.Morphism.
-Require Import HYLO.Container.
+Require Import Hylo.Equivalence.
+Require Import Hylo.Morphism.
+Require Import Hylo.Container.
 
 Abbreviation Coalg F A := (A ~> App F A) (only parsing).
 

@@ -1,5 +1,5 @@
-Require Import HYLO.Extraction.Common.
-Require Import HYLO.Examples.ShortcutFusion.
+Require Import Hylo.Extraction.Common.
+Require Import Hylo.Examples.ShortcutFusion.
 
 Set Extraction Flag 2047.
 Extraction "shortcutfusion" ToExtract.

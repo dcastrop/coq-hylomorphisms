@@ -1,6 +1,6 @@
-Require Import HYLO.Extraction.Common.
-Require Import HYLO.Examples.BTree.
-Require Import HYLO.Examples.QSort.
+Require Import Hylo.Extraction.Common.
+Require Import Hylo.Examples.BTree.
+Require Import Hylo.Examples.QSort.
 
 Extraction Inline posL.
 Extraction Inline posR.

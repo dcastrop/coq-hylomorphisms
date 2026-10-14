@@ -1,7 +1,7 @@
 ; Shared extraction settings. Not part of the installed package, so importing
-; HYLO does not change anyone's extraction options.
+; Hylo does not change anyone's extraction options.
 
 (rocq.theory
- (name HYLO.Extraction)
- (theories Stdlib Paco HYLO.Util HYLO)
+ (name Hylo.Extraction)
+ (theories Stdlib Paco Hylo)
  (flags :standard -w -rewrite-rw,-missing-proof-command))

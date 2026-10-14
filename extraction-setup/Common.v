@@ -1,4 +1,4 @@
-Require Import HYLO.Container.
+Require Import Hylo.Container.
 
 From Stdlib Require Extraction ExtrOcamlBasic ExtrOCamlInt63.
 Set Extraction TypeExpand.

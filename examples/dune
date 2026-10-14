@@ -1,5 +1,5 @@
 (rocq.theory
- (name HYLO.Examples)
+ (name Hylo.Examples)
  (package rocq-hylomorphisms)
- (theories Stdlib Paco HYLO.Util HYLO)
+ (theories Stdlib Paco Hylo)
  (flags :standard -w -rewrite-rw,-missing-proof-command))
