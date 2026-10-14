@@ -16,4 +16,4 @@
  (depends
   (rocq-core (>= 9.2))
   rocq-stdlib
-  (coq-paco (>= 4.2.3))))
+  (rocq-paco (>= 4.2.3))))

@@ -10,7 +10,7 @@ depends: [
   "dune" {>= "3.21"}
   "rocq-core" {>= "9.2"}
   "rocq-stdlib"
-  "coq-paco" {>= "4.2.3"}
+  "rocq-paco" {>= "4.2.3"}
   "odoc" {with-doc}
 ]
 build: [
@@ -29,3 +29,6 @@ build: [
 ]
 dev-repo: "git+https://github.com/dcastrop/rocq-hylomorphisms.git"
 x-maintenance-intent: ["(latest)"]
+pin-depends: [
+  ["rocq-paco.4.2.3+rocq9.3" "git+https://github.com/dcastrop/rocq-paco.git#e9dcd5317267e080298d6380281291e8c12a5d9c"]
+]
