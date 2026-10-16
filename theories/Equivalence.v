@@ -20,7 +20,10 @@ Definition bool_irrelevance {b1 b2 : bool} (p1 p2 : b1 = b2) : p1 = p2 :=
   DecBool.UIP b1 b2 p1 p2.
 
 Reserved Notation "f =e g" (at level 70, no associativity).
-#[mode = "-"]
+(* Mode "!": no instance search on [setoid ?A] for an unknown [?A]. Instances
+   such as [equiv_rcoalg] match any evar and recurse on a fresh one, so such a
+   search never ends and exhausts memory. *)
+#[mode = "!"]
 Class setoid A : Type :=
   MkSetoid
     { eqRel : A -> A -> Prop;

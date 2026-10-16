@@ -146,7 +146,7 @@ Abbreviation fmapU f :=
    |}).
 
 Lemma fmapU_eq `{F : Cont Sh P} `{eA : setoid A} `{eB : setoid B} :
-  forall f g : A ~> B, f =e g -> fmapU f =e fmapU g.
+  forall f g : A ~> B, f =e g -> fmapU f =e (fmapU g : App F A ~> App F B).
 Proof.
   intros f g Hfg [sh p]. simpl.
   apply cont_ext_eq.
@@ -322,8 +322,8 @@ Arguments eta {S1 Esh P1} [F] {S2 Esh2 P2} [G eta_S] [eta_P] eta_C X {eX} : rena
 Section NatShape.
   Context `(F : Cont S1 P) `{SS2 : setoid S2} (G : Cont S2 P).
 
-  Definition NaturalIn natT : Prop
-    := forall (s : S1) (p : P), valid (natT s, p) -> valid(s,p).
+  Definition NaturalIn (natT : S1 -> S2) : Prop
+    := forall (s : S1) (p : P), valid (F:=G) (natT s, p) -> valid (F:=F) (s,p).
   Structure naturalM :=
     { natT :> S1 ~> S2;
       natC : NaturalIn natT
@@ -336,7 +336,7 @@ Arguments natural {S1 Esh P F S2 Esh2 G X eX} f : rename.
 Arguments naturalM {S1 Esh P} F {S2 Esh2} G : rename.
 Arguments CompCont {S1 Esh P1} F {S2 Esh2 P2} G : rename.
 
-Lemma id_is_nat `{F : Cont Sf P} : forall s p, valid (id s, p) -> valid(s, p).
+Lemma id_is_nat `{F : Cont Sf P} : forall (s : Sf) p, valid (F:=F) (id s, p) -> valid (F:=F) (s, p).
 Proof.
   simpl. trivial.
 Qed.
@@ -394,7 +394,7 @@ Section EtaMap.
   Arguments cmap_ {X _ Y _ A _} f.
 
   Lemma cmap_morph `{setoid X} `{setoid Y} `{setoid A}
-    : forall (f g : X ~> Y), f =e g -> cmap_ f =e cmap_ g.
+    : forall (f g : X ~> Y), f =e g -> cmap_ (A:=A) f =e cmap_ (A:=A) g.
   Proof.
     intros f g E [s k]. unfold cmap_. simpl. constructor; simpl.
     - constructor; auto with ffix; simpl. intros [v1 V1] [v2 V2].

@@ -193,9 +193,9 @@ Proof. intros x. split; reflexivity. Qed.
 
 Section Sums.
   Context `{setoid A} `{setoid B} `{setoid C}.
-  Lemma inj1_eq : forall x y : A, x =e y -> inl x =e inl y.
+  Lemma inj1_eq : forall x y : A, x =e y -> inl x =e (inl y : A + C).
   Proof. intros. simpl. trivial. Qed.
-  Lemma inj2_eq : forall x y : A, x =e y -> inr x =e inr y.
+  Lemma inj2_eq : forall x y : A, x =e y -> inr x =e (inr y : C + A).
   Proof. intros. simpl. trivial. Qed.
   Definition inj1 : A ~> A + C := MkMorph inj1_eq.
   Definition inj2 : A ~> C + A := MkMorph inj2_eq.
