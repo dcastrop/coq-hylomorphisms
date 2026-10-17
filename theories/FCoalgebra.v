@@ -79,7 +79,7 @@ Section FCoalgDef.
 
   Definition respects_relation `{eA : setoid A} (c : Coalg F A)
     {B} (m : A -> B) (R : B -> B -> Prop)
-    := forall x (p : Pos (shape (c x))), R (m (cont (c x) p)) (m x).
+    := forall x (p : Pos F (shape (c x))), R (m (cont (c x) p)) (m x).
 
   Lemma wf_coalg_rec `{setoid A} {B}
     (m : A -> B) (R : B -> B -> Prop) (WF : well_founded R)
@@ -288,7 +288,7 @@ Section CAlgDef.
   Definition lg_in_ (x : App F {g : GFix F | FinF g}) : {x : GFix F | FinF x}
     := let gx := g_in (MkCont (shape x) (fun e => proj1_sig (cont x e))) in
        exist (fun g => _) gx
-         (RecF_fold (fun e : Pos (shape (g_out gx)) => proj2_sig (cont x e))).
+         (RecF_fold (fun e : Pos F (shape (g_out gx)) => proj2_sig (cont x e))).
 
   Lemma lg_in_arr : forall x y, x =e y -> lg_in_ x =e lg_in_ y.
   Proof.

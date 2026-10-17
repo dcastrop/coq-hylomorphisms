@@ -83,7 +83,7 @@ Section Elems.
   Proof. intros Hp. apply (positions_sound F s p Hp). Qed.
 
   Fixpoint elems_ (s : Sh) (l : list P)
-    : (forall p, In p l -> valid (F:=fin_cont F) (s, p)) -> list (Pos (F:=fin_cont F) s) :=
+    : (forall p, In p l -> valid (F:=fin_cont F) (s, p)) -> list (Pos (fin_cont F) s) :=
     match l with
     | nil => fun _ => nil
     | p :: l =>
@@ -92,7 +92,7 @@ Section Elems.
     end.
 
   (** The positions of a shape, as elements of [Pos s]. *)
-  Definition elems (s : Sh) : list (Pos (F:=fin_cont F) s) :=
+  Definition elems (s : Sh) : list (Pos (fin_cont F) s) :=
     @elems_ s (positions F s) (@positions_valid s).
 
   Lemma elems_val_ (s : Sh) (l : list P) H : map val (@elems_ s l H) = l.
@@ -104,7 +104,7 @@ Section Elems.
   Lemma elems_val (s : Sh) : map val (elems s) = positions F s.
   Proof. apply elems_val_. Qed.
 
-  Lemma elems_complete (s : Sh) (e : Pos (F:=fin_cont F) s) : In e (elems s).
+  Lemma elems_complete (s : Sh) (e : Pos (fin_cont F) s) : In e (elems s).
   Proof.
     assert (Hin : In (val e) (map val (elems s))).
     { rewrite elems_val. apply (positions_complete F s (val e)).

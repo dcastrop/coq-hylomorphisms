@@ -65,7 +65,7 @@ Proof. simpl. reflexivity. Qed.
 Definition len_alg {A} (x : App (ListF A) int) : int :=
   match x with
   | MkCont sx kx =>
-      match sx as s return (Container.Pos s -> _) -> _ with
+      match sx as s return (Container.Pos (ListF A) s -> _) -> _ with
       | s_nil => fun _ => 0%uint63
       | s_cons _ => fun k => (1 + k (MkElem tt (@tt_cons _ _)))%uint63
       end kx

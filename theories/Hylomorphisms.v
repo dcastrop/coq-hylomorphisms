@@ -16,7 +16,7 @@ Section HyloDef.
     : forall (x : A), RecF c x -> B :=
     fix f x H :=
       match c x as cx
-            return (forall e : Pos (shape cx), RecF c (cont cx e)) -> B
+            return (forall e : Pos F (shape cx), RecF c (cont cx e)) -> B
       with
       | MkCont sx cx => fun H => a (MkCont sx (fun e => let ce := cx e in f ce (H e)))
       end (RecF_inv H).

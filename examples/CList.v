@@ -44,9 +44,9 @@ Canonical Structure natural_list {H H'} (f : H ~> H')
   : naturalM (ListF H) (ListF H')
   := {| natT := l_map_shape f; natC := @map_shape_is_nt _ _ f |}.
 
-Lemma dom_nil_false H : Pos (F:=ListF H) (@s_nil H) -> False.
+Lemma dom_nil_false H : Pos (ListF H) (@s_nil H) -> False.
 Proof. intros []. simpl in *. discriminate. Qed.
-Lemma nil_uninhabited {H B} (x : Pos (F:=ListF H) (@s_nil H)) : B x.
+Lemma nil_uninhabited {H B} (x : Pos (ListF H) (@s_nil H)) : B x.
   apply (False_rect _ (dom_nil_false x)).
 Defined.
 Hint Extern 0 => (apply nil_uninhabited) : ffix.

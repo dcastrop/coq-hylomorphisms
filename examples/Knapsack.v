@@ -34,7 +34,7 @@ Section MemoTable.
     match x with
     | (a, MkCont sx kx) =>
         {| shape := (a, sx);
-          cont := fun e : Container.Pos (a, sx) =>
+          cont := fun e : Container.Pos Memo (a, sx) =>
                     match e with
                     | MkElem e V => kx (MkElem e V)
                     end

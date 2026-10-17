@@ -13,7 +13,7 @@ From Stdlib Require Import Uint63.
 
 Definition merge (x : App (TreeF unit int) (list int)) : list int :=
   let (sx, kx) := x in
-  match sx return (Container.Pos sx -> _) -> _ with
+  match sx return (Container.Pos (TreeF unit int) sx -> _) -> _ with
   | Leaf _ _ => fun _ => nil
   | Node _ h => fun k => List.app (k (posL h)) (h :: k (posR h))
   end kx.

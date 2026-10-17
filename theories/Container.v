@@ -53,20 +53,20 @@ Record Pos `{Cont Sh P} (s : Sh) :=
       val : P;
       Valid : valid (s, val)
     }.
-Arguments Pos & {Sh _ P F} s : rename.
+Arguments Pos & {Sh _ P} F s : rename.
 Arguments MkElem & {Sh _ P F s} val Valid : rename.
 Arguments val & {Sh _ P F s} : rename.
 Arguments Valid & {Sh _ P F s} : rename.
 
-Lemma elem_val_eq `{Cont Sh P} (s : Sh) (e1 e2 : Pos s)
+Lemma elem_val_eq `{F : Cont Sh P} (s : Sh) (e1 e2 : Pos F s)
   : val e1 = val e2 -> e1 = e2.
 Proof.
   destruct e1 as [v1 d1], e2 as [v d2]; simpl in *.
   intros; subst. rewrite (bool_irrelevance d1 d2). auto.
 Qed.
 
-Lemma elem_valid_irr `{Cont Sh P} (s1 s2 : Sh) (Eq : s1 =e s2)
-  : forall e1 : Pos s1, exists e3 : Pos s2, val e1 = val e3.
+Lemma elem_valid_irr `{F : Cont Sh P} (s1 s2 : Sh) (Eq : s1 =e s2)
+  : forall e1 : Pos F s1, exists e3 : Pos F s2, val e1 = val e3.
 Proof.
   intros [v d1]. simpl.
   assert (d2 : valid (s2, v) =e true).
@@ -78,14 +78,14 @@ Qed.
 Record App `{F : Cont Sh P} (X : Type) :=
   MkCont
     { shape : Sh;
-      cont : Pos shape -> X
+      cont : Pos F shape -> X
     }.
 Arguments App {Sh _ P} F X.
 Arguments cont {Sh _ P F X} a k.
 Arguments MkCont {Sh _ P F X} shape cont.
 
 Lemma cont_valid_irrelevant `{F : Cont Sh P} (X : Type) :
-  forall (x : App F X) (e1 e2 : Pos (shape x)),
+  forall (x : App F X) (e1 e2 : Pos F (shape x)),
     val e1 = val e2 -> cont x e1 = cont x e2.
 Proof.
   intros [s p]. simpl. intros [e1 d1] [e2 d2]. simpl. intros Eq. subst.
@@ -123,7 +123,7 @@ Lemma fold_eq A (x y : A) : x =e y -> x = y.
 Proof. trivial. Qed.
 
 Lemma cont_ext_eq `{F : Cont Sh P} (s : Sh) `{setoid X}
-  (k k' : Pos s -> X)
+  (k k' : Pos F s -> X)
   : (forall x, k x =e k' x) -> AppR (MkCont s k) (MkCont s k').
 Proof.
   intros Heq. constructor; simpl in *; auto with ffix.
@@ -287,7 +287,7 @@ Section NaturalTransformation.
     (eta_P : P2 -> P1)
     (eta_C : forall s p, valid (eta_S s, p) -> valid (s, eta_P p)).
 
-  Definition eta_Pos : forall s, Pos (eta_S s) -> Pos s
+  Definition eta_Pos : forall s, Pos G (eta_S s) -> Pos F s
     := fun _ p => {| val := eta_P (val p); Valid := eta_C (Valid p) |}.
 
   Definition eta_ {X} : App F X -> App G X :=

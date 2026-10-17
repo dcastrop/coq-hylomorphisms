@@ -126,9 +126,9 @@ Section MAlg.
 
   Abbreviation FC := (fin_cont F).
 
-  Lemma map_cont_rel (s1 s2 : Sh) (k1 : Pos (F:=FC) s1 -> W) (k2 : Pos (F:=FC) s2 -> W)
+  Lemma map_cont_rel (s1 s2 : Sh) (k1 : Pos FC s1 -> W) (k2 : Pos FC s2 -> W)
     (Ek : forall e1 e2, val e1 = val e2 -> k1 e1 =e k2 e2)
-    : forall (l1 : list (Pos s1)) (l2 : list (Pos s2)),
+    : forall (l1 : list (Pos FC s1)) (l2 : list (Pos FC s2)),
       map val l1 = map val l2 -> Forall2 eqRel (map k1 l1) (map k2 l2).
   Proof.
     induction l1 as [|e1 l1 Ih]; intros [|e2 l2]; simpl; try discriminate; auto.

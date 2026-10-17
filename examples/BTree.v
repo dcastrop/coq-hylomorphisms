@@ -48,9 +48,9 @@ Definition map_tree {L L' A A'} (f : L ~> L') (g : A ~> A')
   : LFix (TreeF L A) ~> LFix (TreeF L' A') :=
   everywhere (nt_shape f g).
 
-Lemma dom_leaf_false L A (x : L) : Pos (F:=TreeF L A) (Leaf A x) -> False.
+Lemma dom_leaf_false L A (x : L) : Pos (TreeF L A) (Leaf A x) -> False.
 Proof. intros []. simpl in *. discriminate. Qed.
-Definition dom_leaf L A B (e : L) (x : Pos (F:=TreeF L A) (Leaf A e)) : B :=
+Definition dom_leaf L A B (e : L) (x : Pos (TreeF L A) (Leaf A e)) : B :=
   False_rect _ (dom_leaf_false x).
 
 Abbreviation a_leaf x := (MkCont (Leaf _ x) (@dom_leaf _ _ _ x)).
@@ -72,9 +72,9 @@ Abbreviation e_rbranch k H := (k (MkElem Rbranch (rnode_valid H))).
 Abbreviation leftB  k := (e_lbranch k eq_refl).
 Abbreviation rightB k := (e_rbranch k eq_refl).
 
-Definition posL {A} (h : A) : Pos (Node unit h) :=
+Definition posL {A} (h : A) : Pos (TreeF unit A) (Node unit h) :=
   MkElem Lbranch eq_refl.
-Definition posR {A} (h : A) : Pos (Node unit h) :=
+Definition posR {A} (h : A) : Pos (TreeF unit A) (Node unit h) :=
 
   MkElem Rbranch eq_refl.
 

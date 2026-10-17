@@ -19,7 +19,7 @@ Section AlgDef.
 
   Lemma LFix_rect [Q : LFix -> Type]
     : (forall x : App F LFix,
-          (forall e : Pos (shape x), Q (cont x e)) ->
+          (forall e : Pos F (shape x), Q (cont x e)) ->
           Q (LFix_in x))
       -> forall l : LFix, Q l.
   Proof.
@@ -27,13 +27,13 @@ Section AlgDef.
   Defined.
   Lemma LFix_rec [Q : LFix -> Set]
     : (forall x : App F LFix,
-          (forall e : Pos (shape x), Q (cont x e)) ->
+          (forall e : Pos F (shape x), Q (cont x e)) ->
           Q (LFix_in x))
       -> forall l : LFix, Q l.
   Proof. intros H. apply LFix_rect, H. Defined.
   Lemma LFix_ind [Q : LFix -> Prop]
     : (forall x : App F LFix,
-          (forall e : Pos (shape x), Q (cont x e)) ->
+          (forall e : Pos F (shape x), Q (cont x e)) ->
           Q (LFix_in x))
       -> forall l : LFix, Q l.
   Proof. intros H. apply LFix_rect, H. Defined.
